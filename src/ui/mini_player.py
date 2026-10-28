@@ -1,7 +1,7 @@
 """
 Frosted Glass Mini Player Pill widget.
 Refined minimalist aesthetic: translucent acrylic glass, simple line-art controls,
-and smooth circular buttons with delicate frosted borders.
+smooth circular buttons with delicate frosted borders, and settings gear button.
 Animates smoothly from the bottom-right of the screen for a clean, non-intrusive experience.
 """
 from PyQt6.QtWidgets import (
@@ -17,17 +17,20 @@ from PyQt6.QtGui import (
 
 from src.config import SPEED_STEPS, DEFAULT_SPEED
 from src.tts_engine import TTSEngine
+from src.utils.settings import settings_db
 from assets.icons import (
-    create_play_icon, create_pause_icon, create_stop_icon, create_close_icon
+    create_play_icon, create_pause_icon, create_stop_icon,
+    create_close_icon, create_gear_icon
 )
 
 
 class MiniPlayer(QWidget):
     """
     Translucent frosted glass player pill with line-art rounded buttons.
-    Always animates smoothly in the bottom-right corner of the screen.
+    Animates smoothly in the bottom-right corner of the screen with settings access.
     """
     closed = pyqtSignal()
+    settings_requested = pyqtSignal()
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
         super().__init__(parent)
@@ -45,7 +48,7 @@ class MiniPlayer(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(48)
-        self.setFixedWidth(320)
+        self.setFixedWidth(356)
 
         # Connect TTS engine signals
         self.tts.playback_started.connect(self._on_playback_started)
@@ -60,7 +63,7 @@ class MiniPlayer(QWidget):
     def _init_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 0, 10, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(7)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 1. Play / Pause Button (Line-art circle)
@@ -120,7 +123,7 @@ class MiniPlayer(QWidget):
 
         self.lbl_speed = QLabel(f"{DEFAULT_SPEED}x", self)
         self.lbl_speed.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_speed.setFixedWidth(42)
+        self.lbl_speed.setFixedWidth(40)
         self.lbl_speed.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
         self.lbl_speed.setStyleSheet("color: #E2E8F0; background: transparent;")
         layout.addWidget(self.lbl_speed)
@@ -148,7 +151,7 @@ class MiniPlayer(QWidget):
                 color: #E2E8F0;
                 border: 1px solid rgba(255, 255, 255, 0.20);
                 border-radius: 13px;
-                padding: 0 10px;
+                padding: 0 9px;
             }
             QPushButton:hover {
                 background-color: rgba(96, 165, 250, 0.20);
@@ -159,7 +162,27 @@ class MiniPlayer(QWidget):
         self.btn_voice.clicked.connect(self._cycle_voice)
         layout.addWidget(self.btn_voice)
 
-        # 5. Close Button (Line-art circle)
+        # 5. Settings Button (Line-art gear)
+        self.btn_settings = QPushButton(self)
+        self.btn_settings.setFixedSize(24, 24)
+        self.btn_settings.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_settings.setIcon(create_gear_icon(14, "#94A3B8"))
+        self.btn_settings.setToolTip("Settings & About")
+        self.btn_settings.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 1px solid transparent;
+                border-radius: 12px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.14);
+                border-color: rgba(255, 255, 255, 0.25);
+            }
+        """)
+        self.btn_settings.clicked.connect(self.settings_requested.emit)
+        layout.addWidget(self.btn_settings)
+
+        # 6. Close Button (Line-art cross)
         self.btn_close = QPushButton(self)
         self.btn_close.setFixedSize(24, 24)
         self.btn_close.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -267,11 +290,16 @@ class MiniPlayer(QWidget):
             return QPoint(int(target_x), int(target_y))
         return QPoint(100, 100)
 
-    def play_text(self, text: str):
-        """Starts speaking text and animates the player in at the bottom-right."""
+    def play_text(self, text: str, show_at_pos: QPoint = None):
+        """Starts speaking text and animates the player in at the configured position."""
         self.anim_group_out.stop()
 
-        target_pos = self._get_bottom_right_pos() if not self._user_moved else self.pos()
+        dock_mode = settings_db.get("dock_position", "bottom_right")
+        if dock_mode == "near_cursor" and show_at_pos:
+            target_pos = show_at_pos
+        else:
+            target_pos = self._get_bottom_right_pos() if not self._user_moved else self.pos()
+
         start_pos = QPoint(target_pos.x(), target_pos.y() + 25)
 
         self.pos_anim_in.setStartValue(start_pos)
@@ -287,6 +315,10 @@ class MiniPlayer(QWidget):
 
         self.btn_play_pause.setIcon(create_pause_icon(18, "#60A5FA"))
         self.tts.speak(text)
+
+    def update_voice_label(self):
+        """Refreshes voice label from current TTS voice."""
+        self.btn_voice.setText(self.tts.current_voice["short_label"])
 
     def _toggle_play_pause(self):
         self.tts.toggle_play_pause()

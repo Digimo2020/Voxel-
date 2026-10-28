@@ -2,6 +2,10 @@
 Configuration settings for Text 2 Voice.
 """
 import sys
+from src.utils.version import CURRENT_VERSION, GITHUB_REPO_URL
+
+VERSION = CURRENT_VERSION
+GITHUB_URL = GITHUB_REPO_URL
 
 # Voice Profiles
 VOICES = [

@@ -2,21 +2,37 @@
 
 All notable changes to the **Text 2 Voice** project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+Versioning structure: `v<Major>.<Minor>.<Patch:02d>` (e.g. `v1.0.01`).
+Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
-## [1.0.0] - 2026-10-28
+## [v1.0.01] - 2026-10-28
 
 ### Added
-- **Universal Text Detection**: Global mouse drag and double-click listener (`src/selection_listener.py`) powered by `pynput`, capturing highlighted text across browsers, document editors, IDEs, and canvas apps like Google Docs.
-- **Safe Clipboard Restorer**: Universal clipboard interception (`src/utils/clipboard.py`) simulating silent copy and immediately restoring previous clipboard data.
-- **24px Frosted Glass Speaker Trigger**: Unobtrusive floating trigger bubble (`src/ui/floating_bubble.py`) with line-art speaker icon and smooth cubic fade-in animation.
-- **Translucent Frosted Glass Mini Player**: Draggable pill widget (`src/ui/mini_player.py`) with play/pause, stop, and clean circular line-art controls.
-- **Speed Regulation**: Responsive `-` and `+` speed adjustments with presets (`0.5x`, `0.75x`, `1.0x`, `1.25x`, `1.5x`, `1.75x`, `2.0x`).
-- **Neural Voice Synthesis**: Edge-TTS integration supporting Jenny (US Female), Guy (US Male), and Sonia (UK Female) with automatic offline Microsoft SAPI5 fallback (`src/tts_engine.py`).
-- **Local JSON History Database**: Lightweight JSON storage (`src/utils/history.py`) persisting recent speech snippets, timestamps, voice used, and speed.
-- **History Viewer & Replay Dialog**: Dedicated UI (`src/ui/history_dialog.py`) to browse past texts, copy to clipboard, or replay audio.
-- **System Tray Integration**: Taskbar notification area icon (`src/ui/tray_icon.py`) with popup toggle, voice selector, and quick exit.
-- **Standalone Windows Build**: PyInstaller build pipeline (`build_exe.bat`) producing a standalone zero-dependency `Text2Voice.exe`.
+- **Settings & About Dialog** (`src/ui/settings_dialog.py`):
+  - Accessible via the player gear button (⚙️) or taskbar tray icon.
+  - Preference controls for default voice, default speed, docking position, and bubble trigger timeout.
+  - About view displaying current version (`v1.0.01`), versioning schema explanation, and a direct link to the [GitHub Repository](https://github.com/Digimo2020/Text-2-Voice).
+- **Persistent Settings Manager** (`src/utils/settings.py`):
+  - Stores and loads preferences from `%LOCALAPPDATA%/Text2Voice/settings.json`.
+- **Version Rollover Utility** (`src/utils/version.py`):
+  - Implements the base-10 rollover versioning system (`v<Major>.<Minor>.<Patch:02d>`).
+- **Bottom-Right Slide-Up Animation**:
+  - Mini player pill smoothly docks above the Windows taskbar with slide-up and fade-in entry/exit transitions.
+- **Transparent 30px Floating Speaker Trigger**:
+  - Replaced the dark background bubble with an ultra-light transparent frosted glass trigger with sky-blue vector speaker.
+
+---
+
+## [v1.0.00] - 2026-10-28
+
+### Added
+- Universal text selection detection across desktop apps, browsers, and Google Docs.
+- Safe clipboard interception with automatic restoration of user clipboard history.
+- Frosted glass floating player pill with play/pause, stop, and speed regulation (`0.5x` to `2.0x`).
+- Microsoft Edge TTS neural speech synthesis with offline SAPI5 fallback.
+- Persistent JSON history logging and history browser dialog.
+- System tray integration and PyInstaller standalone `.exe` build pipeline.

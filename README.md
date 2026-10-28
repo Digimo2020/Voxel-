@@ -1,52 +1,72 @@
 # Text 2 Voice
 
-A lightweight desktop utility for reading selected text aloud using a floating trigger and compact player.
+<p align="left">
+  <a href="https://github.com/Digimo2020/Text-2-Voice/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-60A5FA?style=flat-square" alt="Version v1.0.01"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
+  <a href="https://github.com/Digimo2020/Text-2-Voice"><img src="https://img.shields.io/badge/GitHub-Digimo2020%2FText--2--Voice-181717?style=flat-square&logo=github" alt="GitHub Repository"></a>
+</p>
 
-> **Status: In development.** The repository contains a Python/PyQt6 implementation. Features and platform compatibility must be verified on target systems before being described as production-ready.
+A lightweight, frosted glass desktop utility for reading selected text aloud using a transparent floating trigger and an animated bottom-right mini player.
 
-## Current implementation
+---
+
+## Current Implementation (v1.0.01)
 
 The current source includes:
-- A PyQt6 desktop application entry point.
-- Global mouse and keyboard listeners built with `pynput`.
-- Clipboard-based selected-text capture.
-- A floating trigger and compact mini-player UI.
-- An `edge-tts` speech synthesis path with a `pyttsx3` fallback attempt.
-- Playback speed and voice selection.
-- A system-tray menu and local JSON speech history.
-- A Windows executable build workflow.
+- **Transparent 30px Floating Speaker Trigger**: Subtle, non-intrusive vector speaker icon near text selections without dark backgrounds.
+- **Bottom-Right Slide-Up Mini Player**: Frosted glass capsule pill that animates smoothly from the bottom right corner above the taskbar.
+- **Playback Controls**: Play/Pause, Stop, and fine-tuned `[-] 1.0x [+]` speed regulation (`0.5x` to `2.0x`).
+- **Natural Neural Voices**: Microsoft Edge TTS (Jenny, Guy, Sonia) with automatic offline Microsoft SAPI5 fallback.
+- **Settings & About Dialog**: Configure default voice, speed, trigger timeout, docking positions, view version information, and open the GitHub repository.
+- **Local JSON History Database**: Automatically records spoken snippets to `%LOCALAPPDATA%/Text2Voice/history.json` with replay support.
+- **System Tray Integration**: Taskbar notification area menu with direct access to settings, history, and voice switching.
+- **Standalone Windows Build**: PyInstaller workflow generating a zero-dependency `Text2Voice.exe`.
 
-These are source-code features, not a claim that every feature has been tested successfully in every application or operating system.
+---
 
-## Intended workflow
+## 🔢 Versioning Scheme
 
-1. Select text in an application.
-2. A small floating trigger appears near the pointer.
-3. Click the trigger to start reading.
-4. Use the player to pause/resume, stop, adjust speed, select a voice, or close it.
-5. Access the app from the system tray.
+Text 2 Voice follows a structured base-10 rollover versioning system:
 
-Text-selection capture depends on the target app accepting simulated copy commands. Canvas editors, protected PDFs, remote desktops, and some elevated applications may behave differently.
+**Format:** `v<Major>.<Minor>.<Patch:02d>` *(Current: `v1.0.01`)*
 
-## Technology
+- The **patch** number runs from `01` to `09`. On the 10th iteration, it resets to `00` and the **minor** number (left) increments by 1:
+  - `v1.0.09` ➔ `v1.1.00`
+- On every 10th minor cycle, the minor number resets to `0` and the **major** number increments:
+  - `v1.9.09` ➔ `v2.0.00`
 
-- Python 3.11 recommended
-- PyQt6
-- pynput
-- pyperclip
-- edge-tts
-- pygame
-- pyttsx3
-- PyInstaller for Windows packaging
+---
 
-## Requirements
+## Intended Workflow
 
-Install a supported Python version and Git. Because global input hooks and clipboard capture interact with the desktop, run the application in a trusted local session and review permissions before use.
+1. Select text in any desktop application, browser, or document.
+2. A transparent floating speaker button appears near the pointer.
+3. Click the speaker to start listening.
+4. The mini-player slides up smoothly in the bottom-right corner of your screen.
+5. Use the player to pause/resume, adjust speed, switch voices, access settings, or close.
+6. Access preferences and history anytime from the system tray or player gear icon.
 
-## Run on Windows
+---
 
-Clone the repository and create an isolated environment:
+## Technology Stack
 
+- **Python 3.11**
+- **PyQt6**: Translucent frosted glass GUI and vector QPainter rendering
+- **pynput**: Cross-platform global mouse drag and hotkey interception
+- **pyperclip**: Safe clipboard extraction with instant restoration
+- **edge-tts**: Neural speech synthesis
+- **pyttsx3**: Offline Windows SAPI5 voice fallback
+- **pygame.mixer**: Low-latency audio streaming
+- **PyInstaller**: Windows standalone executable packaging
+
+---
+
+## Quick Start on Windows
+
+### Option 1: Standalone Executable (For Users)
+Download `Text2Voice.exe` from the [Releases](https://github.com/Digimo2020/Text-2-Voice/releases) tab and double-click to run. No Python installation required.
+
+### Option 2: Run from Source (For Developers)
 ```powershell
 git clone https://github.com/Digimo2020/Text-2-Voice.git
 cd Text-2-Voice
@@ -56,87 +76,45 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python main.py
 ```
+*(Or simply double-click `run.bat`).*
 
-Alternatively, use `run.bat` after dependencies are installed.
+---
 
-## Build a Windows executable
+## Building the Executable
 
 ```powershell
-python -m pip install pyinstaller
-.uild_exe.bat
+build_exe.bat
 ```
+Output executable will be placed in `dist/Text2Voice.exe`.
 
-The intended output is `dist/Text2Voice.exe`. A successful build does not by itself guarantee that selection hooks, speech playback, or packaging works correctly on every machine. Verify it on a clean Windows test system before distributing.
+---
 
-## Configuration
-
-`.env.example` documents proposed settings. Check the actual code before assuming every listed environment variable is currently loaded or effective. Do not put real credentials, private tokens, or personal data in the repository.
-
-## Privacy and clipboard behaviour
-
-Text selection uses a simulated copy shortcut and temporarily writes a sentinel value to the system clipboard before attempting restoration. Clipboard restoration cannot be guaranteed for every clipboard manager, rich clipboard format, or timing condition. The current implementation also saves spoken text in local JSON history.
-
-Before using the app with confidential text:
-- Understand that selected text may be submitted to the configured online Edge TTS service when online synthesis is used.
-- Review the privacy terms of any remote service.
-- Avoid sensitive content until the clipboard and history behaviours have been thoroughly tested.
-- Keep local history private and clear it when no longer needed.
-- Disable or exit global listeners when you do not need them.
-
-## Platform support
-
-- **Windows:** Primary target; runtime and packaging still require real-device validation.
-- **macOS:** Not yet verified. Accessibility permissions and platform-specific clipboard, hotkey, and offline TTS behaviour need testing.
-- **Linux:** Not currently supported.
-
-## Testing and CI
-
-The repository includes a GitHub Actions workflow that attempts dependency imports and builds a Windows executable. Review the Actions results for the current branch to confirm whether the latest run passed. Automated build success is not a substitute for interactive testing.
-
-Recommended manual tests:
-- Notepad and a browser text field/document
-- Google Docs and a PDF reader
-- Single-click, double-click, and drag selection
-- No-selection and empty-selection cases
-- Clipboard text and rich-format preservation
-- Play/pause/stop, speed and voice changes
-- Network loss and offline fallback
-- Unicode, long text, punctuation, and non-English text
-- Shutdown during synthesis and playback
-
-## Repository map
+## Repository Map
 
 ```text
-main.py                    Application entry point
-src/config.py              Voice, speed, and UI settings
-src/selection_listener.py  Global input listeners
-src/tts_engine.py          Speech synthesis and audio playback
-src/ui/                    Floating trigger, player, tray, history dialog
-src/utils/                 Clipboard and JSON history helpers
-assets/icons.py            Vector icons
+main.py                    Application entry point & event orchestrator
+src/config.py              Voice profiles, speed presets, and theme palettes
+src/selection_listener.py  Global mouse drag & hotkey listeners
+src/tts_engine.py          Multi-threaded speech synthesis & audio playback
+src/ui/                    Floating bubble, mini player, tray, settings, history dialog
+src/utils/                 Settings, clipboard, history, and version utilities
+assets/icons.py            Vector icons (speaker, play, pause, stop, gear, close)
 scripts/                   Preview-image generation script
-.github/workflows/         Build automation
-requirements.txt            Python dependencies
+.github/workflows/         Build and CI automation
+requirements.txt           Python dependencies
 build_exe.bat              Windows packaging helper
-run.bat                    Windows launcher
-ROADMAP.md                 Planned work
-CONTRIBUTING.md             Contributor guide
-SECURITY.md                 Vulnerability reporting
-CHANGELOG.md                Change history
+run.bat                    Windows development launcher
+ROADMAP.md                 Planned features (macOS port, multi-language, OCR)
+CONTRIBUTING.md            Contributor onboarding guide
+SECURITY.md                Responsible vulnerability reporting
+CHANGELOG.md               Verified version changelog
+LICENSE                    MIT License
 ```
 
-## Roadmap
+---
 
-See [ROADMAP.md](ROADMAP.md). Roadmap checkboxes should reflect verified implementation status, not intended functionality.
+## Project & Community
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Please describe platform, Python version, reproduction steps, and test results in bug reports.
-
-## Security
-
-Read [SECURITY.md](SECURITY.md). Never commit API keys, GitHub tokens, access credentials, private text, generated history files, or personal clipboard data.
-
-## License
-
-See [LICENSE](LICENSE) for the repository's current license file. Confirm licensing and third-party dependency terms before redistributing builds.
+- **Repository**: [https://github.com/Digimo2020/Text-2-Voice](https://github.com/Digimo2020/Text-2-Voice)
+- **Maintainer**: Digimo2020
+- **License**: [MIT License](LICENSE)

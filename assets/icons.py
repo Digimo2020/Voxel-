@@ -4,6 +4,7 @@ Produces crisp, resolution-independent line-art icons for frosted glass micro-UI
 """
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPen, QBrush, QPainterPath
 from PyQt6.QtCore import Qt, QPointF, QRectF
+import math
 
 
 def create_speaker_icon(size: int = 24, color: str = "#FFFFFF", waves: int = 2) -> QIcon:
@@ -49,7 +50,7 @@ def create_speaker_icon(size: int = 24, color: str = "#FFFFFF", waves: int = 2) 
     path_w1.arcTo(QRectF(arc1_x, arc1_y, arc1_w, arc1_h), -45, 90)
     painter.drawPath(path_w1)
 
-    # Second larger wave arc (if waves >= 2)
+    # Second larger wave arc
     if waves >= 2:
         arc2_w, arc2_h = size * 0.54, size * 0.72
         arc2_x = size * 0.44
@@ -58,6 +59,43 @@ def create_speaker_icon(size: int = 24, color: str = "#FFFFFF", waves: int = 2) 
         path_w2.arcMoveTo(QRectF(arc2_x, arc2_y, arc2_w, arc2_h), -40)
         path_w2.arcTo(QRectF(arc2_x, arc2_y, arc2_w, arc2_h), -40, 80)
         painter.drawPath(path_w2)
+
+    painter.end()
+    return QIcon(pixmap)
+
+
+def create_gear_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
+    """Minimalist line-art settings cog/gear icon."""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    c = QColor(color)
+    stroke = max(1.2, size * 0.08)
+    pen = QPen(c, stroke, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+
+    cx, cy = size / 2.0, size / 2.0
+    outer_r = size * 0.38
+    inner_r = size * 0.18
+
+    # Inner hole
+    painter.drawEllipse(QRectF(cx - inner_r, cy - inner_r, inner_r * 2, inner_r * 2))
+
+    # Outer teeth (6 teeth)
+    teeth = 6
+    for i in range(teeth):
+        angle = i * (2 * math.pi / teeth)
+        x1 = cx + (outer_r * 0.7) * math.cos(angle)
+        y1 = cy + (outer_r * 0.7) * math.sin(angle)
+        x2 = cx + outer_r * math.cos(angle)
+        y2 = cy + outer_r * math.sin(angle)
+        painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
+
+    # Outer circle rim
+    painter.drawEllipse(QRectF(cx - outer_r * 0.75, cy - outer_r * 0.75, outer_r * 1.5, outer_r * 1.5))
 
     painter.end()
     return QIcon(pixmap)
