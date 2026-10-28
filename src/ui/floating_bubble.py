@@ -1,19 +1,21 @@
 """
-Floating Mic Bubble widget.
-Smoothly fades in near selected text with a sleek, modern circular icon.
-Clicking it launches playback and reveals the mini player.
+Floating Speaker Bubble widget.
+A tiny, elegant frosted glass circular button with a minimalist speaker icon.
+Smoothly fades in near selected text without obstructing the user.
 """
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer
-from PyQt6.QtGui import QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer, QRectF
+from PyQt6.QtGui import (
+    QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent, QLinearGradient
+)
 
 from src.config import BUBBLE_SIZE, BUBBLE_TIMEOUT_SECONDS, THEME
-from assets.icons import create_mic_icon
+from assets.icons import create_speaker_icon
 
 
 class FloatingBubble(QWidget):
     """
-    Subtle circular floating mic button appearing near selected text.
+    Subtle 24px floating frosted glass speaker trigger appearing near selected text.
     """
     clicked = pyqtSignal(str, QPoint)  # (selected_text, bubble_center_pos)
 
@@ -34,12 +36,13 @@ class FloatingBubble(QWidget):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setFixedSize(BUBBLE_SIZE, BUBBLE_SIZE)
 
-        # Pre-render mic icon
-        self.mic_icon = create_mic_icon(size=int(BUBBLE_SIZE * 0.62), color="#FFFFFF")
+        # Pre-render speaker icon sized for tiny 24px bubble
+        icon_dim = int(BUBBLE_SIZE * 0.62)  # ~15px
+        self.speaker_icon = create_speaker_icon(size=icon_dim, color="#FFFFFF", waves=2)
 
         # Fade animation
         self.fade_anim = QPropertyAnimation(self, b"windowOpacity")
-        self.fade_anim.setDuration(220)
+        self.fade_anim.setDuration(160)
         self.fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         # Auto-hide timer
@@ -50,32 +53,26 @@ class FloatingBubble(QWidget):
 
     def show_at(self, text: str, cursor_x: int, cursor_y: int):
         """
-        Positions the bubble near the mouse cursor (offset above or below)
-        and smoothly fades it in.
+        Positions the bubble near the mouse cursor and smoothly fades in.
         """
         self.selected_text = text
 
-        # Position slightly above and to the right of cursor
-        offset_x = 12
-        offset_y = -BUBBLE_SIZE - 10
+        offset_x = 8
+        offset_y = -BUBBLE_SIZE - 6
 
         target_x = cursor_x + offset_x
         target_y = cursor_y + offset_y
 
-        # Screen boundary clamping
         screen = self.screen() or self.parent().screen() if self.parent() else None
         if screen:
             geo = screen.availableGeometry()
-            # If too close to top edge, place below cursor
-            if target_y < geo.top() + 10:
-                target_y = cursor_y + 24
-            # Keep within horizontal bounds
-            target_x = max(geo.left() + 10, min(geo.right() - BUBBLE_SIZE - 10, target_x))
-            target_y = max(geo.top() + 10, min(geo.bottom() - BUBBLE_SIZE - 10, target_y))
+            if target_y < geo.top() + 6:
+                target_y = cursor_y + 18
+            target_x = max(geo.left() + 6, min(geo.right() - BUBBLE_SIZE - 6, target_x))
+            target_y = max(geo.top() + 6, min(geo.bottom() - BUBBLE_SIZE - 6, target_y))
 
         self.move(int(target_x), int(target_y))
 
-        # Start fade-in animation
         self.fade_anim.stop()
         self.setWindowOpacity(0.0)
         self.show()
@@ -83,11 +80,10 @@ class FloatingBubble(QWidget):
         self.fade_anim.setEndValue(1.0)
         self.fade_anim.start()
 
-        # Start auto-hide timeout
         self.hide_timer.start()
 
     def fade_out(self):
-        """Smoothly fades out and hides the bubble."""
+        """Smoothly fades out and hides."""
         self.hide_timer.stop()
         self.fade_anim.stop()
         self.fade_anim.setStartValue(self.windowOpacity())
@@ -106,26 +102,36 @@ class FloatingBubble(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        w = self.width()
-        h = self.height()
+        w = float(self.width())
+        h = float(self.height())
+        rect = QRectF(1.0, 1.0, w - 2.0, h - 2.0)
 
-        # Outer subtle glow / shadow border
-        bg_color = QColor(THEME["bg_bubble_hover"] if self.is_hovered else THEME["bg_bubble"])
-        painter.setBrush(QBrush(bg_color))
-        painter.setPen(QPen(QColor(255, 255, 255, 60), 1.5))
-        painter.drawEllipse(2, 2, w - 4, h - 4)
+        # Translucent Frosted Glass Effect with subtle lighting gradient
+        grad = QLinearGradient(0, 0, 0, h)
+        if self.is_hovered:
+            grad.setColorAt(0.0, QColor(60, 68, 100, 245))
+            grad.setColorAt(1.0, QColor(32, 38, 58, 235))
+            border_pen = QPen(QColor(96, 165, 250, 220), 1.0)
+        else:
+            grad.setColorAt(0.0, QColor(42, 48, 72, 230))
+            grad.setColorAt(1.0, QColor(20, 24, 38, 215))
+            border_pen = QPen(QColor(255, 255, 255, 75), 1.0)
 
-        # Draw center mic icon
-        icon_size = int(w * 0.58)
-        ix = (w - icon_size) // 2
-        iy = (h - icon_size) // 2
-        self.mic_icon.paint(painter, ix, iy, icon_size, icon_size)
+        painter.setBrush(QBrush(grad))
+        painter.setPen(border_pen)
+        painter.drawEllipse(rect)
+
+        # Draw centered speaker icon
+        icon_dim = int(w * 0.62)
+        ix = int((w - icon_dim) / 2)
+        iy = int((h - icon_dim) / 2)
+        self.speaker_icon.paint(painter, ix, iy, icon_dim, icon_dim)
 
         painter.end()
 
     def enterEvent(self, event):
         self.is_hovered = True
-        self.hide_timer.stop()  # Keep alive while hovered
+        self.hide_timer.stop()
         self.update()
         super().enterEvent(event)
 

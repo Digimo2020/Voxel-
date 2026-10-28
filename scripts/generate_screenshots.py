@@ -1,6 +1,6 @@
 """
 Renders professional open-source preview images and banners for the GitHub repository.
-Uses PyQt6 QPainter for high-resolution, anti-aliased visual output.
+Reflects the refined frosted glass aesthetic, line-art buttons, and speaker icon.
 """
 import sys
 import os
@@ -19,85 +19,96 @@ os.makedirs(OUT_DIR, exist_ok=True)
 def render_banner():
     width, height = 1200, 400
     img = QImage(width, height, QImage.Format.Format_ARGB32_Premultiplied)
-    img.fill(QColor("#0F111A"))
+    img.fill(QColor("#0B0D17"))
 
     p = QPainter(img)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     p.setRenderHint(QPainter.RenderHint.TextAntialiasing)
 
-    # Background ambient radial glow
+    # Ambient radial glow
     radial = QRadialGradient(QPointF(width * 0.5, height * 0.4), 600)
-    radial.setColorAt(0.0, QColor(99, 102, 241, 70))
-    radial.setColorAt(0.5, QColor(139, 92, 246, 25))
-    radial.setColorAt(1.0, QColor(15, 17, 26, 0))
+    radial.setColorAt(0.0, QColor(96, 165, 250, 60))
+    radial.setColorAt(0.5, QColor(59, 130, 246, 20))
+    radial.setColorAt(1.0, QColor(11, 13, 23, 0))
     p.setBrush(QBrush(radial))
     p.setPen(Qt.PenStyle.NoPen)
     p.drawRect(0, 0, width, height)
 
-    # Subtle border
-    p.setPen(QPen(QColor(255, 255, 255, 20), 1))
+    p.setPen(QPen(QColor(255, 255, 255, 25), 1))
     p.setBrush(Qt.BrushStyle.NoBrush)
-    p.drawRoundedRect(QRectF(1, 1, width - 2, height - 2), 12, 12)
+    p.drawRoundedRect(QRectF(1, 1, width - 2, height - 2), 14, 14)
 
     # Logo circle
-    logo_size = 80
+    logo_size = 76
     logo_x = (width - logo_size) // 2
     logo_y = 55
     grad_logo = QLinearGradient(logo_x, logo_y, logo_x + logo_size, logo_y + logo_size)
-    grad_logo.setColorAt(0.0, QColor("#6366F1"))
-    grad_logo.setColorAt(1.0, QColor("#8B5CF6"))
+    grad_logo.setColorAt(0.0, QColor(38, 44, 68, 240))
+    grad_logo.setColorAt(1.0, QColor(22, 26, 42, 230))
     p.setBrush(QBrush(grad_logo))
-    p.setPen(QPen(QColor(255, 255, 255, 100), 2))
+    p.setPen(QPen(QColor(96, 165, 250, 180), 1.5))
     p.drawEllipse(QRectF(logo_x, logo_y, logo_size, logo_size))
 
-    # Inner Mic icon in logo
-    p.setBrush(QBrush(QColor("#FFFFFF")))
+    # Inner Speaker icon with waves
+    p.setBrush(QBrush(QColor("#60A5FA")))
     p.setPen(Qt.PenStyle.NoPen)
-    # Mic capsule
-    mc_w, mc_h = 24, 34
-    mc_x = logo_x + (logo_size - mc_w) / 2
-    mc_y = logo_y + 16
-    p.drawRoundedRect(QRectF(mc_x, mc_y, mc_w, mc_h), 12, 12)
-    # Cradle
+    spk_path = QPainterPath()
+    sx0, sy0 = logo_x + 22, logo_y + 30
+    sx1, sy1 = logo_x + 30, logo_y + 46
+    sx2, sy2 = logo_x + 44, logo_y + 56
+    sx3, sy3 = logo_x + 44, logo_y + 20
+    spk_path.moveTo(sx0, sy0)
+    spk_path.lineTo(sx1, sy0)
+    spk_path.lineTo(sx2, sy3)
+    spk_path.lineTo(sx2, sy2)
+    spk_path.lineTo(sx1, sy1)
+    spk_path.lineTo(sx0, sy1)
+    spk_path.closeSubpath()
+    p.drawPath(spk_path)
+
+    # Waves
     p.setBrush(Qt.BrushStyle.NoBrush)
-    p.setPen(QPen(QColor("#FFFFFF"), 3.5, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-    arc_rect = QRectF(logo_x + 20, logo_y + 24, 40, 36)
-    path = QPainterPath()
-    path.arcMoveTo(arc_rect, 180)
-    path.arcTo(arc_rect, 180, 180)
-    p.drawPath(path)
-    # Stand
-    p.drawLine(QPointF(logo_x + 40, logo_y + 60), QPointF(logo_x + 40, logo_y + 67))
-    p.drawLine(QPointF(logo_x + 28, logo_y + 67), QPointF(logo_x + 52, logo_y + 67))
+    pen_w = QPen(QColor("#60A5FA"), 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    p.setPen(pen_w)
+    w1_rect = QRectF(logo_x + 38, logo_y + 26, 22, 24)
+    pw1 = QPainterPath()
+    pw1.arcMoveTo(w1_rect, -45)
+    pw1.arcTo(w1_rect, -45, 90)
+    p.drawPath(pw1)
+
+    w2_rect = QRectF(logo_x + 35, logo_y + 20, 34, 36)
+    pw2 = QPainterPath()
+    pw2.arcMoveTo(w2_rect, -40)
+    pw2.arcTo(w2_rect, -40, 80)
+    p.drawPath(pw2)
 
     # Title: TEXT 2 VOICE
     p.setPen(QColor("#FFFFFF"))
     font_title = QFont("Segoe UI", 32, QFont.Weight.Bold)
     p.setFont(font_title)
-    p.drawText(QRectF(0, 155, width, 50), Qt.AlignmentFlag.AlignCenter, "TEXT 2 VOICE")
+    p.drawText(QRectF(0, 150, width, 50), Qt.AlignmentFlag.AlignCenter, "TEXT 2 VOICE")
 
-    # Subtitle / Tagline
-    p.setPen(QColor("#A6ADC8"))
+    # Subtitle
+    p.setPen(QColor("#94A3B8"))
     font_sub = QFont("Segoe UI", 15, QFont.Weight.Normal)
     p.setFont(font_sub)
-    p.drawText(QRectF(0, 215, width, 30), Qt.AlignmentFlag.AlignCenter, "Universal Floating Text-to-Speech Engine for Windows & macOS")
+    p.drawText(QRectF(0, 210, width, 30), Qt.AlignmentFlag.AlignCenter, "Universal Frosted Glass Text-to-Speech Engine for Windows & macOS")
 
     # Feature badges
     badges = [
-        "⚡ Universal Selection",
-        "🎙️ Natural Neural Voices",
-        "🎛️ Speed Controls (0.5x-2.0x)",
-        "📜 JSON History Storage",
-        "📦 100% Standalone .EXE"
+        "⚡ 24px Micro Trigger",
+        "🪟 Frosted Glass UI",
+        "🎙️ Neural Natural Voices",
+        "🎛️ Line-Art Speed Pill",
+        "📜 JSON History Storage"
     ]
-    badge_y = 285
+    badge_y = 280
     start_x = 105
     spacing = 205
     for i, b in enumerate(badges):
         bx = start_x + (i * spacing)
-        # Badge pill
-        p.setBrush(QBrush(QColor(30, 32, 48, 220)))
-        p.setPen(QPen(QColor(99, 102, 241, 120), 1.2))
+        p.setBrush(QBrush(QColor(22, 26, 42, 200)))
+        p.setPen(QPen(QColor(255, 255, 255, 30), 1))
         p.drawRoundedRect(QRectF(bx, badge_y, 190, 38), 19, 19)
 
         p.setPen(QColor("#E2E8F0"))
@@ -113,168 +124,184 @@ def render_banner():
 def render_ui_preview():
     width, height = 1000, 560
     img = QImage(width, height, QImage.Format.Format_ARGB32_Premultiplied)
-    img.fill(QColor("#11131F"))
+    img.fill(QColor("#0B0D17"))
 
     p = QPainter(img)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     p.setRenderHint(QPainter.RenderHint.TextAntialiasing)
 
-    # Desktop Application Window Mockup (Chrome / Editor window)
+    # Simulated Application Window (Clean Editor / Browser)
     win_x, win_y, win_w, win_h = 60, 40, 880, 480
-    p.setBrush(QBrush(QColor("#181926")))
-    p.setPen(QPen(QColor(255, 255, 255, 20), 1))
-    p.drawRoundedRect(QRectF(win_x, win_y, win_w, win_h), 12, 12)
+    p.setBrush(QBrush(QColor("#131622")))
+    p.setPen(QPen(QColor(255, 255, 255, 18), 1))
+    p.drawRoundedRect(QRectF(win_x, win_y, win_w, win_h), 14, 14)
 
-    # Window Title Bar
-    p.setBrush(QBrush(QColor("#1E2030")))
+    # Title Bar
+    p.setBrush(QBrush(QColor("#1A1E2E")))
     p.setPen(Qt.PenStyle.NoPen)
-    p.drawRoundedRect(QRectF(win_x, win_y, win_w, 42), 12, 12)
+    p.drawRoundedRect(QRectF(win_x, win_y, win_w, 42), 14, 14)
     p.drawRect(QRectF(win_x, win_y + 30, win_w, 12))
 
-    # Window Dots (Close, Min, Max)
-    p.setBrush(QBrush(QColor("#ED8796")))
-    p.drawEllipse(QRectF(win_x + 16, win_y + 15, 12, 12))
-    p.setBrush(QBrush(QColor("#EED49F")))
-    p.drawEllipse(QRectF(win_x + 36, win_y + 15, 12, 12))
-    p.setBrush(QBrush(QColor("#A6DA95")))
-    p.drawEllipse(QRectF(win_x + 56, win_y + 15, 12, 12))
+    p.setBrush(QBrush(QColor("#EF4444")))
+    p.drawEllipse(QRectF(win_x + 16, win_y + 15, 11, 11))
+    p.setBrush(QBrush(QColor("#F59E0B")))
+    p.drawEllipse(QRectF(win_x + 34, win_y + 15, 11, 11))
+    p.setBrush(QBrush(QColor("#10B981")))
+    p.drawEllipse(QRectF(win_x + 52, win_y + 15, 11, 11))
 
-    # Window title text
-    p.setPen(QColor("#939AB7"))
+    p.setPen(QColor("#94A3B8"))
     p.setFont(QFont("Segoe UI", 10, QFont.Weight.Medium))
-    p.drawText(QRectF(win_x + 80, win_y + 11, 400, 20), Qt.AlignmentFlag.AlignLeft, "Document.txt — Any Windows Application / Browser / Google Docs")
+    p.drawText(QRectF(win_x + 76, win_y + 11, 400, 20), Qt.AlignmentFlag.AlignLeft, "Document — Works anywhere in Chrome, Word, VS Code, Google Docs")
 
-    # Document content text
+    # Document text
     content_y = win_y + 80
     p.setPen(QColor("#CAD3F5"))
     p.setFont(QFont("Segoe UI", 13, QFont.Weight.Normal))
     p.drawText(win_x + 50, content_y, "Natural Language Processing and Speech Synthesis have advanced dramatically.")
-    p.drawText(win_x + 50, content_y + 35, "Users can effortlessly select any paragraph or sentence across any platform.")
+    p.drawText(win_x + 50, content_y + 35, "Users can effortlessly highlight any paragraph or sentence across any platform.")
 
-    # Highlighting selected text
-    sel_rect = QRectF(win_x + 48, content_y + 52, 590, 32)
-    p.setBrush(QBrush(QColor(99, 102, 241, 90)))
-    p.setPen(Qt.PenStyle.NoPen)
+    # Selected text highlight
+    sel_rect = QRectF(win_x + 48, content_y + 52, 595, 30)
+    p.setBrush(QBrush(QColor(96, 165, 250, 45)))
+    p.setPen(QPen(QColor(96, 165, 250, 90), 1))
     p.drawRoundedRect(sel_rect, 4, 4)
 
     p.setPen(QColor("#FFFFFF"))
     p.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
-    p.drawText(win_x + 52, content_y + 74, "Text 2 Voice will instantly detect the selection and fade in a floating mic.")
+    p.drawText(win_x + 52, content_y + 73, "Text 2 Voice will instantly detect the selection and fade in a floating speaker.")
 
     p.setPen(QColor("#CAD3F5"))
     p.setFont(QFont("Segoe UI", 13, QFont.Weight.Normal))
-    p.drawText(win_x + 50, content_y + 120, "Playback begins with natural human cadence, crystal-clear pronunciation, and custom speed.")
+    p.drawText(win_x + 50, content_y + 118, "Playback begins with natural human cadence, crystal-clear pronunciation, and custom speed.")
 
-    # 1. Floating Mic Bubble Mockup
+    # 1. New 24px Micro Speaker Bubble Mockup (50% smaller!)
     bubble_x = win_x + 655
-    bubble_y = content_y + 44
-    bubble_size = 44
+    bubble_y = content_y + 53
+    bubble_size = 24
 
-    # Glow effect
-    p.setBrush(QBrush(QColor(99, 102, 241, 60)))
-    p.drawEllipse(QRectF(bubble_x - 4, bubble_y - 4, bubble_size + 8, bubble_size + 8))
-
-    p.setBrush(QBrush(QColor("#6366F1")))
-    p.setPen(QPen(QColor(255, 255, 255, 120), 2))
+    # Frosted glass circle
+    grad_b = QLinearGradient(0, bubble_y, 0, bubble_y + bubble_size)
+    grad_b.setColorAt(0.0, QColor(48, 56, 82, 235))
+    grad_b.setColorAt(1.0, QColor(22, 26, 40, 220))
+    p.setBrush(QBrush(grad_b))
+    p.setPen(QPen(QColor(255, 255, 255, 80), 1.0))
     p.drawEllipse(QRectF(bubble_x, bubble_y, bubble_size, bubble_size))
 
-    # Mic inside bubble
+    # Inner speaker icon
     p.setBrush(QBrush(QColor("#FFFFFF")))
     p.setPen(Qt.PenStyle.NoPen)
-    p.drawRoundedRect(QRectF(bubble_x + 14, bubble_y + 9, 16, 20), 8, 8)
+    spk_p = QPainterPath()
+    bx0, by0 = bubble_x + 5, bubble_y + 9
+    bx1, by1 = bubble_x + 8, bubble_y + 15
+    bx2, by2 = bubble_x + 13, bubble_y + 19
+    bx3, by3 = bubble_x + 13, bubble_y + 5
+    spk_p.moveTo(bx0, by0)
+    spk_p.lineTo(bx1, by0)
+    spk_p.lineTo(bx2, by3)
+    spk_p.lineTo(bx2, by2)
+    spk_p.lineTo(bx1, by1)
+    spk_p.lineTo(bx0, by1)
+    spk_p.closeSubpath()
+    p.drawPath(spk_p)
+
+    # Wave arc
     p.setBrush(Qt.BrushStyle.NoBrush)
-    p.setPen(QPen(QColor("#FFFFFF"), 2.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-    b_arc = QRectF(bubble_x + 10, bubble_y + 14, 24, 20)
-    p_b = QPainterPath()
-    p_b.arcMoveTo(b_arc, 180)
-    p_b.arcTo(b_arc, 180, 180)
-    p.drawPath(p_b)
-    p.drawLine(QPointF(bubble_x + 22, bubble_y + 34), QPointF(bubble_x + 22, bubble_y + 38))
+    p.setPen(QPen(QColor("#FFFFFF"), 1.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+    w_arc = QRectF(bubble_x + 11, bubble_y + 7, 8, 10)
+    pw = QPainterPath()
+    pw.arcMoveTo(w_arc, -45)
+    pw.arcTo(w_arc, -45, 90)
+    p.drawPath(pw)
 
-    # Tooltip / label pointing to bubble
-    p.setPen(QColor("#A6ADC8"))
-    p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
-    p.drawText(bubble_x - 30, bubble_y - 12, "Fades in smoothly ↗")
+    # Pointer arrow & label
+    p.setPen(QColor("#94A3B8"))
+    p.setFont(QFont("Segoe UI", 9, QFont.Weight.Medium))
+    p.drawText(bubble_x + 32, bubble_y + 16, "← Subtle 24px Speaker Trigger (Fades in)")
 
-    # 2. Floating Mini Player Pill Mockup
-    player_w, player_h = 390, 60
+    # 2. Refined Frosted Glass Mini Player Pill Mockup
+    player_w, player_h = 320, 48
     player_x = (width - player_w) // 2
-    player_y = content_y + 190
+    player_y = content_y + 195
 
-    # Shadow
-    p.setBrush(QBrush(QColor(0, 0, 0, 160)))
+    # True Frosted Glass Pill
+    grad_p = QLinearGradient(0, player_y, 0, player_y + player_h)
+    grad_p.setColorAt(0.0, QColor(38, 44, 64, 215))
+    grad_p.setColorAt(0.4, QColor(22, 25, 38, 205))
+    grad_p.setColorAt(1.0, QColor(16, 18, 28, 220))
+    p.setBrush(QBrush(grad_p))
+    p.setPen(QPen(QColor(255, 255, 255, 48), 1.0))
+    p.drawRoundedRect(QRectF(player_x, player_y, player_w, player_h), player_h / 2, player_h / 2)
+
+    # Button 1: Play/Pause circle with line border
+    btn1_x = player_x + 12
+    btn1_y = player_y + 8
+    btn1_r = 32
+    p.setBrush(QBrush(QColor(96, 165, 250, 40)))
+    p.setPen(QPen(QColor(96, 165, 250, 180), 1.2))
+    p.drawEllipse(QRectF(btn1_x, btn1_y, btn1_r, btn1_r))
+    # Pause bars
+    p.setBrush(QBrush(QColor("#60A5FA")))
     p.setPen(Qt.PenStyle.NoPen)
-    p.drawRoundedRect(QRectF(player_x + 3, player_y + 6, player_w, player_h), 30, 30)
+    p.drawRoundedRect(QRectF(btn1_x + 10, btn1_y + 9, 3.5, 14), 1.5, 1.5)
+    p.drawRoundedRect(QRectF(btn1_x + 18, btn1_y + 9, 3.5, 14), 1.5, 1.5)
 
-    # Pill background
-    p.setBrush(QBrush(QColor("#1E1E2E")))
-    p.setPen(QPen(QColor("#313244"), 2))
-    p.drawRoundedRect(QRectF(player_x, player_y, player_w, player_h), 30, 30)
-
-    # Play/Pause button
-    btn_r = 40
-    btn_x = player_x + 12
-    btn_y = player_y + (player_h - btn_r) // 2
-    p.setBrush(QBrush(QColor("#89B4FA")))
+    # Button 2: Stop circle with line border
+    btn2_x = btn1_x + 40
+    btn2_y = player_y + 10
+    btn2_r = 28
+    p.setBrush(QBrush(QColor(248, 113, 113, 35)))
+    p.setPen(QPen(QColor(248, 113, 113, 140), 1.0))
+    p.drawEllipse(QRectF(btn2_x, btn2_y, btn2_r, btn2_r))
+    p.setBrush(QBrush(QColor("#F87171")))
     p.setPen(Qt.PenStyle.NoPen)
-    p.drawEllipse(QRectF(btn_x, btn_y, btn_r, btn_r))
+    p.drawRoundedRect(QRectF(btn2_x + 9, btn2_y + 9, 10, 10), 2, 2)
 
-    # Pause icon bars
-    p.setBrush(QBrush(QColor("#1E1E2E")))
-    p.drawRoundedRect(QRectF(btn_x + 13, btn_y + 12, 5, 16), 2, 2)
-    p.drawRoundedRect(QRectF(btn_x + 22, btn_y + 12, 5, 16), 2, 2)
+    # Separator
+    p.setPen(QPen(QColor(255, 255, 255, 35), 1))
+    p.drawLine(QPointF(btn2_x + 36, player_y + 15), QPointF(btn2_x + 36, player_y + 33))
 
-    # Stop button
-    stop_x = btn_x + 48
-    stop_y = player_y + 14
-    p.setBrush(QBrush(QColor("#313244")))
-    p.drawRoundedRect(QRectF(stop_x, stop_y, 32, 32), 16, 16)
-    p.setBrush(QBrush(QColor("#F38BA8")))
-    p.drawRoundedRect(QRectF(stop_x + 9, stop_y + 9, 14, 14), 2, 2)
+    # Speed controls: [-] 1.0x [+]
+    sp_x = btn2_x + 46
+    p.setBrush(QBrush(QColor(255, 255, 255, 20)))
+    p.setPen(QPen(QColor(255, 255, 255, 45), 1))
+    p.drawEllipse(QRectF(sp_x, player_y + 12, 24, 24))
+    p.setPen(QColor("#CBD5E1"))
+    p.setFont(QFont("Segoe UI", 11, QFont.Weight.Medium))
+    p.drawText(QRectF(sp_x, player_y + 12, 24, 24), Qt.AlignmentFlag.AlignCenter, "-")
 
-    # Separator 1
-    p.setPen(QPen(QColor("#45475A"), 1.5))
-    p.drawLine(QPointF(stop_x + 42, player_y + 16), QPointF(stop_x + 42, player_y + 44))
+    p.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+    p.drawText(QRectF(sp_x + 24, player_y + 12, 42, 24), Qt.AlignmentFlag.AlignCenter, "1.25x")
 
-    # Speed Controls [-] 1.0x [+]
-    sp_x = stop_x + 54
-    p.setBrush(QBrush(QColor("#313244")))
-    p.setPen(Qt.PenStyle.NoPen)
-    p.drawRoundedRect(QRectF(sp_x, player_y + 16, 28, 28), 14, 14)
-    p.setPen(QColor("#CDD6F4"))
-    p.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
-    p.drawText(QRectF(sp_x, player_y + 16, 28, 28), Qt.AlignmentFlag.AlignCenter, "-")
+    p.setBrush(QBrush(QColor(255, 255, 255, 20)))
+    p.setPen(QPen(QColor(255, 255, 255, 45), 1))
+    p.drawEllipse(QRectF(sp_x + 66, player_y + 12, 24, 24))
+    p.setPen(QColor("#CBD5E1"))
+    p.setFont(QFont("Segoe UI", 11, QFont.Weight.Medium))
+    p.drawText(QRectF(sp_x + 66, player_y + 12, 24, 24), Qt.AlignmentFlag.AlignCenter, "+")
 
-    p.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
-    p.drawText(QRectF(sp_x + 28, player_y + 16, 50, 28), Qt.AlignmentFlag.AlignCenter, "1.25x")
+    # Separator
+    p.setPen(QPen(QColor(255, 255, 255, 35), 1))
+    p.drawLine(QPointF(sp_x + 98, player_y + 15), QPointF(sp_x + 98, player_y + 33))
 
-    p.drawRoundedRect(QRectF(sp_x + 78, player_y + 16, 28, 28), 14, 14)
-    p.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
-    p.drawText(QRectF(sp_x + 78, player_y + 16, 28, 28), Qt.AlignmentFlag.AlignCenter, "+")
-
-    # Separator 2
-    p.setPen(QPen(QColor("#45475A"), 1.5))
-    p.drawLine(QPointF(sp_x + 116, player_y + 16), QPointF(sp_x + 116, player_y + 44))
-
-    # Voice button
-    vc_x = sp_x + 126
-    p.setBrush(QBrush(QColor("#313244")))
-    p.setPen(QPen(QColor("#89B4FA"), 1))
-    p.drawRoundedRect(QRectF(vc_x, player_y + 15, 86, 30), 15, 15)
-    p.setPen(QColor("#CDD6F4"))
-    p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
-    p.drawText(QRectF(vc_x, player_y + 15, 86, 30), Qt.AlignmentFlag.AlignCenter, "Jenny (F)")
+    # Voice capsule
+    vc_x = sp_x + 106
+    p.setBrush(QBrush(QColor(255, 255, 255, 20)))
+    p.setPen(QPen(QColor(255, 255, 255, 50), 1))
+    p.drawRoundedRect(QRectF(vc_x, player_y + 11, 62, 26), 13, 13)
+    p.setPen(QColor("#E2E8F0"))
+    p.setFont(QFont("Segoe UI", 9, QFont.Weight.Medium))
+    p.drawText(QRectF(vc_x, player_y + 11, 62, 26), Qt.AlignmentFlag.AlignCenter, "Jenny")
 
     # Close button
-    cl_x = vc_x + 94
-    p.setPen(QColor("#A6ADC8"))
-    p.setFont(QFont("Segoe UI", 11, QFont.Weight.Normal))
-    p.drawText(QRectF(cl_x, player_y + 15, 26, 30), Qt.AlignmentFlag.AlignCenter, "✕")
+    cl_x = vc_x + 70
+    p.setPen(QPen(QColor("#94A3B8"), 1.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+    p.drawLine(QPointF(cl_x + 4, player_y + 19), QPointF(cl_x + 14, player_y + 29))
+    p.drawLine(QPointF(cl_x + 14, player_y + 19), QPointF(cl_x + 4, player_y + 29))
 
     # Annotation pointer for player
-    p.setPen(QColor("#89B4FA"))
-    p.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
-    p.drawText(QRectF(0, player_y + 70, width, 24), Qt.AlignmentFlag.AlignCenter, "Floating Mini Player Pill (Draggable anywhere on screen)")
+    p.setPen(QColor("#60A5FA"))
+    p.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+    p.drawText(QRectF(0, player_y + 64, width, 24), Qt.AlignmentFlag.AlignCenter, "Frosted Glass Pill with Simple Line-Art Round Buttons (Draggable anywhere)")
 
     p.end()
     out_path = os.path.join(OUT_DIR, "floating_ui_preview.png")
@@ -282,85 +309,6 @@ def render_ui_preview():
     print("Saved preview to:", out_path)
 
 
-def render_architecture():
-    width, height = 1000, 380
-    img = QImage(width, height, QImage.Format.Format_ARGB32_Premultiplied)
-    img.fill(QColor("#0F111A"))
-
-    p = QPainter(img)
-    p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    p.setRenderHint(QPainter.RenderHint.TextAntialiasing)
-
-    # Title
-    p.setPen(QColor("#FFFFFF"))
-    p.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
-    p.drawText(QRectF(0, 24, width, 30), Qt.AlignmentFlag.AlignCenter, "Text 2 Voice System Architecture & Workflow")
-
-    # Flowchart boxes
-    steps = [
-        {"num": "1", "title": "Global Hook", "sub": "pynput listener\nMouse drag / Hotkey", "color": "#6366F1"},
-        {"num": "2", "title": "Safe Clipboard", "sub": "Silent Ctrl+C copy\nRestores user clipboard", "color": "#3B82F6"},
-        {"num": "3", "title": "Floating Micro-UI", "sub": "PyQt6 translucent\nMic bubble & Mini Player", "color": "#06B6D4"},
-        {"num": "4", "title": "Neural TTS Engine", "sub": "Edge-TTS Neural\nOffline SAPI5 Fallback", "color": "#10B981"},
-        {"num": "5", "title": "JSON Storage", "sub": "history.json database\nReplay & favorites", "color": "#F59E0B"}
-    ]
-
-    box_w, box_h = 160, 150
-    start_x = 45
-    spacing = 190
-    box_y = 95
-
-    for i, s in enumerate(steps):
-        bx = start_x + (i * spacing)
-
-        # Card
-        p.setBrush(QBrush(QColor("#181926")))
-        p.setPen(QPen(QColor(s["color"]), 1.8))
-        p.drawRoundedRect(QRectF(bx, box_y, box_w, box_h), 12, 12)
-
-        # Header tag
-        p.setBrush(QBrush(QColor(s["color"])))
-        p.setPen(Qt.PenStyle.NoPen)
-        p.drawRoundedRect(QRectF(bx + 12, box_y + 12, 28, 28), 14, 14)
-        p.setPen(QColor("#FFFFFF"))
-        p.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
-        p.drawText(QRectF(bx + 12, box_y + 12, 28, 28), Qt.AlignmentFlag.AlignCenter, s["num"])
-
-        # Title
-        p.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
-        p.drawText(QRectF(bx + 48, box_y + 16, box_w - 55, 24), Qt.AlignmentFlag.AlignLeft, s["title"])
-
-        # Divider
-        p.setPen(QPen(QColor("#313244"), 1))
-        p.drawLine(QPointF(bx + 12, box_y + 52), QPointF(bx + box_w - 12, box_y + 52))
-
-        # Description
-        p.setPen(QColor("#CAD3F5"))
-        p.setFont(QFont("Segoe UI", 9, QFont.Weight.Normal))
-        p.drawText(QRectF(bx + 12, box_y + 64, box_w - 24, 72), Qt.AlignmentFlag.AlignLeft | Qt.TextFlag.TextWordWrap, s["sub"])
-
-        # Draw connecting arrows between boxes
-        if i < len(steps) - 1:
-            ax = bx + box_w + 5
-            ay = box_y + (box_h // 2)
-            p.setPen(QPen(QColor("#89B4FA"), 2.5, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-            p.drawLine(QPointF(ax, ay), QPointF(ax + 18, ay))
-            p.drawLine(QPointF(ax + 12, ay - 5), QPointF(ax + 18, ay))
-            p.drawLine(QPointF(ax + 12, ay + 5), QPointF(ax + 18, ay))
-
-    # Bottom notes
-    p.setPen(QColor("#939AB7"))
-    p.setFont(QFont("Segoe UI", 10, QFont.Weight.Normal))
-    p.drawText(QRectF(0, 290, width, 50), Qt.AlignmentFlag.AlignCenter,
-               "100% Asynchronous & Thread-Safe: Synthesis and audio never block the GUI event loop.\nCross-platform architecture engineered for instant porting to macOS.")
-
-    p.end()
-    out_path = os.path.join(OUT_DIR, "architecture.png")
-    img.save(out_path)
-    print("Saved architecture to:", out_path)
-
-
 if __name__ == "__main__":
     render_banner()
     render_ui_preview()
-    render_architecture()

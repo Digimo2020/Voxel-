@@ -40,8 +40,8 @@ SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
 DEFAULT_SPEED = 1.0
 DEFAULT_VOICE_INDEX = 0  # Jenny (US Female)
 
-# UI Settings
-BUBBLE_SIZE = 38
+# UI Settings - Refined Minimalist Glass Aesthetic
+BUBBLE_SIZE = 24                # ~50% smaller for an elegant, non-intrusive trigger
 BUBBLE_TIMEOUT_SECONDS = 4.0
 MIN_SELECTED_LENGTH = 2
 DRAG_THRESHOLD_PIXELS = 8
@@ -50,21 +50,45 @@ DRAG_THRESHOLD_PIXELS = 8
 HOTKEY_WINDOWS = "<ctrl>+<alt>+s"
 HOTKEY_MAC = "<cmd>+<alt>+s"
 
-# Modern Dark UI Theme Palettes
+# Refined Frosted Glass Palettes
 THEME = {
-    "bg_bubble": "#6366F1",         # Indigo accent
-    "bg_bubble_hover": "#4F46E5",
-    "bg_player": "#1E1E2E",         # Deep slate dark
-    "border_player": "#313244",
-    "text_primary": "#CDD6F4",
-    "text_secondary": "#A6ADC8",
-    "accent": "#89B4FA",           # Soft blue accent
-    "accent_hover": "#B4BEFE",
-    "button_bg": "#313244",
-    "button_hover": "#45475A",
-    "button_active": "#585B70",
-    "stop_bg": "#F38BA8",          # Soft coral red
-    "stop_hover": "#EBA0AC"
+    # Frosted Glass Backgrounds
+    "glass_bg": "rgba(22, 25, 38, 0.82)",
+    "glass_border": "rgba(255, 255, 255, 0.18)",
+    "glass_border_subtle": "rgba(255, 255, 255, 0.10)",
+    "glass_bubble": "rgba(35, 39, 58, 0.90)",
+    "glass_bubble_hover": "rgba(55, 62, 92, 0.95)",
+    "glass_bubble_border": "rgba(255, 255, 255, 0.28)",
+    
+    # Text
+    "text_primary": "#E2E8F0",
+    "text_secondary": "#94A3B8",
+    "text_muted": "#64748B",
+    
+    # Dialogs & Panels
+    "bg_player": "#161926",
+    "border_player": "#2A3048",
+    "button_bg": "#22273B",
+    "button_hover": "#313854",
+    "button_active": "#3E4668",
+    "accent": "#60A5FA",
+    "accent_hover": "#93C5FD",
+
+    # Line Art Accent Buttons
+    "accent_line": "#60A5FA",
+    "accent_bg": "rgba(96, 165, 250, 0.15)",
+    "accent_hover_bg": "rgba(96, 165, 250, 0.28)",
+    
+    # Neutral Circle Buttons
+    "btn_glass": "rgba(255, 255, 255, 0.06)",
+    "btn_glass_border": "rgba(255, 255, 255, 0.16)",
+    "btn_glass_hover": "rgba(255, 255, 255, 0.14)",
+    "btn_glass_active": "rgba(255, 255, 255, 0.22)",
+    
+    # Stop / Danger
+    "stop_line": "#F87171",
+    "stop_bg": "rgba(248, 113, 113, 0.15)",
+    "stop_hover_bg": "rgba(248, 113, 113, 0.28)"
 }
 
 IS_MAC = sys.platform == "darwin"
