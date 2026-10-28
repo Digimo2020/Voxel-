@@ -1,17 +1,14 @@
-"""
-Settings & About Dialog.
-Allows users to configure voices, speeds, trigger behaviors, and docking positions.
-Displays current version (v1.0.01) and clickable GitHub repository link.
-"""
+"""Voxel Preferences & About dialog."""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget, QLabel,
     QComboBox, QCheckBox, QDoubleSpinBox, QPushButton, QGroupBox, QFormLayout
 )
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QFont, QCursor, QDesktopServices
+from PyQt6.QtGui import QFont, QCursor, QDesktopServices, QPixmap
 
 from src.config import THEME, VOICES, SPEED_STEPS, VERSION, GITHUB_URL
 from src.utils.settings import settings_db
+from assets.icons import create_voxel_logo
 
 
 class SettingsDialog(QDialog):
@@ -19,65 +16,20 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Text 2 Voice — Settings & About")
-        self.setFixedSize(500, 440)
+        self.setWindowTitle("Voxel — Settings")
+        self.setFixedSize(520, 470)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(f"""
-            QDialog {{
-                background-color: {THEME["bg_player"]};
-                color: {THEME["text_primary"]};
-            }}
-            QTabWidget::pane {{
-                border: 1px solid {THEME["border_player"]};
-                background-color: #181926;
-                border-radius: 8px;
-            }}
-            QTabBar::tab {{
-                background-color: #1E2030;
-                color: {THEME["text_secondary"]};
-                padding: 8px 18px;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
-                margin-right: 4px;
-                font-weight: bold;
-            }}
-            QTabBar::tab:selected {{
-                background-color: #181926;
-                color: #FFFFFF;
-                border-bottom: 2px solid {THEME["accent"]};
-            }}
-            QGroupBox {{
-                border: 1px solid {THEME["border_player"]};
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 14px;
-                font-weight: bold;
-                color: {THEME["text_primary"]};
-            }}
-            QComboBox, QDoubleSpinBox {{
-                background-color: #24273A;
-                color: {THEME["text_primary"]};
-                border: 1px solid {THEME["border_player"]};
-                border-radius: 4px;
-                padding: 4px 8px;
-            }}
-            QCheckBox {{
-                color: {THEME["text_primary"]};
-                spacing: 8px;
-            }}
-            QPushButton {{
-                background-color: {THEME["button_bg"]};
-                color: {THEME["text_primary"]};
-                border: 1px solid {THEME["border_player"]};
-                border-radius: 6px;
-                padding: 6px 14px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {THEME["button_hover"]};
-            }}
+            QDialog {{ background: #151C2B; color: #F8FAFF; }}
+            QTabWidget::pane {{ border: 1px solid #2A344A; background: #192235; border-radius: 10px; }}
+            QTabBar::tab {{ background: #20283A; color: #A7B2C6; padding: 9px 16px; border-top-left-radius: 7px; border-top-right-radius: 7px; margin-right: 4px; }}
+            QTabBar::tab:selected {{ background: #192235; color: #FFFFFF; border-bottom: 2px solid #168BFF; }}
+            QGroupBox {{ border: 1px solid #2A344A; border-radius: 8px; margin-top: 12px; padding-top: 13px; font-weight: 600; }}
+            QComboBox, QDoubleSpinBox {{ background: #20283A; color: #F8FAFF; border: 1px solid #36435C; border-radius: 6px; padding: 6px; }}
+            QCheckBox {{ color: #F8FAFF; spacing: 8px; }}
+            QPushButton {{ background: #20283A; color: #F8FAFF; border: 1px solid #36435C; border-radius: 7px; padding: 7px 13px; }}
+            QPushButton:hover {{ background: #2B3853; }}
         """)
-
         self._init_ui()
         self.load_values()
 
@@ -85,165 +37,124 @@ class SettingsDialog(QDialog):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(16, 16, 16, 16)
         main_layout.setSpacing(12)
-
         self.tabs = QTabWidget(self)
 
-        # Tab 1: General Preferences
-        tab_prefs = QWidget()
-        layout_prefs = QVBoxLayout(tab_prefs)
-        layout_prefs.setContentsMargins(14, 14, 14, 14)
-        layout_prefs.setSpacing(12)
-
-        # Form Layout
+        prefs = QWidget()
+        prefs_layout = QVBoxLayout(prefs)
+        prefs_layout.setContentsMargins(14, 14, 14, 14)
         form = QFormLayout()
-        form.setSpacing(10)
+        form.setSpacing(11)
 
-        # Default Voice
         self.combo_voice = QComboBox(self)
-        for v in VOICES:
-            self.combo_voice.addItem(v["label"], v["id"])
-        form.addRow("Default Voice:", self.combo_voice)
+        for voice in VOICES:
+            self.combo_voice.addItem(voice["label"], voice["id"])
+        form.addRow("Default voice", self.combo_voice)
 
-        # Default Speed
         self.combo_speed = QComboBox(self)
-        for s in SPEED_STEPS:
-            self.combo_speed.addItem(f"{s}x", s)
-        form.addRow("Default Speed:", self.combo_speed)
+        for speed in SPEED_STEPS:
+            self.combo_speed.addItem(f"{speed:g}×", speed)
+        form.addRow("Default speed", self.combo_speed)
 
-        # Docking Position
         self.combo_dock = QComboBox(self)
-        self.combo_dock.addItem("Bottom-Right Corner (Animated)", "bottom_right")
-        self.combo_dock.addItem("Near Selection Cursor", "near_cursor")
-        form.addRow("Player Position:", self.combo_dock)
+        self.combo_dock.addItem("Bottom-right", "bottom_right")
+        self.combo_dock.addItem("Near selection", "near_cursor")
+        form.addRow("Player position", self.combo_dock)
 
-        # Bubble Timeout
+        self.combo_theme = QComboBox(self)
+        self.combo_theme.addItem("Dark", "dark")
+        self.combo_theme.addItem("Glass", "glass")
+        form.addRow("Player appearance", self.combo_theme)
+
         self.spin_timeout = QDoubleSpinBox(self)
         self.spin_timeout.setRange(1.5, 12.0)
         self.spin_timeout.setSingleStep(0.5)
         self.spin_timeout.setSuffix(" sec")
-        form.addRow("Trigger Timeout:", self.spin_timeout)
+        form.addRow("Trigger timeout", self.spin_timeout)
 
-        layout_prefs.addLayout(form)
+        prefs_layout.addLayout(form)
+        self.chk_trigger = QCheckBox("Show floating Voxel trigger on text selection", self)
+        prefs_layout.addWidget(self.chk_trigger)
+        help_text = QLabel("Dark uses a solid charcoal surface. Glass uses a pale translucent finish. Some transparency effects depend on Windows desktop composition.", self)
+        help_text.setWordWrap(True)
+        help_text.setStyleSheet("color:#A7B2C6;")
+        prefs_layout.addWidget(help_text)
+        prefs_layout.addStretch()
+        self.tabs.addTab(prefs, "Preferences")
 
-        # Selection trigger checkbox
-        self.chk_trigger = QCheckBox("Show floating speaker trigger when selecting text", self)
-        layout_prefs.addWidget(self.chk_trigger)
-        layout_prefs.addStretch()
+        about = QWidget()
+        about_layout = QVBoxLayout(about)
+        about_layout.setContentsMargins(18, 18, 18, 18)
+        about_layout.setSpacing(10)
+        logo = QLabel(self)
+        logo.setPixmap(create_voxel_logo(56).pixmap(56, 56))
+        about_layout.addWidget(logo, 0, Qt.AlignmentFlag.AlignHCenter)
+        name = QLabel("Voxel")
+        name.setFont(QFont("Segoe UI", 19, QFont.Weight.Bold))
+        name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        about_layout.addWidget(name)
+        tagline = QLabel("Text to Speech, Anywhere.")
+        tagline.setStyleSheet("color:#A7B2C6;")
+        tagline.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        about_layout.addWidget(tagline)
+        about_layout.addSpacing(8)
 
-        self.tabs.addTab(tab_prefs, "⚙️ Preferences")
-
-        # Tab 2: About & Version
-        tab_about = QWidget()
-        layout_about = QVBoxLayout(tab_about)
-        layout_about.setContentsMargins(16, 16, 16, 16)
-        layout_about.setSpacing(10)
-
-        title_lbl = QLabel("🔊 Text 2 Voice", self)
-        title_lbl.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
-        title_lbl.setStyleSheet(f"color: {THEME['accent']};")
-        layout_about.addWidget(title_lbl)
-
-        sub_lbl = QLabel("Universal Frosted Glass Text-to-Speech Engine", self)
-        sub_lbl.setFont(QFont("Segoe UI", 10, QFont.Weight.Medium))
-        sub_lbl.setStyleSheet("color: #94A3B8;")
-        layout_about.addWidget(sub_lbl)
-
-        # Version Pill Box
-        ver_box = QGroupBox("Release & Version Information", self)
+        ver_box = QGroupBox("Version")
         ver_layout = QVBoxLayout(ver_box)
-        ver_layout.setSpacing(6)
+        ver_layout.addWidget(QLabel(f"Current version: {VERSION}"))
+        about_layout.addWidget(ver_box)
 
-        lbl_ver = QLabel(f"Current Version: <b><font color='#60A5FA'>{VERSION}</font></b>", self)
-        lbl_ver.setFont(QFont("Segoe UI", 11))
-        ver_layout.addWidget(lbl_ver)
+        repo_box = QGroupBox("Project")
+        repo_layout = QVBoxLayout(repo_box)
+        repo_layout.addWidget(QLabel("Created and maintained by Digimo2020"))
+        repo_link = QPushButton("Open Voxel on GitHub")
+        repo_link.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        repo_link.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
+        repo_layout.addWidget(repo_link)
+        about_layout.addWidget(repo_box)
+        about_layout.addStretch()
+        self.tabs.addTab(about, "About")
 
-        lbl_ver_rule = QLabel(
-            "Structure: <code>v&lt;Major&gt;.&lt;Minor&gt;.&lt;Patch:02d&gt;</code><br>"
-            "Every 10th patch increments minor, every 10th minor increments major.", self
-        )
-        lbl_ver_rule.setStyleSheet("color: #94A3B8; font-size: 11px;")
-        ver_layout.addWidget(lbl_ver_rule)
-
-        layout_about.addWidget(ver_box)
-
-        # GitHub Project Info Box
-        gh_box = QGroupBox("Open Source Repository", self)
-        gh_layout = QVBoxLayout(gh_box)
-        gh_layout.setSpacing(8)
-
-        lbl_author = QLabel("Created & Maintained by: <b>Digimo2020</b>", self)
-        gh_layout.addWidget(lbl_author)
-
-        btn_gh = QPushButton(f"🌐 Open GitHub: {GITHUB_URL}", self)
-        btn_gh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_gh.setStyleSheet(f"""
-            QPushButton {{
-                background-color: rgba(96, 165, 250, 0.15);
-                border: 1px solid rgba(96, 165, 250, 0.6);
-                color: #93C5FD;
-                padding: 6px 12px;
-            }}
-            QPushButton:hover {{
-                background-color: rgba(96, 165, 250, 0.3);
-                color: #FFFFFF;
-            }}
-        """)
-        btn_gh.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
-        gh_layout.addWidget(btn_gh)
-
-        layout_about.addWidget(gh_box)
-        layout_about.addStretch()
-
-        self.tabs.addTab(tab_about, "ℹ️ About & Version")
         main_layout.addWidget(self.tabs)
-
-        # Bottom buttons: Save & Cancel
-        btn_row = QHBoxLayout()
-        btn_row.addStretch()
-
-        btn_save = QPushButton("Save & Apply", self)
-        btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_save.setStyleSheet(f"background-color: {THEME['accent']}; color: #11111B;")
-        btn_save.clicked.connect(self.save_and_apply)
-        btn_row.addWidget(btn_save)
-
-        btn_close = QPushButton("Close", self)
-        btn_close.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_close.clicked.connect(self.close)
-        btn_row.addWidget(btn_close)
-
-        main_layout.addLayout(btn_row)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        save = QPushButton("Save & Apply")
+        save.setStyleSheet("background:#168BFF; color:#FFFFFF; border-color:#168BFF;")
+        save.clicked.connect(self.save_and_apply)
+        buttons.addWidget(save)
+        close = QPushButton("Close")
+        close.clicked.connect(self.close)
+        buttons.addWidget(close)
+        main_layout.addLayout(buttons)
 
     def load_values(self):
-        """Loads saved settings into controls."""
         voice_id = settings_db.get("default_voice", "en-US-JennyNeural")
         idx = self.combo_voice.findData(voice_id)
         if idx >= 0:
             self.combo_voice.setCurrentIndex(idx)
 
-        speed_val = settings_db.get("default_speed", 1.0)
-        idx_sp = self.combo_speed.findData(speed_val)
-        if idx_sp >= 0:
-            self.combo_speed.setCurrentIndex(idx_sp)
+        speed = settings_db.get("default_speed", 1.0)
+        idx = self.combo_speed.findData(speed)
+        if idx >= 0:
+            self.combo_speed.setCurrentIndex(idx)
 
-        dock_mode = settings_db.get("dock_position", "bottom_right")
-        idx_dk = self.combo_dock.findData(dock_mode)
-        if idx_dk >= 0:
-            self.combo_dock.setCurrentIndex(idx_dk)
+        dock = settings_db.get("dock_position", "bottom_right")
+        idx = self.combo_dock.findData(dock)
+        if idx >= 0:
+            self.combo_dock.setCurrentIndex(idx)
 
-        timeout = settings_db.get("bubble_timeout", 4.0)
-        self.spin_timeout.setValue(timeout)
+        theme = settings_db.get("player_theme", "dark")
+        idx = self.combo_theme.findData(theme)
+        self.combo_theme.setCurrentIndex(max(0, idx))
 
-        enabled = settings_db.get("selection_popup_enabled", True)
-        self.chk_trigger.setChecked(enabled)
+        self.spin_timeout.setValue(settings_db.get("bubble_timeout", 4.0))
+        self.chk_trigger.setChecked(settings_db.get("selection_popup_enabled", True))
 
     def save_and_apply(self):
-        """Saves values and emits signal."""
         settings_db.set("default_voice", self.combo_voice.currentData())
         settings_db.set("default_speed", self.combo_speed.currentData())
         settings_db.set("dock_position", self.combo_dock.currentData())
+        settings_db.set("player_theme", self.combo_theme.currentData())
         settings_db.set("bubble_timeout", self.spin_timeout.value())
         settings_db.set("selection_popup_enabled", self.chk_trigger.isChecked())
-
         self.settings_applied.emit()
         self.close()

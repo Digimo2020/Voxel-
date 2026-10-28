@@ -1,30 +1,23 @@
 """
-Floating Speaker Trigger widget.
-Transparent frosted glass circular button with a crisp line-art speaker icon.
-Contains NO black/dark background, blending seamlessly into any document or web page.
+Floating Voxel trigger shown near selected text.
+Uses the approved text/speech mark, not a conventional recording microphone or volume icon.
 """
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer, QRectF
-from PyQt6.QtGui import (
-    QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent
-)
+from PyQt6.QtGui import QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent
 
-from src.config import BUBBLE_SIZE, BUBBLE_TIMEOUT_SECONDS
-from assets.icons import create_speaker_icon
+from src.config import BUBBLE_SIZE, BUBBLE_TIMEOUT_SECONDS, BRAND
+from assets.icons import create_voxel_logo
 
 
 class FloatingBubble(QWidget):
-    """
-    Subtle 30px transparent floating speaker trigger appearing near selected text.
-    """
-    clicked = pyqtSignal(str)  # (selected_text)
+    clicked = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.selected_text: str = ""
-        self.is_hovered: bool = False
+        self.selected_text = ""
+        self.is_hovered = False
 
-        # Frameless, stays on top, tool-tip type (doesn't steal focus)
         self.setWindowFlags(
             Qt.WindowType.ToolTip |
             Qt.WindowType.FramelessWindowHint |
@@ -36,42 +29,27 @@ class FloatingBubble(QWidget):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setFixedSize(BUBBLE_SIZE, BUBBLE_SIZE)
 
-        # Pre-render speaker icon with modern sky-blue accent
-        icon_dim = int(BUBBLE_SIZE * 0.65)  # ~20px
-        self.speaker_icon_idle = create_speaker_icon(size=icon_dim, color="#60A5FA", waves=2)
-        self.speaker_icon_hover = create_speaker_icon(size=icon_dim, color="#93C5FD", waves=2)
-
-        # Fade animation
+        self.logo = create_voxel_logo(int(BUBBLE_SIZE * 0.86))
         self.fade_anim = QPropertyAnimation(self, b"windowOpacity")
         self.fade_anim.setDuration(160)
         self.fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # Auto-hide timer
         self.hide_timer = QTimer(self)
         self.hide_timer.setSingleShot(True)
         self.hide_timer.setInterval(int(BUBBLE_TIMEOUT_SECONDS * 1000))
         self.hide_timer.timeout.connect(self.fade_out)
 
     def show_at(self, text: str, cursor_x: int, cursor_y: int):
-        """
-        Positions the bubble near the mouse cursor and smoothly fades in.
-        """
         self.selected_text = text
-
-        offset_x = 10
-        offset_y = -BUBBLE_SIZE - 8
-
-        target_x = cursor_x + offset_x
-        target_y = cursor_y + offset_y
-
-        screen = self.screen() or self.parent().screen() if self.parent() else None
+        target_x = cursor_x + 10
+        target_y = cursor_y - self.height() - 8
+        screen = self.screen()
         if screen:
             geo = screen.availableGeometry()
             if target_y < geo.top() + 6:
                 target_y = cursor_y + 20
-            target_x = max(geo.left() + 6, min(geo.right() - BUBBLE_SIZE - 6, target_x))
-            target_y = max(geo.top() + 6, min(geo.bottom() - BUBBLE_SIZE - 6, target_y))
-
+            target_x = max(geo.left() + 6, min(geo.right() - self.width() - 6, target_x))
+            target_y = max(geo.top() + 6, min(geo.bottom() - self.height() - 6, target_y))
         self.move(int(target_x), int(target_y))
 
         self.fade_anim.stop()
@@ -80,15 +58,17 @@ class FloatingBubble(QWidget):
         self.fade_anim.setStartValue(0.0)
         self.fade_anim.setEndValue(1.0)
         self.fade_anim.start()
-
         self.hide_timer.start()
 
     def fade_out(self):
-        """Smoothly fades out and hides."""
         self.hide_timer.stop()
         self.fade_anim.stop()
         self.fade_anim.setStartValue(self.windowOpacity())
         self.fade_anim.setEndValue(0.0)
+        try:
+            self.fade_anim.finished.disconnect(self._on_fade_out_finished)
+        except Exception:
+            pass
         self.fade_anim.finished.connect(self._on_fade_out_finished)
         self.fade_anim.start()
 
@@ -102,30 +82,16 @@ class FloatingBubble(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w = float(self.width())
-        h = float(self.height())
-        rect = QRectF(1.5, 1.5, w - 3.0, h - 3.0)
-
-        # Transparent / Translucent glass disc (No black background!)
+        rect = QRectF(1.0, 1.0, self.width() - 2.0, self.height() - 2.0)
         if self.is_hovered:
-            bg_color = QColor(96, 165, 250, 45)      # Light translucent blue on hover
-            border_pen = QPen(QColor(96, 165, 250, 200), 1.2)
+            painter.setBrush(QBrush(QColor(104, 71, 255, 35)))
+            painter.setPen(QPen(QColor(22, 139, 255, 170), 1.2))
         else:
-            bg_color = QColor(255, 255, 255, 22)     # Subtle transparent frosted halo
-            border_pen = QPen(QColor(255, 255, 255, 90), 1.0)
-
-        painter.setBrush(QBrush(bg_color))
-        painter.setPen(border_pen)
+            painter.setBrush(QBrush(QColor(255, 255, 255, 28)))
+            painter.setPen(QPen(QColor(255, 255, 255, 95), 0.8))
         painter.drawEllipse(rect)
-
-        # Draw speaker icon
-        icon_dim = int(w * 0.65)
-        ix = int((w - icon_dim) / 2)
-        iy = int((h - icon_dim) / 2)
-        icon = self.speaker_icon_hover if self.is_hovered else self.speaker_icon_idle
-        icon.paint(painter, ix, iy, icon_dim, icon_dim)
-
+        self.logo.paint(painter, int(self.width()*0.07), int(self.height()*0.07),
+                        int(self.width()*0.86), int(self.height()*0.86))
         painter.end()
 
     def enterEvent(self, event):

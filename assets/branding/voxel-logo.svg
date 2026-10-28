@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 160" role="img" aria-labelledby="title">
+  <title id="title">Voxel — Text to Speech, Anywhere</title>
+  <defs>
+    <linearGradient id="voxelGradient" x1="12" y1="88" x2="82" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6847FF"/>
+      <stop offset=".52" stop-color="#465DFF"/>
+      <stop offset="1" stop-color="#168BFF"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(14 10) scale(1.38)" fill="none" stroke="url(#voxelGradient)" stroke-linecap="round" stroke-linejoin="round" stroke-width="7">
+    <path d="M35 48V29c0-11 7-17 15-17s15 6 15 17v19c0 12-6 19-15 19S35 60 35 48Z"/>
+    <path d="M43 31h14M43 40h14M44 49h11" stroke-width="6.2"/>
+    <path d="M23 42c0 16 10 30 24 33v14l23-20c9-8 12-17 12-27"/>
+  </g>
+  <text x="145" y="88" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="68" font-weight="750" letter-spacing="-2.5" fill="#111B2E">Voxel</text>
+  <text x="149" y="117" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" font-weight="500" letter-spacing="3.1" fill="#667085">TEXT TO SPEECH, ANYWHERE</text>
+</svg>

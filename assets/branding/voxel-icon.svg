@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title">
+  <title id="title">Voxel icon</title>
+  <defs>
+    <linearGradient id="voxelGradient" x1="12" y1="88" x2="82" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6847FF"/>
+      <stop offset=".52" stop-color="#465DFF"/>
+      <stop offset="1" stop-color="#168BFF"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#voxelGradient)" stroke-linecap="round" stroke-linejoin="round" stroke-width="7">
+    <path d="M35 48V29c0-11 7-17 15-17s15 6 15 17v19c0 12-6 19-15 19S35 60 35 48Z"/>
+    <path d="M43 31h14M43 40h14M44 49h11" stroke-width="6.2"/>
+    <path d="M23 42c0 16 10 30 24 33v14l23-20c9-8 12-17 12-27"/>
+  </g>
+</svg>
