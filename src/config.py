@@ -41,7 +41,7 @@ DEFAULT_SPEED = 1.0
 DEFAULT_VOICE_INDEX = 0  # Jenny (US Female)
 
 # UI Settings - Refined Minimalist Glass Aesthetic
-BUBBLE_SIZE = 24                # ~50% smaller for an elegant, non-intrusive trigger
+BUBBLE_SIZE = 30                # Slightly bigger (30px) for easier clicking, pure transparent glass
 BUBBLE_TIMEOUT_SECONDS = 4.0
 MIN_SELECTED_LENGTH = 2
 DRAG_THRESHOLD_PIXELS = 8
@@ -52,13 +52,16 @@ HOTKEY_MAC = "<cmd>+<alt>+s"
 
 # Refined Frosted Glass Palettes
 THEME = {
-    # Frosted Glass Backgrounds
+    # Transparent Glass Bubble Trigger (No dark black background!)
+    "bubble_bg": "rgba(255, 255, 255, 0.12)",
+    "bubble_border": "rgba(255, 255, 255, 0.35)",
+    "bubble_hover_bg": "rgba(96, 165, 250, 0.25)",
+    "bubble_hover_border": "rgba(96, 165, 250, 0.75)",
+
+    # Frosted Glass Mini Player Backgrounds
     "glass_bg": "rgba(22, 25, 38, 0.82)",
     "glass_border": "rgba(255, 255, 255, 0.18)",
     "glass_border_subtle": "rgba(255, 255, 255, 0.10)",
-    "glass_bubble": "rgba(35, 39, 58, 0.90)",
-    "glass_bubble_hover": "rgba(55, 62, 92, 0.95)",
-    "glass_bubble_border": "rgba(255, 255, 255, 0.28)",
     
     # Text
     "text_primary": "#E2E8F0",

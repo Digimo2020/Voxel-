@@ -1,23 +1,23 @@
 """
-Floating Speaker Bubble widget.
-A tiny, elegant frosted glass circular button with a minimalist speaker icon.
-Smoothly fades in near selected text without obstructing the user.
+Floating Speaker Trigger widget.
+Transparent frosted glass circular button with a crisp line-art speaker icon.
+Contains NO black/dark background, blending seamlessly into any document or web page.
 """
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer, QRectF
 from PyQt6.QtGui import (
-    QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent, QLinearGradient
+    QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent
 )
 
-from src.config import BUBBLE_SIZE, BUBBLE_TIMEOUT_SECONDS, THEME
+from src.config import BUBBLE_SIZE, BUBBLE_TIMEOUT_SECONDS
 from assets.icons import create_speaker_icon
 
 
 class FloatingBubble(QWidget):
     """
-    Subtle 24px floating frosted glass speaker trigger appearing near selected text.
+    Subtle 30px transparent floating speaker trigger appearing near selected text.
     """
-    clicked = pyqtSignal(str, QPoint)  # (selected_text, bubble_center_pos)
+    clicked = pyqtSignal(str)  # (selected_text)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -36,9 +36,10 @@ class FloatingBubble(QWidget):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setFixedSize(BUBBLE_SIZE, BUBBLE_SIZE)
 
-        # Pre-render speaker icon sized for tiny 24px bubble
-        icon_dim = int(BUBBLE_SIZE * 0.62)  # ~15px
-        self.speaker_icon = create_speaker_icon(size=icon_dim, color="#FFFFFF", waves=2)
+        # Pre-render speaker icon with modern sky-blue accent
+        icon_dim = int(BUBBLE_SIZE * 0.65)  # ~20px
+        self.speaker_icon_idle = create_speaker_icon(size=icon_dim, color="#60A5FA", waves=2)
+        self.speaker_icon_hover = create_speaker_icon(size=icon_dim, color="#93C5FD", waves=2)
 
         # Fade animation
         self.fade_anim = QPropertyAnimation(self, b"windowOpacity")
@@ -57,8 +58,8 @@ class FloatingBubble(QWidget):
         """
         self.selected_text = text
 
-        offset_x = 8
-        offset_y = -BUBBLE_SIZE - 6
+        offset_x = 10
+        offset_y = -BUBBLE_SIZE - 8
 
         target_x = cursor_x + offset_x
         target_y = cursor_y + offset_y
@@ -67,7 +68,7 @@ class FloatingBubble(QWidget):
         if screen:
             geo = screen.availableGeometry()
             if target_y < geo.top() + 6:
-                target_y = cursor_y + 18
+                target_y = cursor_y + 20
             target_x = max(geo.left() + 6, min(geo.right() - BUBBLE_SIZE - 6, target_x))
             target_y = max(geo.top() + 6, min(geo.bottom() - BUBBLE_SIZE - 6, target_y))
 
@@ -104,28 +105,26 @@ class FloatingBubble(QWidget):
 
         w = float(self.width())
         h = float(self.height())
-        rect = QRectF(1.0, 1.0, w - 2.0, h - 2.0)
+        rect = QRectF(1.5, 1.5, w - 3.0, h - 3.0)
 
-        # Translucent Frosted Glass Effect with subtle lighting gradient
-        grad = QLinearGradient(0, 0, 0, h)
+        # Transparent / Translucent glass disc (No black background!)
         if self.is_hovered:
-            grad.setColorAt(0.0, QColor(60, 68, 100, 245))
-            grad.setColorAt(1.0, QColor(32, 38, 58, 235))
-            border_pen = QPen(QColor(96, 165, 250, 220), 1.0)
+            bg_color = QColor(96, 165, 250, 45)      # Light translucent blue on hover
+            border_pen = QPen(QColor(96, 165, 250, 200), 1.2)
         else:
-            grad.setColorAt(0.0, QColor(42, 48, 72, 230))
-            grad.setColorAt(1.0, QColor(20, 24, 38, 215))
-            border_pen = QPen(QColor(255, 255, 255, 75), 1.0)
+            bg_color = QColor(255, 255, 255, 22)     # Subtle transparent frosted halo
+            border_pen = QPen(QColor(255, 255, 255, 90), 1.0)
 
-        painter.setBrush(QBrush(grad))
+        painter.setBrush(QBrush(bg_color))
         painter.setPen(border_pen)
         painter.drawEllipse(rect)
 
-        # Draw centered speaker icon
-        icon_dim = int(w * 0.62)
+        # Draw speaker icon
+        icon_dim = int(w * 0.65)
         ix = int((w - icon_dim) / 2)
         iy = int((h - icon_dim) / 2)
-        self.speaker_icon.paint(painter, ix, iy, icon_dim, icon_dim)
+        icon = self.speaker_icon_hover if self.is_hovered else self.speaker_icon_idle
+        icon.paint(painter, ix, iy, icon_dim, icon_dim)
 
         painter.end()
 
@@ -144,8 +143,7 @@ class FloatingBubble(QWidget):
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             text = self.selected_text
-            center = self.mapToGlobal(QPoint(self.width() // 2, self.height() // 2))
             self.hide_timer.stop()
             self.hide()
-            self.clicked.emit(text, center)
+            self.clicked.emit(text)
         super().mousePressEvent(event)

@@ -69,9 +69,9 @@ class Text2VoiceApp:
         """Called when text is selected in any application."""
         self.bubble.show_at(text, x, y)
 
-    def _on_bubble_clicked(self, text: str, center_pos: QPoint):
-        """Called when user clicks the floating mic bubble."""
-        self.player.play_text(text, center_pos)
+    def _on_bubble_clicked(self, text: str):
+        """Called when user clicks the floating mic/speaker bubble."""
+        self.player.play_text(text)
 
     def _on_clicked_outside(self):
         """Called when user clicks elsewhere on screen."""

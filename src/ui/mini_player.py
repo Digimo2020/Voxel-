@@ -2,16 +2,20 @@
 Frosted Glass Mini Player Pill widget.
 Refined minimalist aesthetic: translucent acrylic glass, simple line-art controls,
 and smooth circular buttons with delicate frosted borders.
+Animates smoothly from the bottom-right of the screen for a clean, non-intrusive experience.
 """
 from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QLabel
+    QWidget, QHBoxLayout, QPushButton, QLabel, QApplication
 )
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QRectF
+from PyQt6.QtCore import (
+    Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve,
+    QParallelAnimationGroup, QRectF
+)
 from PyQt6.QtGui import (
     QColor, QFont, QCursor, QMouseEvent, QPainter, QBrush, QPen, QLinearGradient
 )
 
-from src.config import SPEED_STEPS, DEFAULT_SPEED, THEME
+from src.config import SPEED_STEPS, DEFAULT_SPEED
 from src.tts_engine import TTSEngine
 from assets.icons import (
     create_play_icon, create_pause_icon, create_stop_icon, create_close_icon
@@ -21,6 +25,7 @@ from assets.icons import (
 class MiniPlayer(QWidget):
     """
     Translucent frosted glass player pill with line-art rounded buttons.
+    Always animates smoothly in the bottom-right corner of the screen.
     """
     closed = pyqtSignal()
 
@@ -29,6 +34,7 @@ class MiniPlayer(QWidget):
         self.tts = tts_engine
         self._drag_pos = QPoint()
         self._is_dragging = False
+        self._user_moved = False
 
         # Frameless, transparent floating tool window
         self.setWindowFlags(
@@ -197,9 +203,32 @@ class MiniPlayer(QWidget):
         painter.end()
 
     def _init_animations(self):
-        self.fade_anim = QPropertyAnimation(self, b"windowOpacity")
-        self.fade_anim.setDuration(160)
-        self.fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        # Entry animation group (Slide up + Fade in)
+        self.anim_group_in = QParallelAnimationGroup(self)
+        self.pos_anim_in = QPropertyAnimation(self, b"pos")
+        self.pos_anim_in.setDuration(240)
+        self.pos_anim_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.fade_anim_in = QPropertyAnimation(self, b"windowOpacity")
+        self.fade_anim_in.setDuration(240)
+        self.fade_anim_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.anim_group_in.addAnimation(self.pos_anim_in)
+        self.anim_group_in.addAnimation(self.fade_anim_in)
+
+        # Exit animation group (Slide down + Fade out)
+        self.anim_group_out = QParallelAnimationGroup(self)
+        self.pos_anim_out = QPropertyAnimation(self, b"pos")
+        self.pos_anim_out.setDuration(180)
+        self.pos_anim_out.setEasingCurve(QEasingCurve.Type.InCubic)
+
+        self.fade_anim_out = QPropertyAnimation(self, b"windowOpacity")
+        self.fade_anim_out.setDuration(180)
+        self.fade_anim_out.setEasingCurve(QEasingCurve.Type.InCubic)
+
+        self.anim_group_out.addAnimation(self.pos_anim_out)
+        self.anim_group_out.addAnimation(self.fade_anim_out)
+        self.anim_group_out.finished.connect(self._on_exit_finished)
 
     def _create_separator(self) -> QWidget:
         sep = QWidget(self)
@@ -226,37 +255,38 @@ class MiniPlayer(QWidget):
             }
         """)
 
-    def play_text(self, text: str, show_at_pos: QPoint = None):
-        """Starts speaking text and displays the player near position."""
-        if show_at_pos:
-            self._position_near(show_at_pos)
+    def _get_bottom_right_pos(self) -> QPoint:
+        """Calculates bottom-right docking position above taskbar."""
+        screen = QApplication.primaryScreen()
+        if screen:
+            geo = screen.availableGeometry()
+            margin_right = 24
+            margin_bottom = 24
+            target_x = geo.right() - self.width() - margin_right
+            target_y = geo.bottom() - self.height() - margin_bottom
+            return QPoint(int(target_x), int(target_y))
+        return QPoint(100, 100)
 
-        self.fade_anim.stop()
+    def play_text(self, text: str):
+        """Starts speaking text and animates the player in at the bottom-right."""
+        self.anim_group_out.stop()
+
+        target_pos = self._get_bottom_right_pos() if not self._user_moved else self.pos()
+        start_pos = QPoint(target_pos.x(), target_pos.y() + 25)
+
+        self.pos_anim_in.setStartValue(start_pos)
+        self.pos_anim_in.setEndValue(target_pos)
+
+        self.fade_anim_in.setStartValue(0.0)
+        self.fade_anim_in.setEndValue(1.0)
+
+        self.move(start_pos)
         self.setWindowOpacity(0.0)
         self.show()
-        self.fade_anim.setStartValue(0.0)
-        self.fade_anim.setEndValue(1.0)
-        self.fade_anim.start()
+        self.anim_group_in.start()
 
         self.btn_play_pause.setIcon(create_pause_icon(18, "#60A5FA"))
         self.tts.speak(text)
-
-    def _position_near(self, center_pos: QPoint):
-        """Positions the player near the given point while remaining on-screen."""
-        w = self.width()
-        h = self.height()
-        target_x = center_pos.x() - (w // 2)
-        target_y = center_pos.y() + 16
-
-        screen = self.screen()
-        if screen:
-            geo = screen.availableGeometry()
-            if target_y + h > geo.bottom() - 10:
-                target_y = center_pos.y() - h - 16
-            target_x = max(geo.left() + 10, min(geo.right() - w - 10, target_x))
-            target_y = max(geo.top() + 10, min(geo.bottom() - h - 10, target_y))
-
-        self.move(int(target_x), int(target_y))
 
     def _toggle_play_pause(self):
         self.tts.toggle_play_pause()
@@ -290,7 +320,21 @@ class MiniPlayer(QWidget):
             self.tts.speak(self.tts.current_text)
 
     def close_player(self):
+        """Animates out (slides down & fades out)."""
         self.tts.stop()
+        curr_pos = self.pos()
+        end_pos = QPoint(curr_pos.x(), curr_pos.y() + 20)
+
+        self.pos_anim_out.setStartValue(curr_pos)
+        self.pos_anim_out.setEndValue(end_pos)
+
+        self.fade_anim_out.setStartValue(self.windowOpacity())
+        self.fade_anim_out.setEndValue(0.0)
+
+        self.anim_group_in.stop()
+        self.anim_group_out.start()
+
+    def _on_exit_finished(self):
         self.hide()
         self.closed.emit()
 
@@ -321,6 +365,7 @@ class MiniPlayer(QWidget):
     def mouseMoveEvent(self, event: QMouseEvent):
         if self._is_dragging and event.buttons() == Qt.MouseButton.LeftButton:
             self.move(event.globalPosition().toPoint() - self._drag_pos)
+            self._user_moved = True
             event.accept()
         super().mouseMoveEvent(event)
 
