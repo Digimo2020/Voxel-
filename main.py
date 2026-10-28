@@ -12,6 +12,7 @@ from src.selection_listener import SelectionListener
 from src.ui.floating_bubble import FloatingBubble
 from src.ui.mini_player import MiniPlayer
 from src.ui.tray_icon import AppTrayIcon
+from src.ui.history_dialog import HistoryDialog
 from assets.icons import create_app_icon
 
 
@@ -27,6 +28,7 @@ class Text2VoiceApp:
         self.bubble = FloatingBubble()
         self.player = MiniPlayer(self.tts)
         self.tray = AppTrayIcon(self.tts)
+        self.history_dialog = HistoryDialog()
 
         # Selection Listener with collision check function
         self.listener = SelectionListener(
@@ -54,8 +56,10 @@ class Text2VoiceApp:
         # 3. User clicked empty outside space -> Fade out bubble
         self.listener.clicked_outside.connect(self._on_clicked_outside, Qt.ConnectionType.QueuedConnection)
 
-        # 4. Tray controls
+        # 4. Tray & History controls
         self.tray.toggle_enabled_requested.connect(self.listener.set_enabled)
+        self.tray.history_requested.connect(self._show_history)
+        self.history_dialog.replay_requested.connect(self._replay_history)
         self.tray.quit_requested.connect(self.quit)
 
         # App shutdown hook
@@ -73,6 +77,16 @@ class Text2VoiceApp:
         """Called when user clicks elsewhere on screen."""
         if self.bubble.isVisible():
             self.bubble.fade_out()
+
+    def _show_history(self):
+        """Displays the JSON history dialog."""
+        self.history_dialog.load_history()
+        self.history_dialog.show()
+        self.history_dialog.activateWindow()
+
+    def _replay_history(self, text: str):
+        """Replays selected history item."""
+        self.player.play_text(text)
 
     def _cleanup(self):
         """Clean up threads and temp files on exit."""

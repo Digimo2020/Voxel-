@@ -15,6 +15,7 @@ import edge_tts
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.config import VOICES, DEFAULT_SPEED, DEFAULT_VOICE_INDEX
+from src.utils.history import history_db
 
 # Initialize pygame mixer once
 try:
@@ -76,6 +77,12 @@ class TTSEngine(QObject):
         self.stop()
         self.current_text = text.strip()
         self._stop_event.clear()
+
+        # Log to JSON history database
+        try:
+            history_db.add_entry(self.current_text, self.current_voice["name"], self.current_speed)
+        except Exception as e:
+            print(f"[TTS Engine] History logging error: {e}")
 
         # Start synthesis worker thread
         self._active_thread = threading.Thread(

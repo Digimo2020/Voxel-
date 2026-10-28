@@ -16,6 +16,7 @@ class AppTrayIcon(QSystemTrayIcon):
     System Tray icon for quick control and status.
     """
     toggle_enabled_requested = pyqtSignal(bool)
+    history_requested = pyqtSignal()
     quit_requested = pyqtSignal()
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
@@ -60,6 +61,10 @@ class AppTrayIcon(QSystemTrayIcon):
         # Test Voice action
         test_action = menu.addAction("▶ Test Current Voice")
         test_action.triggered.connect(self._test_voice)
+
+        # History action
+        history_action = menu.addAction("📜 View History (JSON)")
+        history_action.triggered.connect(self.history_requested.emit)
 
         menu.addSeparator()
 
