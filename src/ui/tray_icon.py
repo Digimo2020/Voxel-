@@ -3,10 +3,10 @@ Menu Bar / System Tray Icon for Voxel.
 Lives in the macOS Menu Bar (or Windows Notification Area) for quick controls and settings.
 """
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
-from PyQt6.QtGui import QAction, QActionGroup
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices
+from PyQt6.QtCore import pyqtSignal, QUrl
 
-from src.config import VOICES, VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE
+from src.config import VOICES, VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, IS_MAC
 from src.tts_engine import TTSEngine
 from assets.icons import create_tray_icon
 
@@ -88,9 +88,18 @@ class AppTrayIcon(QSystemTrayIcon):
         history_action = menu.addAction("📜 History & Recent Clips...")
         history_action.triggered.connect(self.history_requested.emit)
 
-        # Settings dialog
-        settings_action = menu.addAction("⚙️ Settings & About...")
+        # Settings & Downloads dialog
+        settings_action = menu.addAction("⚙️ Settings & Downloads...")
         settings_action.triggered.connect(self.settings_requested.emit)
+
+        # Platform-specific direct download link (OS-adaptive)
+        if IS_MAC:
+            down_action = menu.addAction("📥 Download macOS Installer (.pkg)...")
+            down_url = f"{GITHUB_URL}/releases/latest/download/Voxel.pkg"
+        else:
+            down_action = menu.addAction("📥 Download Windows App (.exe)...")
+            down_url = f"{GITHUB_URL}/releases/latest/download/Voxel.exe"
+        down_action.triggered.connect(lambda: QDesktopServices.openUrl(QUrl(down_url)))
 
         menu.addSeparator()
 

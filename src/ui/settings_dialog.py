@@ -1,7 +1,9 @@
 """
-Settings & About Dialog for Voxel.
+Settings, Downloads & About Dialog for Voxel.
 Allows configuring default voices, speeds, trigger timeouts, dock modes, and theme styles.
-Includes macOS Accessibility Permission status checker and Voxel branding details.
+Features OS-adaptive download options:
+- On macOS: Displays macOS .pkg and .dmg download options; Windows .exe is invisible.
+- On Windows: Displays Windows .exe download option; macOS .pkg and .dmg are invisible.
 """
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget, QLabel,
@@ -21,8 +23,8 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"{APP_NAME} — Settings & About")
-        self.setFixedSize(520, 480)
+        self.setWindowTitle(f"{APP_NAME} — Settings & Downloads")
+        self.setFixedSize(540, 500)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(f"""
             QDialog {{
@@ -149,7 +151,98 @@ class SettingsDialog(QDialog):
         layout_prefs.addStretch()
         self.tabs.addTab(tab_prefs, "⚙️ Preferences")
 
-        # Tab 2: About & Version
+        # Tab 2: Downloads & Data (OS-Adaptive & Platform-Filtered)
+        tab_downloads = QWidget()
+        layout_down = QVBoxLayout(tab_downloads)
+        layout_down.setContentsMargins(14, 14, 14, 14)
+        layout_down.setSpacing(12)
+
+        down_header = QLabel("📦 Official Download & Installation Packages", tab_downloads)
+        down_header.setStyleSheet("color: #FFFFFF; font-size: 14px; font-weight: 700;")
+        layout_down.addWidget(down_header)
+
+        # Platform Filtered Options:
+        # On macOS, show .pkg and .dmg; hide Windows .exe completely.
+        # On Windows, show .exe; hide macOS .pkg and .dmg completely.
+        if IS_MAC:
+            mac_box = QGroupBox("macOS Installation Packages (Universal)", tab_downloads)
+            mac_layout = QVBoxLayout(mac_box)
+            mac_layout.setSpacing(10)
+
+            # Option A: System-wide .pkg installer (Applications folder, for everyone)
+            pkg_row = QHBoxLayout()
+            pkg_info = QVBoxLayout()
+            pkg_title = QLabel("<b>Voxel.pkg (System-wide Installer)</b>", mac_box)
+            pkg_desc = QLabel("Installs into <b>/Applications</b> for all users. Includes embedded UX design assets.", mac_box)
+            pkg_desc.setStyleSheet("color: #94A3B8; font-size: 11px;")
+            pkg_info.addWidget(pkg_title)
+            pkg_info.addWidget(pkg_desc)
+            pkg_row.addLayout(pkg_info)
+
+            btn_pkg = QPushButton("📥 Download .pkg", mac_box)
+            btn_pkg.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_pkg.setStyleSheet("background-color: #0084FF; color: #FFFFFF; padding: 6px 14px;")
+            pkg_url = f"{GITHUB_URL}/releases/latest/download/Voxel.pkg"
+            btn_pkg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(pkg_url)))
+            pkg_row.addWidget(btn_pkg)
+            mac_layout.addLayout(pkg_row)
+
+            # Option B: .dmg disk image
+            dmg_row = QHBoxLayout()
+            dmg_info = QVBoxLayout()
+            dmg_title = QLabel("<b>Voxel.dmg (Disk Image)</b>", mac_box)
+            dmg_desc = QLabel("Standard drag-and-drop installer disk image.", mac_box)
+            dmg_desc.setStyleSheet("color: #94A3B8; font-size: 11px;")
+            dmg_info.addWidget(dmg_title)
+            dmg_info.addWidget(dmg_desc)
+            dmg_row.addLayout(dmg_info)
+
+            btn_dmg = QPushButton("📥 Download .dmg", mac_box)
+            btn_dmg.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_dmg.setStyleSheet("background-color: #242942; color: #FFFFFF; padding: 6px 14px;")
+            dmg_url = f"{GITHUB_URL}/releases/latest/download/Voxel.dmg"
+            btn_dmg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(dmg_url)))
+            dmg_row.addWidget(btn_dmg)
+            mac_layout.addLayout(dmg_row)
+
+            layout_down.addWidget(mac_box)
+
+            # Note explaining that Windows download option is filtered/invisible
+            lbl_filter = QLabel("ℹ️ <i>Windows options are hidden because you are on macOS.</i>", tab_downloads)
+            lbl_filter.setStyleSheet("color: #64748B; font-size: 11px;")
+            layout_down.addWidget(lbl_filter)
+        else:
+            win_box = QGroupBox("Windows Installation Packages", tab_downloads)
+            win_layout = QVBoxLayout(win_box)
+            win_layout.setSpacing(10)
+
+            win_row = QHBoxLayout()
+            win_info = QVBoxLayout()
+            win_title = QLabel("<b>Voxel.exe (Standalone Executable)</b>", win_box)
+            win_desc = QLabel("Zero-dependency executable for Windows 10/11.", win_box)
+            win_desc.setStyleSheet("color: #94A3B8; font-size: 11px;")
+            win_info.addWidget(win_title)
+            win_info.addWidget(win_desc)
+            win_row.addLayout(win_info)
+
+            btn_win = QPushButton("📥 Download .exe", win_box)
+            btn_win.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_win.setStyleSheet("background-color: #0084FF; color: #FFFFFF; padding: 6px 14px;")
+            win_url = f"{GITHUB_URL}/releases/latest/download/Voxel.exe"
+            btn_win.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(win_url)))
+            win_row.addWidget(btn_win)
+            win_layout.addLayout(win_row)
+
+            layout_down.addWidget(win_box)
+
+            lbl_filter = QLabel("ℹ️ <i>macOS packages are hidden because you are on Windows.</i>", tab_downloads)
+            lbl_filter.setStyleSheet("color: #64748B; font-size: 11px;")
+            layout_down.addWidget(lbl_filter)
+
+        layout_down.addStretch()
+        self.tabs.addTab(tab_downloads, "📥 Downloads")
+
+        # Tab 3: About & Version
         tab_about = QWidget()
         layout_about = QVBoxLayout(tab_about)
         layout_about.setContentsMargins(16, 16, 16, 16)

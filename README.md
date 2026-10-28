@@ -26,7 +26,16 @@ A lightweight, frosted glass desktop utility for reading selected text aloud acr
 
 ## 🚀 Quick Start on macOS
 
-### Option 1: Run from Source (Development)
+### Option 1: Native macOS Package Installer (.pkg — Recommended)
+Download `Voxel.pkg` from the [Releases](https://github.com/Digimo2020/Voxel---V.002/releases) page and double-click to install.
+- Installs system-wide into `/Applications/Voxel.app` for **all users**.
+- Features an Apple Installer wizard with embedded **UX design screenshots**.
+- Zero dependencies required.
+
+### Option 2: Drag-and-Drop Disk Image (.dmg)
+Download `Voxel.dmg` from the [Releases](https://github.com/Digimo2020/Voxel---V.002/releases) page and drag Voxel into `/Applications`.
+
+### Option 3: Run from Source (Development)
 ```bash
 git clone https://github.com/Digimo2020/Voxel---V.002.git
 cd Voxel---V.002
@@ -34,26 +43,24 @@ chmod +x run.sh
 ./run.sh
 ```
 
-### Option 2: Build Native macOS App & DMG
+### Building macOS Installers (.app, .dmg & .pkg)
 ```bash
 chmod +x build_mac.sh
 ./build_mac.sh
 ```
 This generates:
-- Standalone App Bundle: `dist/Voxel.app`
-- Drag-and-Drop Installer: `dist/Voxel.dmg`
+- System-wide Installer : `dist/Voxel.pkg` (for all users)
+- Standalone App Bundle : `dist/Voxel.app`
+- Drag-and-Drop Image   : `dist/Voxel.dmg`
 
 ---
 
 ## 💻 Quick Start on Windows
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python main.py
-```
-*(Or double-click `run.bat`). To build `Voxel.exe`, run `build_exe.bat`.*
+### Standalone Executable (.exe)
+Download `Voxel.exe` from the [Releases](https://github.com/Digimo2020/Voxel---V.002/releases) tab and double-click to run.
+
+*(Note: In the in-app Settings dialog and Menu Bar, download options are platform-filtered: macOS installers are invisible on Windows, and Windows executables are invisible on macOS).*
 
 ---
 

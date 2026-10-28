@@ -26,6 +26,7 @@ voxel_speech_*
 
 # Local data and iconsets
 .voxel_data/
+.pyinstaller_cache/
 assets/icon.iconset/
 
 

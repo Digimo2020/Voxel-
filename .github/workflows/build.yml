@@ -44,8 +44,9 @@ jobs:
     - name: Upload macOS Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Voxel-macOS-DMG
+        name: Voxel-macOS-Package
         path: |
+          dist/Voxel.pkg
           dist/Voxel.dmg
           dist/Voxel-macOS.zip
 
@@ -54,6 +55,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
+          dist/Voxel.pkg
           dist/Voxel.dmg
           dist/Voxel-macOS.zip
         generate_release_notes: true
