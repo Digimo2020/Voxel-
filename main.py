@@ -1,13 +1,15 @@
 """
-Text 2 Voice - Main Application Entry Point.
+Voxel - Text to Speech, Anywhere.
+Main Application Entry Point.
 Coordinates UI widgets, background selection listeners, settings, and TTS playback.
 """
 import sys
 import os
-from PyQt6.QtWidgets import QApplication
+import pyperclip
+from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import Qt, QPoint
 
-from src.config import VERSION, VOICES
+from src.config import VERSION, VOICES, APP_NAME, APP_TAGLINE, IS_MAC
 from src.tts_engine import TTSEngine
 from src.selection_listener import SelectionListener
 from src.ui.floating_bubble import FloatingBubble
@@ -16,14 +18,16 @@ from src.ui.tray_icon import AppTrayIcon
 from src.ui.history_dialog import HistoryDialog
 from src.ui.settings_dialog import SettingsDialog
 from src.utils.settings import settings_db
+from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from assets.icons import create_app_icon
 
 
-class Text2VoiceApp:
+class VoxelApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
-        self.app.setApplicationName("Text 2 Voice")
+        self.app.setApplicationName(APP_NAME)
+        self.app.setApplicationDisplayName(f"{APP_NAME} — {APP_TAGLINE}")
         self.app.setWindowIcon(create_app_icon(64))
 
         # Core Components
@@ -77,7 +81,7 @@ class Text2VoiceApp:
         return False
 
     def _connect_signals(self):
-        # 1. Selection detected -> Show floating speaker bubble
+        # 1. Selection detected -> Show floating Voxel logo
         self.listener.text_selected.connect(self._on_text_selected, Qt.ConnectionType.QueuedConnection)
 
         # 2. Bubble clicked -> Launch playback & open Mini Player
@@ -86,14 +90,18 @@ class Text2VoiceApp:
         # 3. User clicked empty outside space -> Fade out bubble
         self.listener.clicked_outside.connect(self._on_clicked_outside, Qt.ConnectionType.QueuedConnection)
 
-        # 4. Tray, History & Settings controls
+        # 4. Tray, History, Settings & Direct Clipboard controls
         self.tray.toggle_enabled_requested.connect(self._on_tray_toggle_enabled)
         self.tray.history_requested.connect(self._show_history)
         self.tray.settings_requested.connect(self._show_settings)
+        self.tray.read_clipboard_requested.connect(self._on_read_clipboard_requested)
         self.player.settings_requested.connect(self._show_settings)
         self.history_dialog.replay_requested.connect(self._replay_history)
         self.settings_dialog.settings_applied.connect(self._on_settings_applied)
         self.tray.quit_requested.connect(self.quit)
+
+        # 5. Permission guidance on macOS
+        self.listener.permission_needed.connect(self._on_permission_needed)
 
         # App shutdown hook
         self.app.aboutToQuit.connect(self._cleanup)
@@ -104,13 +112,32 @@ class Text2VoiceApp:
             self.bubble.show_at(text, x, y)
 
     def _on_bubble_clicked(self, text: str):
-        """Called when user clicks the floating speaker bubble."""
+        """Called when user clicks the floating Voxel logo."""
         self.player.play_text(text)
 
     def _on_clicked_outside(self):
         """Called when user clicks elsewhere on screen."""
         if self.bubble.isVisible():
             self.bubble.fade_out()
+
+    def _on_read_clipboard_requested(self):
+        """Reads current system clipboard aloud directly."""
+        try:
+            text = pyperclip.paste().strip()
+            if text:
+                self.player.play_text(text)
+        except Exception as e:
+            print(f"[Main] Clipboard read error: {e}")
+
+    def _on_permission_needed(self):
+        """Informs user if macOS Accessibility permission is required for global hooks."""
+        if IS_MAC:
+            self.tray.showMessage(
+                "Voxel: Accessibility Permission",
+                "To detect selected text across your apps, please grant Accessibility in System Settings.",
+                AppTrayIcon.MessageIcon.Warning,
+                6000
+            )
 
     def _show_history(self):
         """Displays the JSON history dialog."""
@@ -149,10 +176,10 @@ class Text2VoiceApp:
         self.tray.show()
         self.listener.start()
 
-        # Show notification on startup
+        hotkey_desc = "Cmd+Alt+S" if IS_MAC else "Ctrl+Alt+S"
         self.tray.showMessage(
-            f"Text 2 Voice {VERSION} is Active",
-            "Select text in any app to read it aloud. Press Ctrl+Alt+S anytime!",
+            f"{APP_NAME} ({VERSION}) is Active",
+            f"Select text in any app to read it aloud. Press {hotkey_desc} anytime!",
             AppTrayIcon.MessageIcon.Information,
             3500
         )
@@ -165,5 +192,5 @@ class Text2VoiceApp:
 
 
 if __name__ == "__main__":
-    app_instance = Text2VoiceApp()
+    app_instance = VoxelApp()
     app_instance.start()

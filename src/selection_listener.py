@@ -1,8 +1,9 @@
 """
-Global Mouse and Keyboard Selection Listener.
-Detects text selection across any application (browsers, editors, Google Docs, etc.)
+Global Mouse and Keyboard Selection Listener for Voxel.
+Detects text selection across any macOS or Windows application (browsers, editors, documents)
 and notifies the UI on the main thread via Qt signals.
 """
+import sys
 import time
 import math
 from typing import Callable, Optional
@@ -11,14 +12,16 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.config import DRAG_THRESHOLD_PIXELS, MIN_SELECTED_LENGTH, HOTKEY_WINDOWS, HOTKEY_MAC, IS_MAC
 from src.utils.clipboard import grab_selected_text
+from src.utils.mac_permissions import is_accessibility_trusted
 
 
 class SelectionListener(QObject):
     """
-    Background listener that triggers when the user selects text in any app.
+    Background listener that triggers when user selects text or presses the global hotkey.
     """
     text_selected = pyqtSignal(str, int, int)  # (text, cursor_x, cursor_y)
     clicked_outside = pyqtSignal()
+    permission_needed = pyqtSignal()
 
     def __init__(self, is_inside_widget_fn: Optional[Callable[[int, int], bool]] = None, parent=None):
         super().__init__(parent)
@@ -36,14 +39,22 @@ class SelectionListener(QObject):
 
     def start(self):
         """Starts mouse and hotkey listeners."""
-        # 1. Mouse listener
-        self._mouse_listener = mouse.Listener(
-            on_click=self._on_mouse_click
-        )
-        self._mouse_listener.daemon = True
-        self._mouse_listener.start()
+        # On macOS, check if accessibility permission is granted
+        if IS_MAC and not is_accessibility_trusted(prompt=False):
+            print("[SelectionListener] Notice: macOS Accessibility permission not yet granted.")
+            self.permission_needed.emit()
 
-        # 2. Global Hotkey listener (Ctrl+Alt+S or Cmd+Alt+S)
+        # 1. Mouse listener
+        try:
+            self._mouse_listener = mouse.Listener(
+                on_click=self._on_mouse_click
+            )
+            self._mouse_listener.daemon = True
+            self._mouse_listener.start()
+        except Exception as e:
+            print(f"[SelectionListener] Mouse listener start error: {e}")
+
+        # 2. Global Hotkey listener (Cmd+Alt+S on Mac, Ctrl+Alt+S on Windows)
         hotkey_str = HOTKEY_MAC if IS_MAC else HOTKEY_WINDOWS
         try:
             self._keyboard_listener = keyboard.GlobalHotKeys({
@@ -96,7 +107,7 @@ class SelectionListener(QObject):
             drag_dist = math.hypot(x - self._press_pos[0], y - self._press_pos[1])
             is_drag = drag_dist >= DRAG_THRESHOLD_PIXELS
 
-            # Double-click check (within 350ms and small displacement)
+            # Double-click check (within 380ms and small displacement)
             double_click_dist = math.hypot(x - self._last_click_pos[0], y - self._last_click_pos[1])
             is_double_click = (now - self._last_click_time < 0.38) and (double_click_dist < 10)
 
@@ -110,24 +121,21 @@ class SelectionListener(QObject):
                 self.clicked_outside.emit()
 
     def _handle_possible_selection(self, cursor_x: int, cursor_y: int):
-        """Waits briefly for selection to settle, then grabs text."""
-        # Brief pause to let active application register selection highlight
+        """Waits briefly for selection to settle in target app, then grabs text."""
         time.sleep(0.08)
 
-        text = grab_selected_text(timeout_ms=160)
+        text = grab_selected_text(timeout_ms=180)
         if text and len(text) >= MIN_SELECTED_LENGTH:
-            # Check that it contains at least one alphanumeric character
             if any(c.isalnum() for c in text):
                 self.text_selected.emit(text, cursor_x, cursor_y)
 
     def _on_hotkey_triggered(self):
-        """Triggered when pressing Ctrl+Alt+S (or Cmd+Alt+S)."""
+        """Triggered when pressing Cmd+Alt+S (or Ctrl+Alt+S)."""
         if not self.is_enabled:
             return
 
-        text = grab_selected_text(timeout_ms=160)
+        text = grab_selected_text(timeout_ms=180)
         if text and len(text) >= MIN_SELECTED_LENGTH:
-            # Get current mouse position
             ctrl = mouse.Controller()
             cx, cy = ctrl.position
             self.text_selected.emit(text, int(cx), int(cy))

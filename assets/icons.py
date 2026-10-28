@@ -1,182 +1,298 @@
 """
-Vector icon generator using QPainter.
-Produces crisp, resolution-independent line-art icons for frosted glass micro-UIs.
+Voxel Vector Icon Generator.
+Produces resolution-independent icons and symbols using QPainter for Retina/HiDPI screens.
 """
-from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPen, QBrush, QPainterPath
+from PyQt6.QtGui import (
+    QIcon, QPixmap, QPainter, QColor, QPen, QBrush,
+    QPainterPath, QLinearGradient, QRadialGradient
+)
 from PyQt6.QtCore import Qt, QPointF, QRectF
 import math
 
 
-def create_speaker_icon(size: int = 24, color: str = "#FFFFFF", waves: int = 2) -> QIcon:
-    """Creates an elegant line-art speaker icon with sound waves."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
+def create_voxel_icon_pixmap(size: int = 64) -> QPixmap:
+    """Renders the standalone Voxel microphone icon onto a QPixmap."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+
+    painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-    c = QColor(color)
-    stroke = max(1.2, size * 0.08)
+    cx = size / 2.0
+    cy = size * 0.48
+    scale = size / 100.0
 
-    # 1. Speaker body & cone
-    path = QPainterPath()
-    x0, y0 = size * 0.18, size * 0.38
-    x1, y1 = size * 0.32, size * 0.62
-    x2, y2 = size * 0.52, size * 0.78
-    x3, y3 = size * 0.52, size * 0.22
+    # Cradle
+    cradle_stroke = max(1.8, 8.2 * scale)
+    grad_cradle = QLinearGradient(cx - 35 * scale, cy + 35 * scale, cx + 35 * scale, cy - 35 * scale)
+    grad_cradle.setColorAt(0.0, QColor("#7C3AED"))
+    grad_cradle.setColorAt(0.4, QColor("#6366F1"))
+    grad_cradle.setColorAt(1.0, QColor("#0084FF"))
 
-    path.moveTo(x0, y0)
-    path.lineTo(x1, y0)
-    path.lineTo(x2, y3)
-    path.lineTo(x2, y2)
-    path.lineTo(x1, y1)
-    path.lineTo(x0, y1)
-    path.closeSubpath()
-
-    painter.setBrush(QBrush(c))
-    painter.setPen(Qt.PenStyle.NoPen)
-    painter.drawPath(path)
-
-    # 2. Sound wave arcs
-    pen_wave = QPen(c, stroke, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-    painter.setPen(pen_wave)
+    pen_cradle = QPen(
+        QBrush(grad_cradle),
+        cradle_stroke,
+        Qt.PenStyle.SolidLine,
+        Qt.PenCapStyle.RoundCap,
+        Qt.PenJoinStyle.RoundJoin
+    )
+    painter.setPen(pen_cradle)
     painter.setBrush(Qt.BrushStyle.NoBrush)
 
-    # First small wave arc
-    arc1_w, arc1_h = size * 0.32, size * 0.44
-    arc1_x = size * 0.46
-    arc1_y = (size - arc1_h) / 2
-    path_w1 = QPainterPath()
-    path_w1.arcMoveTo(QRectF(arc1_x, arc1_y, arc1_w, arc1_h), -45)
-    path_w1.arcTo(QRectF(arc1_x, arc1_y, arc1_w, arc1_h), -45, 90)
-    painter.drawPath(path_w1)
+    cradle_path = QPainterPath()
+    cradle_path.moveTo(cx - 26 * scale, cy - 10 * scale)
+    cradle_path.cubicTo(
+        cx - 26 * scale, cy + 18 * scale,
+        cx - 18 * scale, cy + 28 * scale,
+        cx - 10 * scale, cy + 32 * scale
+    )
+    cradle_path.lineTo(cx - 15 * scale, cy + 44 * scale)
+    cradle_path.lineTo(cx - 2 * scale, cy + 33 * scale)
+    cradle_path.cubicTo(
+        cx + 16 * scale, cy + 33 * scale,
+        cx + 26 * scale, cy + 20 * scale,
+        cx + 26 * scale, cy - 10 * scale
+    )
+    painter.drawPath(cradle_path)
 
-    # Second larger wave arc
-    if waves >= 2:
-        arc2_w, arc2_h = size * 0.54, size * 0.72
-        arc2_x = size * 0.44
-        arc2_y = (size - arc2_h) / 2
-        path_w2 = QPainterPath()
-        path_w2.arcMoveTo(QRectF(arc2_x, arc2_y, arc2_w, arc2_h), -40)
-        path_w2.arcTo(QRectF(arc2_x, arc2_y, arc2_w, arc2_h), -40, 80)
-        painter.drawPath(path_w2)
+    # Microphone capsule
+    mic_w = 34 * scale
+    mic_h = 45 * scale
+    mic_x = cx - mic_w / 2.0
+    mic_y = cy - mic_h / 2.0 - 5 * scale
+    mic_r = mic_w / 2.0
 
-    painter.end()
-    return QIcon(pixmap)
+    grad_mic = QLinearGradient(mic_x, mic_y + mic_h, mic_x + mic_w, mic_y)
+    grad_mic.setColorAt(0.0, QColor("#0072FF"))
+    grad_mic.setColorAt(1.0, QColor("#00C6FF"))
 
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QBrush(grad_mic))
+    painter.drawRoundedRect(QRectF(mic_x, mic_y, mic_w, mic_h), mic_r, mic_r)
 
-def create_gear_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
-    """Minimalist line-art settings cog/gear icon."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    # 3 lines
+    line_thickness = max(1.6, 3.8 * scale)
+    line_pen = QPen(QColor("#FFFFFF"), line_thickness, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(line_pen)
 
-    c = QColor(color)
-    stroke = max(1.2, size * 0.08)
-    pen = QPen(c, stroke, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-    painter.setPen(pen)
-    painter.setBrush(Qt.BrushStyle.NoBrush)
+    hw_top = 7.0 * scale
+    hw_mid = 10.0 * scale
+    hw_bot = 8.0 * scale
 
-    cx, cy = size / 2.0, size / 2.0
-    outer_r = size * 0.38
-    inner_r = size * 0.18
+    y_top = cy - 10 * scale
+    y_mid = cy - 4 * scale
+    y_bot = cy + 2 * scale
 
-    # Inner hole
-    painter.drawEllipse(QRectF(cx - inner_r, cy - inner_r, inner_r * 2, inner_r * 2))
-
-    # Outer teeth (6 teeth)
-    teeth = 6
-    for i in range(teeth):
-        angle = i * (2 * math.pi / teeth)
-        x1 = cx + (outer_r * 0.7) * math.cos(angle)
-        y1 = cy + (outer_r * 0.7) * math.sin(angle)
-        x2 = cx + outer_r * math.cos(angle)
-        y2 = cy + outer_r * math.sin(angle)
-        painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
-
-    # Outer circle rim
-    painter.drawEllipse(QRectF(cx - outer_r * 0.75, cy - outer_r * 0.75, outer_r * 1.5, outer_r * 1.5))
+    painter.drawLine(QPointF(cx - hw_top, y_top), QPointF(cx + hw_top, y_top))
+    painter.drawLine(QPointF(cx - hw_mid, y_mid), QPointF(cx + hw_mid, y_mid))
+    painter.drawLine(QPointF(cx - hw_bot, y_bot), QPointF(cx + hw_bot, y_bot))
 
     painter.end()
-    return QIcon(pixmap)
+    return pix
 
 
-def create_play_icon(size: int = 24, color: str = "#60A5FA") -> QIcon:
-    """Crisp line-art play triangle."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
+def create_app_icon(size: int = 64) -> QIcon:
+    """App Icon with frosted squircle and Voxel microphone."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+
+    painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-    c = QColor(color)
-    painter.setBrush(QBrush(c))
+    # Rounded squircle background
+    r = size * 0.22
+    painter.setBrush(QBrush(QColor("#131625")))
+    painter.setPen(QPen(QColor(255, 255, 255, 45), 1.2))
+    painter.drawRoundedRect(QRectF(2, 2, size - 4, size - 4), r, r)
+    painter.end()
+
+    # Draw logo centered
+    logo_pix = create_voxel_icon_pixmap(int(size * 0.72))
+    painter = QPainter(pix)
+    offset = int(size * 0.14)
+    painter.drawPixmap(offset, offset, logo_pix)
+    painter.end()
+
+    return QIcon(pix)
+
+
+def create_tray_icon(size: int = 32) -> QIcon:
+    """Menu bar / tray icon."""
+    pix = create_voxel_icon_pixmap(size)
+    return QIcon(pix)
+
+
+def create_play_icon(size: int = 24, color: str = "#FFFFFF") -> QIcon:
+    """Play triangle."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    painter.setBrush(QBrush(QColor(color)))
     painter.setPen(Qt.PenStyle.NoPen)
 
     path = QPainterPath()
-    p1 = QPointF(size * 0.35, size * 0.28)
-    p2 = QPointF(size * 0.35, size * 0.72)
-    p3 = QPointF(size * 0.72, size * 0.50)
-    path.moveTo(p1)
-    path.lineTo(p2)
-    path.lineTo(p3)
+    left = size * 0.34
+    top = size * 0.24
+    right = size * 0.74
+    mid_y = size * 0.50
+    bottom = size * 0.76
+
+    path.moveTo(left, top)
+    path.lineTo(right, mid_y)
+    path.lineTo(left, bottom)
     path.closeSubpath()
+
     painter.drawPath(path)
-
     painter.end()
-    return QIcon(pixmap)
+    return QIcon(pix)
 
 
-def create_pause_icon(size: int = 24, color: str = "#60A5FA") -> QIcon:
-    """Two sleek rounded pause bars."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
+def create_pause_icon(size: int = 24, color: str = "#FFFFFF") -> QIcon:
+    """Pause double bars."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
     painter.setBrush(QBrush(QColor(color)))
     painter.setPen(Qt.PenStyle.NoPen)
 
     bar_w = max(2.5, size * 0.15)
-    bar_h = size * 0.48
-    y = (size - bar_h) / 2
-    r = bar_w / 2
+    bar_h = size * 0.50
+    gap = size * 0.16
+    cx = size / 2.0
+    cy = (size - bar_h) / 2.0
 
-    # Left bar
-    painter.drawRoundedRect(QRectF(size * 0.33, y, bar_w, bar_h), r, r)
-    # Right bar
-    painter.drawRoundedRect(QRectF(size * 0.55, y, bar_w, bar_h), r, r)
+    r = bar_w / 2.0
+    painter.drawRoundedRect(QRectF(cx - gap - bar_w, cy, bar_w, bar_h), r, r)
+    painter.drawRoundedRect(QRectF(cx + gap, cy, bar_w, bar_h), r, r)
 
     painter.end()
-    return QIcon(pixmap)
+    return QIcon(pix)
 
 
-def create_stop_icon(size: int = 24, color: str = "#F87171") -> QIcon:
+def create_stop_icon(size: int = 24, color: str = "#94A3B8") -> QIcon:
     """Clean rounded stop square."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
     painter.setBrush(QBrush(QColor(color)))
     painter.setPen(Qt.PenStyle.NoPen)
 
     s = size * 0.38
-    x = (size - s) / 2
-    painter.drawRoundedRect(QRectF(x, x, s, s), 2.5, 2.5)
+    x = (size - s) / 2.0
+    painter.drawRoundedRect(QRectF(x, x, s, s), 3.0, 3.0)
 
     painter.end()
-    return QIcon(pixmap)
+    return QIcon(pix)
+
+
+def create_minus_icon(size: int = 18, color: str = "#CBD5E1") -> QIcon:
+    """Minus line for speed pill."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    pen = QPen(QColor(color), 1.8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+
+    pad = size * 0.28
+    painter.drawLine(QPointF(pad, size / 2.0), QPointF(size - pad, size / 2.0))
+    painter.end()
+    return QIcon(pix)
+
+
+def create_plus_icon(size: int = 18, color: str = "#CBD5E1") -> QIcon:
+    """Plus sign for speed pill."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    pen = QPen(QColor(color), 1.8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+
+    pad = size * 0.28
+    mid = size / 2.0
+    painter.drawLine(QPointF(pad, mid), QPointF(size - pad, mid))
+    painter.drawLine(QPointF(mid, pad), QPointF(mid, size - pad))
+    painter.end()
+    return QIcon(pix)
+
+
+def create_chevron_down_icon(size: int = 16, color: str = "#94A3B8") -> QIcon:
+    """Chevron down arrow for voice dropdown."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    pen = QPen(QColor(color), 1.8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+
+    path = QPainterPath()
+    left = size * 0.25
+    mid_x = size * 0.50
+    right = size * 0.75
+    top = size * 0.38
+    bottom = size * 0.62
+
+    path.moveTo(left, top)
+    path.lineTo(mid_x, bottom)
+    path.lineTo(right, top)
+
+    painter.drawPath(path)
+    painter.end()
+    return QIcon(pix)
+
+
+def create_gear_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
+    """Line-art settings cog."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    pen = QPen(QColor(color), 1.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+
+    cx, cy = size / 2.0, size / 2.0
+    r_in = size * 0.18
+    r_out = size * 0.36
+    teeth = 8
+
+    path = QPainterPath()
+    for i in range(teeth * 2):
+        angle = i * math.pi / teeth
+        r = r_out if i % 2 == 0 else r_in * 1.35
+        x = cx + r * math.cos(angle)
+        y = cy + r * math.sin(angle)
+        if i == 0:
+            path.moveTo(x, y)
+        else:
+            path.lineTo(x, y)
+    path.closeSubpath()
+    painter.drawPath(path)
+    painter.drawEllipse(QPointF(cx, cy), r_in * 0.85, r_in * 0.85)
+
+    painter.end()
+    return QIcon(pix)
 
 
 def create_close_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
     """Delicate line cross."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-    pen = QPen(QColor(color), max(1.5, size * 0.10))
-    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen = QPen(QColor(color), 1.8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
     painter.setPen(pen)
 
     pad = size * 0.32
@@ -184,27 +300,4 @@ def create_close_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
     painter.drawLine(QPointF(size - pad, pad), QPointF(pad, size - pad))
 
     painter.end()
-    return QIcon(pixmap)
-
-
-def create_app_icon(size: int = 64) -> QIcon:
-    """Creates the application tray & window icon with speaker symbol."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-    # Frosted dark circular glass background
-    painter.setBrush(QBrush(QColor("#1E2235")))
-    painter.setPen(QPen(QColor(255, 255, 255, 80), 1.5))
-    painter.drawEllipse(QRectF(2, 2, size - 4, size - 4))
-    painter.end()
-
-    # Inner speaker
-    spk = create_speaker_icon(size=int(size * 0.65), color="#60A5FA", waves=2)
-    painter = QPainter(pixmap)
-    offset = int(size * 0.175)
-    spk.paint(painter, offset, offset, int(size * 0.65), int(size * 0.65))
-    painter.end()
-
-    return QIcon(pixmap)
+    return QIcon(pix)

@@ -19,8 +19,15 @@ build/
 
 # Temporary audio files
 t2v_*
+voxel_speech_*
 *.mp3
 *.wav
+*.aiff
+
+# Local data and iconsets
+.voxel_data/
+assets/icon.iconset/
+
 
 # OS generated files
 .DS_Store

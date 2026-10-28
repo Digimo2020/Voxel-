@@ -1,13 +1,45 @@
 """
-Persistent Settings Manager.
-Saves user preferences (default voice, speed, bubble timeout, hotkey, dock mode)
-to %LOCALAPPDATA%/Text2Voice/settings.json.
+Persistent Settings Manager for Voxel.
+Saves user preferences (default voice, speed, bubble timeout, hotkey, dock mode, theme)
+to standard application data locations:
+- macOS: ~/Library/Application Support/Voxel/settings.json
+- Windows: %LOCALAPPDATA%/Voxel/settings.json
+- Linux: ~/.config/Voxel/settings.json
 """
+import sys
 import os
 import json
 from typing import Any, Dict
 
-SETTINGS_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Text2Voice")
+IS_MAC = sys.platform == "darwin"
+
+def get_app_storage_dir() -> str:
+    """Finds an accessible storage directory across platforms and sandboxes."""
+    candidates = []
+    if IS_MAC:
+        candidates.append(os.path.expanduser("~/Library/Application Support/Voxel"))
+    elif os.name == "nt":
+        candidates.append(os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Voxel"))
+    else:
+        candidates.append(os.path.expanduser("~/.config/Voxel"))
+
+    candidates.append(os.path.expanduser("~/.voxel"))
+    candidates.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".voxel_data"))
+
+    for c in candidates:
+        try:
+            os.makedirs(c, exist_ok=True)
+            test_file = os.path.join(c, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            return c
+        except Exception:
+            continue
+    return candidates[-1]
+
+
+SETTINGS_DIR = get_app_storage_dir()
 SETTINGS_FILE = os.path.join(SETTINGS_DIR, "settings.json")
 
 DEFAULT_SETTINGS: Dict[str, Any] = {
@@ -16,7 +48,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "selection_popup_enabled": True,
     "bubble_timeout": 4.0,
     "dock_position": "bottom_right",   # "bottom_right" or "near_cursor"
-    "hotkey": "<ctrl>+<alt>+s",
+    "hotkey": "<cmd>+<alt>+s" if IS_MAC else "<ctrl>+<alt>+s",
+    "theme_mode": "dark_glass",       # "dark_glass" or "light_glass"
     "version": "v1.0.01"
 }
 
@@ -63,5 +96,5 @@ class SettingsManager:
         self.save()
 
 
-# Global singleton instance
+# Global Singleton Instance
 settings_db = SettingsManager()

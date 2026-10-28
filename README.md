@@ -1,120 +1,98 @@
-# Text 2 Voice
+# Voxel — Text to Speech, Anywhere
 
 <p align="left">
-  <a href="https://github.com/Digimo2020/Text-2-Voice/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-60A5FA?style=flat-square" alt="Version v1.0.01"></a>
+  <a href="https://github.com/Digimo2020/Voxel---V.002/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-0084FF?style=flat-square" alt="Version v1.0.01"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
-  <a href="https://github.com/Digimo2020/Text-2-Voice"><img src="https://img.shields.io/badge/GitHub-Digimo2020%2FText--2--Voice-181717?style=flat-square&logo=github" alt="GitHub Repository"></a>
+  <a href="https://github.com/Digimo2020/Voxel---V.002"><img src="https://img.shields.io/badge/GitHub-Digimo2020%2FVoxel-181717?style=flat-square&logo=github" alt="GitHub Repository"></a>
+  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-6366F1?style=flat-square" alt="Platform: macOS & Windows">
 </p>
 
-A lightweight, frosted glass desktop utility for reading selected text aloud using a transparent floating trigger and an animated bottom-right mini player.
+A lightweight, frosted glass desktop utility for reading selected text aloud across any application on **macOS** and **Windows**, featuring a voice-reactive microphone logo with real-time waveform animations and an animated capsule mini-player.
 
 ---
 
-## Current Implementation (v1.0.01)
+## 🎨 Features & Visual Design
 
-The current source includes:
-- **Transparent 30px Floating Speaker Trigger**: Subtle, non-intrusive vector speaker icon near text selections without dark backgrounds.
-- **Bottom-Right Slide-Up Mini Player**: Frosted glass capsule pill that animates smoothly from the bottom right corner above the taskbar.
-- **Playback Controls**: Play/Pause, Stop, and fine-tuned `[-] 1.0x [+]` speed regulation (`0.5x` to `2.0x`).
-- **Natural Neural Voices**: Microsoft Edge TTS (Jenny, Guy, Sonia) with automatic offline Microsoft SAPI5 fallback.
-- **Settings & About Dialog**: Configure default voice, speed, trigger timeout, docking positions, view version information, and open the GitHub repository.
-- **Local JSON History Database**: Automatically records spoken snippets to `%LOCALAPPDATA%/Text2Voice/history.json` with replay support.
-- **System Tray Integration**: Taskbar notification area menu with direct access to settings, history, and voice switching.
-- **Standalone Windows Build**: PyInstaller workflow generating a zero-dependency `Text2Voice.exe`.
-
----
-
-## 🔢 Versioning Scheme
-
-Text 2 Voice follows a structured base-10 rollover versioning system:
-
-**Format:** `v<Major>.<Minor>.<Patch:02d>` *(Current: `v1.0.01`)*
-
-- The **patch** number runs from `01` to `09`. On the 10th iteration, it resets to `00` and the **minor** number (left) increments by 1:
-  - `v1.0.09` ➔ `v1.1.00`
-- On every 10th minor cycle, the minor number resets to `0` and the **major** number increments:
-  - `v1.9.09` ➔ `v2.0.00`
+- **Floating Voxel Logo Trigger**: Smoothly fades in near selected text without stealing window focus. Fades out automatically on dismissal or click.
+- **Voice-Reactive Animated Mic Logo**: The 3 horizontal lines inside the microphone capsule dynamically animate and pulse like an audio equalizer in real-time as speech plays, accompanied by a soft breathing glow.
+- **Frosted Glass Capsule Mini-Player**: Sleek translucent acrylic capsule that slides up with smooth easing curves from the bottom-right of the screen above the Dock/Taskbar.
+- **Vibrant Gradient Controls**: Glowing electric cyan & violet play/pause button, delicate stop button, segmented speed controller (`[-] 1.0x [+]`), and instant voice switcher.
+- **High-Definition Neural Voices**: Microsoft Edge Neural TTS voices (Jenny, Guy, Sonia, Aria) with automatic offline fallback to native macOS Speech (`Samantha`, `Alex`) or Windows SAPI5.
+- **Menu Bar / System Tray Integration**: Native macOS Menu Bar status item and Windows notification icon with quick access to voice switching, history, settings, and one-click clipboard reading.
+- **Zero-Dependency Audio Stack**: Built directly on `PyQt6.QtMultimedia` with native CoreAudio and AVFoundation hardware acceleration.
+- **macOS Accessibility Assistance**: Built-in permission checker and quick-launch helper to enable required Accessibility permissions seamlessly.
 
 ---
 
-## Intended Workflow
+## 🚀 Quick Start on macOS
 
-1. Select text in any desktop application, browser, or document.
-2. A transparent floating speaker button appears near the pointer.
-3. Click the speaker to start listening.
-4. The mini-player slides up smoothly in the bottom-right corner of your screen.
-5. Use the player to pause/resume, adjust speed, switch voices, access settings, or close.
-6. Access preferences and history anytime from the system tray or player gear icon.
+### Option 1: Run from Source (Development)
+```bash
+git clone https://github.com/Digimo2020/Voxel---V.002.git
+cd Voxel---V.002
+chmod +x run.sh
+./run.sh
+```
 
----
-
-## Technology Stack
-
-- **Python 3.11**
-- **PyQt6**: Translucent frosted glass GUI and vector QPainter rendering
-- **pynput**: Cross-platform global mouse drag and hotkey interception
-- **pyperclip**: Safe clipboard extraction with instant restoration
-- **edge-tts**: Neural speech synthesis
-- **pyttsx3**: Offline Windows SAPI5 voice fallback
-- **pygame.mixer**: Low-latency audio streaming
-- **PyInstaller**: Windows standalone executable packaging
+### Option 2: Build Native macOS App & DMG
+```bash
+chmod +x build_mac.sh
+./build_mac.sh
+```
+This generates:
+- Standalone App Bundle: `dist/Voxel.app`
+- Drag-and-Drop Installer: `dist/Voxel.dmg`
 
 ---
 
-## Quick Start on Windows
+## 💻 Quick Start on Windows
 
-### Option 1: Standalone Executable (For Users)
-Download `Text2Voice.exe` from the [Releases](https://github.com/Digimo2020/Text-2-Voice/releases) tab and double-click to run. No Python installation required.
-
-### Option 2: Run from Source (For Developers)
 ```powershell
-git clone https://github.com/Digimo2020/Text-2-Voice.git
-cd Text-2-Voice
-py -3.11 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 python main.py
 ```
-*(Or simply double-click `run.bat`).*
+*(Or double-click `run.bat`). To build `Voxel.exe`, run `build_exe.bat`.*
 
 ---
 
-## Building the Executable
+## ⌨️ Workflow & Shortcuts
 
-```powershell
-build_exe.bat
-```
-Output executable will be placed in `dist/Text2Voice.exe`.
+1. **Highlight text** in any document, browser, PDF, or text editor.
+2. The **Voxel Logo badge** smoothly fades in near your cursor.
+3. Click the logo (or press `Cmd+Alt+S` on Mac / `Ctrl+Alt+S` on Windows) to start listening.
+4. The capsule mini-player slides up smoothly in the bottom-right corner.
+5. The 3 voice lines inside the microphone animate in sync with playback.
+6. Adjust speed, switch voices, view speech history, or configure preferences anytime.
 
 ---
 
-## Repository Map
+## 🗺 Repository Architecture
 
 ```text
-main.py                    Application entry point & event orchestrator
-src/config.py              Voice profiles, speed presets, and theme palettes
-src/selection_listener.py  Global mouse drag & hotkey listeners
-src/tts_engine.py          Multi-threaded speech synthesis & audio playback
-src/ui/                    Floating bubble, mini player, tray, settings, history dialog
-src/utils/                 Settings, clipboard, history, and version utilities
-assets/icons.py            Vector icons (speaker, play, pause, stop, gear, close)
-scripts/                   Preview-image generation script
-.github/workflows/         Build and CI automation
-requirements.txt           Python dependencies
-build_exe.bat              Windows packaging helper
-run.bat                    Windows development launcher
-ROADMAP.md                 Planned features (macOS port, multi-language, OCR)
-CONTRIBUTING.md            Contributor onboarding guide
-SECURITY.md                Responsible vulnerability reporting
-CHANGELOG.md               Verified version changelog
-LICENSE                    MIT License
+main.py                      Application entry point & event orchestrator
+src/config.py                Voxel brand tokens, themes, voice presets & paths
+src/selection_listener.py    Global mouse drag & hotkey interception (macOS & Windows)
+src/tts_engine.py            QtMultimedia player, Edge-TTS & native macOS 'say' fallback
+src/ui/voxel_logo_widget.py  Vector Voxel logo with 40 FPS voice-reactive wave animation
+src/ui/floating_bubble.py    Floating Voxel logo trigger with smooth fade animations
+src/ui/mini_player.py        Frosted glass capsule player with glowing controls
+src/ui/tray_icon.py          Menu bar & system tray controller
+src/ui/settings_dialog.py    Preferences, about dialog & macOS accessibility checker
+src/ui/history_dialog.py     Persistent JSON speech history viewer & replay
+src/utils/mac_permissions.py macOS Accessibility check and System Settings URL launcher
+src/utils/clipboard.py       Safe clipboard extraction with original contents restoration
+src/utils/settings.py        Cross-platform preferences (~/Library/Application Support/Voxel)
+src/utils/history.py         Cross-platform history database
+assets/icons.py              High-DPI vector icons (cradle, mic, play, pause, stop, etc.)
+build_mac.sh                 Automated macOS .app and .dmg compiler
+run.sh                       One-click macOS launcher
+.github/workflows/build.yml  Multi-platform automated CI/CD for macOS & Windows releases
 ```
 
 ---
 
-## Project & Community
+## 📄 License
 
-- **Repository**: [https://github.com/Digimo2020/Text-2-Voice](https://github.com/Digimo2020/Text-2-Voice)
-- **Maintainer**: Digimo2020
-- **License**: [MIT License](LICENSE)
+Distributed under the [MIT License](LICENSE). Created and maintained by **Digimo2020**.

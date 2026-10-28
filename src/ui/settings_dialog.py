@@ -1,7 +1,7 @@
 """
-Settings & About Dialog.
-Allows users to configure voices, speeds, trigger behaviors, and docking positions.
-Displays current version (v1.0.01) and clickable GitHub repository link.
+Settings & About Dialog for Voxel.
+Allows configuring default voices, speeds, trigger timeouts, dock modes, and theme styles.
+Includes macOS Accessibility Permission status checker and Voxel branding details.
 """
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget, QLabel,
@@ -10,8 +10,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QFont, QCursor, QDesktopServices
 
-from src.config import THEME, VOICES, SPEED_STEPS, VERSION, GITHUB_URL
+from src.config import THEME, VOICES, SPEED_STEPS, VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC
 from src.utils.settings import settings_db
+from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
+from src.ui.voxel_logo_widget import VoxelLogoWidget
 
 
 class SettingsDialog(QDialog):
@@ -19,46 +21,47 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Text 2 Voice — Settings & About")
-        self.setFixedSize(500, 440)
+        self.setWindowTitle(f"{APP_NAME} — Settings & About")
+        self.setFixedSize(520, 480)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(f"""
             QDialog {{
-                background-color: {THEME["bg_player"]};
+                background-color: {THEME["bg_window"]};
                 color: {THEME["text_primary"]};
+                font-family: {FONT_FAMILY};
             }}
             QTabWidget::pane {{
-                border: 1px solid {THEME["border_player"]};
-                background-color: #181926;
+                border: 1px solid {THEME["border_window"]};
+                background-color: #171B2D;
                 border-radius: 8px;
             }}
             QTabBar::tab {{
-                background-color: #1E2030;
+                background-color: #1F243B;
                 color: {THEME["text_secondary"]};
                 padding: 8px 18px;
                 border-top-left-radius: 6px;
                 border-top-right-radius: 6px;
                 margin-right: 4px;
-                font-weight: bold;
+                font-weight: 600;
             }}
             QTabBar::tab:selected {{
-                background-color: #181926;
+                background-color: #171B2D;
                 color: #FFFFFF;
                 border-bottom: 2px solid {THEME["accent"]};
             }}
             QGroupBox {{
-                border: 1px solid {THEME["border_player"]};
-                border-radius: 6px;
+                border: 1px solid {THEME["border_window"]};
+                border-radius: 8px;
                 margin-top: 10px;
                 padding-top: 14px;
-                font-weight: bold;
+                font-weight: 600;
                 color: {THEME["text_primary"]};
             }}
             QComboBox, QDoubleSpinBox {{
-                background-color: #24273A;
+                background-color: #242942;
                 color: {THEME["text_primary"]};
-                border: 1px solid {THEME["border_player"]};
-                border-radius: 4px;
+                border: 1px solid {THEME["border_window"]};
+                border-radius: 6px;
                 padding: 4px 8px;
             }}
             QCheckBox {{
@@ -66,15 +69,15 @@ class SettingsDialog(QDialog):
                 spacing: 8px;
             }}
             QPushButton {{
-                background-color: {THEME["button_bg"]};
+                background-color: #242942;
                 color: {THEME["text_primary"]};
-                border: 1px solid {THEME["border_player"]};
+                border: 1px solid {THEME["border_window"]};
                 border-radius: 6px;
                 padding: 6px 14px;
-                font-weight: bold;
+                font-weight: 600;
             }}
             QPushButton:hover {{
-                background-color: {THEME["button_hover"]};
+                background-color: #313859;
             }}
         """)
 
@@ -94,7 +97,6 @@ class SettingsDialog(QDialog):
         layout_prefs.setContentsMargins(14, 14, 14, 14)
         layout_prefs.setSpacing(12)
 
-        # Form Layout
         form = QFormLayout()
         form.setSpacing(10)
 
@@ -126,10 +128,25 @@ class SettingsDialog(QDialog):
         layout_prefs.addLayout(form)
 
         # Selection trigger checkbox
-        self.chk_trigger = QCheckBox("Show floating speaker trigger when selecting text", self)
+        self.chk_trigger = QCheckBox("Show floating Voxel logo when selecting text", self)
         layout_prefs.addWidget(self.chk_trigger)
-        layout_prefs.addStretch()
 
+        # macOS Accessibility Permission Box
+        if IS_MAC:
+            perm_box = QGroupBox("macOS System Permissions", self)
+            perm_layout = QHBoxLayout(perm_box)
+            trusted = is_accessibility_trusted(prompt=False)
+            status_text = "🟢 Granted" if trusted else "⚠️ Accessibility Permission Needed"
+            self.lbl_perm = QLabel(f"Accessibility: <b>{status_text}</b>", perm_box)
+            perm_layout.addWidget(self.lbl_perm)
+
+            btn_open_perm = QPushButton("Open System Settings", perm_box)
+            btn_open_perm.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_open_perm.clicked.connect(open_accessibility_settings)
+            perm_layout.addWidget(btn_open_perm)
+            layout_prefs.addWidget(perm_box)
+
+        layout_prefs.addStretch()
         self.tabs.addTab(tab_prefs, "⚙️ Preferences")
 
         # Tab 2: About & Version
@@ -138,32 +155,37 @@ class SettingsDialog(QDialog):
         layout_about.setContentsMargins(16, 16, 16, 16)
         layout_about.setSpacing(10)
 
-        title_lbl = QLabel("🔊 Text 2 Voice", self)
-        title_lbl.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
-        title_lbl.setStyleSheet(f"color: {THEME['accent']};")
-        layout_about.addWidget(title_lbl)
+        # Header with Logo & Brand
+        header_row = QHBoxLayout()
+        header_logo = VoxelLogoWidget(size=44, animated=True, parent=tab_about)
+        header_row.addWidget(header_logo)
 
-        sub_lbl = QLabel("Universal Frosted Glass Text-to-Speech Engine", self)
-        sub_lbl.setFont(QFont("Segoe UI", 10, QFont.Weight.Medium))
-        sub_lbl.setStyleSheet("color: #94A3B8;")
-        layout_about.addWidget(sub_lbl)
+        header_text = QVBoxLayout()
+        title_lbl = QLabel(f"{APP_NAME}", self)
+        title_lbl.setStyleSheet(f"color: #FFFFFF; font-size: 20px; font-weight: 800;")
+        header_text.addWidget(title_lbl)
+
+        sub_lbl = QLabel(f"{APP_TAGLINE}", self)
+        sub_lbl.setStyleSheet("color: #0084FF; font-size: 11px; font-weight: 700; letter-spacing: 1px;")
+        header_text.addWidget(sub_lbl)
+        header_row.addLayout(header_text)
+        header_row.addStretch()
+        layout_about.addLayout(header_row)
 
         # Version Pill Box
-        ver_box = QGroupBox("Release & Version Information", self)
+        ver_box = QGroupBox("Version Information", self)
         ver_layout = QVBoxLayout(ver_box)
         ver_layout.setSpacing(6)
 
-        lbl_ver = QLabel(f"Current Version: <b><font color='#60A5FA'>{VERSION}</font></b>", self)
-        lbl_ver.setFont(QFont("Segoe UI", 11))
+        lbl_ver = QLabel(f"Current Version: <b><font color='#0084FF'>{VERSION}</font></b>", self)
         ver_layout.addWidget(lbl_ver)
 
         lbl_ver_rule = QLabel(
             "Structure: <code>v&lt;Major&gt;.&lt;Minor&gt;.&lt;Patch:02d&gt;</code><br>"
-            "Every 10th patch increments minor, every 10th minor increments major.", self
+            "Base-10 rollover scheme: increments patch, minor on 10th, major on 100th.", self
         )
         lbl_ver_rule.setStyleSheet("color: #94A3B8; font-size: 11px;")
         ver_layout.addWidget(lbl_ver_rule)
-
         layout_about.addWidget(ver_box)
 
         # GitHub Project Info Box
@@ -174,17 +196,17 @@ class SettingsDialog(QDialog):
         lbl_author = QLabel("Created & Maintained by: <b>Digimo2020</b>", self)
         gh_layout.addWidget(lbl_author)
 
-        btn_gh = QPushButton(f"🌐 Open GitHub: {GITHUB_URL}", self)
+        btn_gh = QPushButton(f"🌐 GitHub: {GITHUB_URL}", self)
         btn_gh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_gh.setStyleSheet(f"""
             QPushButton {{
-                background-color: rgba(96, 165, 250, 0.15);
-                border: 1px solid rgba(96, 165, 250, 0.6);
-                color: #93C5FD;
+                background-color: rgba(0, 132, 255, 0.15);
+                border: 1px solid rgba(0, 132, 255, 0.5);
+                color: #38BDF8;
                 padding: 6px 12px;
             }}
             QPushButton:hover {{
-                background-color: rgba(96, 165, 250, 0.3);
+                background-color: rgba(0, 132, 255, 0.3);
                 color: #FFFFFF;
             }}
         """)
@@ -194,7 +216,7 @@ class SettingsDialog(QDialog):
         layout_about.addWidget(gh_box)
         layout_about.addStretch()
 
-        self.tabs.addTab(tab_about, "ℹ️ About & Version")
+        self.tabs.addTab(tab_about, "ℹ️ About Voxel")
         main_layout.addWidget(self.tabs)
 
         # Bottom buttons: Save & Cancel
@@ -203,7 +225,17 @@ class SettingsDialog(QDialog):
 
         btn_save = QPushButton("Save & Apply", self)
         btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_save.setStyleSheet(f"background-color: {THEME['accent']}; color: #11111B;")
+        btn_save.setStyleSheet(f"""
+            QPushButton {{
+                background-color: #0084FF;
+                color: #FFFFFF;
+                border: none;
+                padding: 7px 18px;
+            }}
+            QPushButton:hover {{
+                background-color: #0072FF;
+            }}
+        """)
         btn_save.clicked.connect(self.save_and_apply)
         btn_row.addWidget(btn_save)
 

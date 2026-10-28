@@ -1,13 +1,20 @@
 """
-JSON-based History and Storage Manager.
-Persists recent spoken text clips, timestamps, voice, and speed to a local JSON file.
+JSON-based History and Storage Manager for Voxel.
+Persists recent spoken text clips, timestamps, voice, and speed to:
+- macOS: ~/Library/Application Support/Voxel/history.json
+- Windows: %LOCALAPPDATA%/Voxel/history.json
 """
+import sys
 import os
 import json
 import time
 from typing import List, Dict, Any
 
-HISTORY_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Text2Voice")
+IS_MAC = sys.platform == "darwin"
+
+from src.utils.settings import get_app_storage_dir
+
+HISTORY_DIR = get_app_storage_dir()
 HISTORY_FILE = os.path.join(HISTORY_DIR, "history.json")
 MAX_HISTORY_ENTRIES = 50
 
@@ -36,10 +43,10 @@ class HistoryManager:
             return {}
 
         entry = {
-            "id": f"t2v_{int(time.time() * 1000)}",
+            "id": f"vox_{int(time.time() * 1000)}",
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "text": cleaned,
-            "preview": cleaned[:45] + ("..." if len(cleaned) > 45 else ""),
+            "preview": cleaned[:55] + ("..." if len(cleaned) > 55 else ""),
             "voice": voice_name,
             "speed": round(speed, 2),
             "char_count": len(cleaned)
@@ -51,37 +58,40 @@ class HistoryManager:
             return history[0]
 
         history.insert(0, entry)
-        history = history[:MAX_HISTORY_ENTRIES]
+        if len(history) > MAX_HISTORY_ENTRIES:
+            history = history[:MAX_HISTORY_ENTRIES]
+
         self._save(history)
         return entry
 
     def get_all(self) -> List[Dict[str, Any]]:
-        """Retrieves all history entries."""
+        """Reads all history records."""
+        if not os.path.exists(self.filepath):
+            return []
         try:
-            if os.path.exists(self.filepath):
-                with open(self.filepath, "r", encoding="utf-8") as f:
-                    return json.load(f)
+            with open(self.filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
         except Exception as e:
             print(f"[HistoryManager] Read error: {e}")
-        return []
+            return []
 
     def clear(self):
-        """Clears all history."""
+        """Empties history storage."""
         self._save([])
 
-    def _save(self, data: List[Dict[str, Any]]):
-        """Writes data back to the JSON file safely."""
+    def _save(self, items: List[Dict[str, Any]]):
         try:
             tmp = self.filepath + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+                json.dump(items, f, indent=2)
             if os.path.exists(self.filepath):
                 os.replace(tmp, self.filepath)
             else:
                 os.rename(tmp, self.filepath)
         except Exception as e:
-            print(f"[HistoryManager] Save error: {e}")
+            print(f"[HistoryManager] Write error: {e}")
 
 
-# Global singleton instance
+# Global Singleton Instance
 history_db = HistoryManager()
