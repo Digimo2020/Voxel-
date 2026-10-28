@@ -1,4 +1,5 @@
 @echo off
+setlocal
 title Push Text 2 Voice to GitHub
 cd /d "%~dp0"
 
@@ -7,36 +8,47 @@ echo   Push Text 2 Voice to GitHub
 echo   Repository: https://github.com/Digimo2020/Text-2-Voice.git
 echo ========================================================
 echo.
-echo Choose an authentication method:
-echo   [1] Interactive Browser Login (Recommended - uses Git Credential Manager)
-echo   [2] GitHub Personal Access Token (PAT)
-echo.
-set /p choice="Enter choice (1 or 2, default is 1): "
 
-if "%choice%"=="2" goto use_token
-goto use_gcm
-
-:use_gcm
-echo.
-echo Launching Git push...
-echo A GitHub authorization window will open in your browser.
-echo Please click "Authorize" or "Sign in with browser" to complete the push.
-echo.
-"C:\Users\%USERNAME%\AppData\Local\Programs\Git\cmd\git.exe" push -u origin main
-goto end
-
-:use_token
-echo.
-set /p token="Paste your GitHub Personal Access Token (classic with 'repo' scope): "
-if "%token%"=="" (
-    echo No token provided. Aborting.
-    goto end
+where git >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: Git was not found on PATH. Install Git for Windows first.
+  pause
+  exit /b 1
 )
-echo Pushing with access token...
-"C:\Users\%USERNAME%\AppData\Local\Programs\Git\cmd\git.exe" push -u https://%token%@github.com/Digimo2020/Text-2-Voice.git main
-goto end
 
-:end
+git rev-parse --is-inside-work-tree >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: This folder is not a Git working tree.
+  pause
+  exit /b 1
+)
+
+for /f "delims=" %%R in ('git remote get-url origin 2^>nul') do set "REMOTE=%%R"
+if not defined REMOTE (
+  echo ERROR: No origin remote is configured.
+  echo Configure origin as https://github.com/Digimo2020/Text-2-Voice.git
+  pause
+  exit /b 1
+)
+
+echo Remote origin: %REMOTE%
 echo.
-echo ========================================================
+echo Checking current branch and working tree...
+git status --short --branch
+echo.
+echo This helper will NOT create a commit or discard local changes.
+echo Review and commit your changes first, then press a key to push.
+pause
+
+git push -u origin main
+if errorlevel 1 (
+  echo.
+  echo Push failed. Check authentication, branch name, and remote changes.
+  echo Do not force-push. Reconcile divergent history before trying again.
+  pause
+  exit /b 1
+)
+
+echo.
+echo Push completed successfully.
 pause
