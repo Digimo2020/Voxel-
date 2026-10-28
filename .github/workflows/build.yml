@@ -1,0 +1,41 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: "pip"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Verify Application Smoke Test
+      run: |
+        python -c "import PyQt6, pynput, pyperclip, edge_tts, pygame; print('All modules imported successfully')"
+
+    - name: Compile Standalone Executable
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --name "Text2Voice" --collect-all edge_tts --collect-all certifi --collect-all pygame --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 main.py
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Text2Voice-Windows-EXE
+        path: dist/Text2Voice.exe
