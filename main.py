@@ -5,9 +5,20 @@ Coordinates UI widgets, background selection listeners, settings, and TTS playba
 """
 import sys
 import os
+import traceback
 import pyperclip
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import Qt, QPoint
+
+# Install top-level crash guard so unhandled slot exceptions never abort the process
+def _global_exception_handler(exc_type, exc_value, exc_tb):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_tb)
+        return
+    err_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    print(f"[Voxel Uncaught Error] {err_msg}", file=sys.stderr)
+
+sys.excepthook = _global_exception_handler
 
 from src.config import VERSION, VOICES, APP_NAME, APP_TAGLINE, IS_MAC
 from src.tts_engine import TTSEngine
@@ -141,15 +152,21 @@ class VoxelApp:
 
     def _show_history(self):
         """Displays the JSON history dialog."""
-        self.history_dialog.load_history()
-        self.history_dialog.show()
-        self.history_dialog.activateWindow()
+        try:
+            self.history_dialog.load_history()
+            self.history_dialog.show()
+            self.history_dialog.activateWindow()
+        except Exception as e:
+            print(f"[Voxel] Error showing history dialog: {e}", file=sys.stderr)
 
     def _show_settings(self):
         """Displays the settings dialog with about & version info."""
-        self.settings_dialog.load_values()
-        self.settings_dialog.show()
-        self.settings_dialog.activateWindow()
+        try:
+            self.settings_dialog.load_values()
+            self.settings_dialog.show()
+            self.settings_dialog.activateWindow()
+        except Exception as e:
+            print(f"[Voxel] Error showing settings dialog: {e}", file=sys.stderr)
 
     def _on_settings_applied(self):
         """Applies updated settings across the app."""

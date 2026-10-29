@@ -15,6 +15,7 @@ IS_MAC = sys.platform == "darwin"
 
 def get_app_storage_dir() -> str:
     """Finds an accessible storage directory across platforms and sandboxes."""
+    import tempfile
     candidates = []
     if IS_MAC:
         candidates.append(os.path.expanduser("~/Library/Application Support/Voxel"))
@@ -24,7 +25,8 @@ def get_app_storage_dir() -> str:
         candidates.append(os.path.expanduser("~/.config/Voxel"))
 
     candidates.append(os.path.expanduser("~/.voxel"))
-    candidates.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".voxel_data"))
+    candidates.append(os.path.join(os.path.expanduser("~"), ".voxel_data"))
+    candidates.append(os.path.join(tempfile.gettempdir(), ".voxel_data"))
 
     for c in candidates:
         try:
@@ -36,7 +38,13 @@ def get_app_storage_dir() -> str:
             return c
         except Exception:
             continue
-    return candidates[-1]
+
+    fallback = os.path.join(tempfile.gettempdir(), ".voxel_data")
+    try:
+        os.makedirs(fallback, exist_ok=True)
+    except Exception:
+        pass
+    return fallback
 
 
 SETTINGS_DIR = get_app_storage_dir()

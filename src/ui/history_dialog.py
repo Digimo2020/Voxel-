@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QLabel, QMessageBox, QWidget
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QCursor
+from PyQt6.QtGui import QFont, QCursor, QColor
 import pyperclip
 
 from src.config import THEME, APP_NAME, FONT_FAMILY
@@ -105,26 +105,29 @@ class HistoryDialog(QDialog):
 
     def load_history(self):
         """Populates list with stored entries."""
-        self.list_widget.clear()
-        entries = history_db.get_all()
+        try:
+            self.list_widget.clear()
+            entries = history_db.get_all()
 
-        if not entries:
-            empty_item = QListWidgetItem("No recent speech history found.")
-            empty_item.setFlags(Qt.ItemFlag.NoItemFlags)
-            empty_item.setForeground(QColor(148, 163, 184))
-            self.list_widget.addItem(empty_item)
-            return
+            if not entries:
+                empty_item = QListWidgetItem("No recent speech history found.")
+                empty_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                empty_item.setForeground(QColor(148, 163, 184))
+                self.list_widget.addItem(empty_item)
+                return
 
-        for entry in entries:
-            ts = entry.get("timestamp", "")
-            preview = entry.get("preview", "")
-            voice = entry.get("voice", "")
-            speed = entry.get("speed", 1.0)
-            item_text = f"[{ts}] ({voice}, {speed}x)\n{preview}"
+            for entry in entries:
+                ts = entry.get("timestamp", "")
+                preview = entry.get("preview", "")
+                voice = entry.get("voice", "")
+                speed = entry.get("speed", 1.0)
+                item_text = f"[{ts}] ({voice}, {speed}x)\n{preview}"
 
-            item = QListWidgetItem(item_text)
-            item.setData(Qt.ItemDataRole.UserRole, entry.get("text", ""))
-            self.list_widget.addItem(item)
+                item = QListWidgetItem(item_text)
+                item.setData(Qt.ItemDataRole.UserRole, entry.get("text", ""))
+                self.list_widget.addItem(item)
+        except Exception as e:
+            print(f"[HistoryDialog] Error loading history: {e}")
 
     def _get_current_entry_text(self) -> str:
         curr = self.list_widget.currentItem()
