@@ -1,41 +1,69 @@
 # Voxel — Text to Speech, Anywhere
 
-<p align="left">
-  <a href="https://github.com/Digimo2020/Voxel---V.002/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-0084FF?style=flat-square" alt="Version v1.0.01"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
-  <a href="https://github.com/Digimo2020/Voxel---V.002"><img src="https://img.shields.io/badge/GitHub-Digimo2020%2FVoxel-181717?style=flat-square&logo=github" alt="GitHub Repository"></a>
-  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-6366F1?style=flat-square" alt="Platform: macOS & Windows">
+<p align="center">
+  <img src="assets/banner.png" alt="Voxel Banner" width="100%">
 </p>
 
-A lightweight, frosted glass desktop utility for reading selected text aloud across any application on **macOS** and **Windows**, featuring a voice-reactive microphone logo with real-time waveform animations and an animated capsule mini-player.
+<p align="center">
+  <a href="https://github.com/Digimo2020/Voxel---V.002/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.01"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
+  <a href="https://github.com/Digimo2020/Voxel---V.002"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
+  <a href="https://github.com/Digimo2020/Voxel---V.002/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel---V.002/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
+</p>
 
 ---
 
-## 🎨 Features & Visual Design
+## 🎙 What is Voxel?
 
-- **Floating Voxel Logo Trigger**: Smoothly fades in near selected text without stealing window focus. Fades out automatically on dismissal or click.
-- **Voice-Reactive Animated Mic Logo**: The 3 horizontal lines inside the microphone capsule dynamically animate and pulse like an audio equalizer in real-time as speech plays, accompanied by a soft breathing glow.
-- **Frosted Glass Capsule Mini-Player**: Sleek translucent acrylic capsule that slides up with smooth easing curves from the bottom-right of the screen above the Dock/Taskbar.
-- **Vibrant Gradient Controls**: Glowing electric cyan & violet play/pause button, delicate stop button, segmented speed controller (`[-] 1.0x [+]`), and instant voice switcher.
-- **High-Definition Neural Voices**: Microsoft Edge Neural TTS voices (Jenny, Guy, Sonia, Aria) with automatic offline fallback to native macOS Speech (`Samantha`, `Alex`) or Windows SAPI5.
-- **Menu Bar / System Tray Integration**: Native macOS Menu Bar status item and Windows notification icon with quick access to voice switching, history, settings, and one-click clipboard reading.
-- **Zero-Dependency Audio Stack**: Built directly on `PyQt6.QtMultimedia` with native CoreAudio and AVFoundation hardware acceleration.
-- **macOS Accessibility Assistance**: Built-in permission checker and quick-launch helper to enable required Accessibility permissions seamlessly.
+**Voxel** is a lightweight, frosted glass desktop utility for reading highlighted text aloud anywhere on **macOS** and **Windows**. 
+
+Featuring a **voice-reactive microphone logo** with real-time waveform equalizer animations, a subtle floating selection trigger, and an animated bottom-right capsule player, Voxel blends seamlessly into your workflow across any document, web browser, PDF, or text editor.
 
 ---
 
-## 🚀 Quick Start on macOS
+## ✨ Key Features & UX Design
 
-### Option 1: Native macOS Package Installer (.pkg — Recommended)
-Download `Voxel.pkg` from the [Releases](https://github.com/Digimo2020/Voxel---V.002/releases) page and double-click to install.
-- Installs system-wide into `/Applications/Voxel.app` for **all users**.
-- Features an Apple Installer wizard with embedded **UX design screenshots**.
-- Zero dependencies required.
+- 🌊 **Voice-Reactive Waveform Animation**: The 3 internal lines of the microphone capsule pulse and dance at 40 FPS like a real-time audio equalizer during playback, accented by a soft breathing radial glow.
+- 🫧 **Non-Intrusive Floating Trigger**: Appears smoothly with fade-in easing near your cursor whenever you highlight text, without stealing window focus (`WA_ShowWithoutActivating`).
+- 💊 **Frosted Glass Capsule Player**: Slides up above your Dock/Taskbar with smooth cubic easing. Includes a glowing electric blue-to-violet play/pause button, delicate stop button, segmented speed regulator (`[-] 1.0x [+]`), and voice switcher.
+- 📦 **System-Wide macOS `.pkg` Installer**: Universal installer package targeting `/Applications/Voxel.app` for **all users** on the system, complete with embedded UX design screenshots in the Apple Installer wizard.
+- 👁️ **Platform-Adaptive "Invisible" Downloads**: Download options automatically adapt to the user's operating system. On macOS, Windows executables are hidden; on Windows, macOS packages are hidden.
+- 🗣️ **High-Definition Neural Voices**: Microsoft Edge Neural TTS voices (Jenny, Guy, Sonia, Aria) with instant offline fallback to native macOS Speech (`Samantha`, `Alex`) or Windows SAPI5.
+- ⚡ **Zero-Dependency Audio Engine**: Modernized with `PyQt6.QtMultimedia` for hardware-accelerated CoreAudio playback without SDL or external C dependencies.
+- 🛡️ **macOS Accessibility Assistant**: Proactive permissions checker with 1-click shortcut to macOS Privacy & Security settings.
 
-### Option 2: Drag-and-Drop Disk Image (.dmg)
-Download `Voxel.dmg` from the [Releases](https://github.com/Digimo2020/Voxel---V.002/releases) page and drag Voxel into `/Applications`.
+---
 
-### Option 3: Run from Source (Development)
+## 🎨 Visual Showcase
+
+<p align="center">
+  <img src="assets/branding/mini_player_themes.png" alt="Voxel Mini Player Themes (Dark & Frosted Glass)" width="95%">
+</p>
+
+<p align="center">
+  <em>Figure 1: Dual Theme Modes — Dark Acrylic Capsule & Frosted Iridescent Glass Capsule</em>
+</p>
+
+<p align="center">
+  <img src="assets/voxel_mac_preview.png" alt="Voxel macOS Native UI Preview" width="95%">
+</p>
+
+<p align="center">
+  <em>Figure 2: Native macOS Micro-UI — Floating Selection Badge & Voice-Reactive Mini Player</em>
+</p>
+
+---
+
+## 🚀 Quick Download & Installation
+
+###  For macOS Users
+
+| Package Format | Description | Target |
+| :--- | :--- | :--- |
+| [**📥 Download Voxel.pkg**](https://github.com/Digimo2020/Voxel---V.002/releases/latest/download/Voxel.pkg) *(Recommended)* | Apple System-Wide Installer with embedded UX design preview wizard | `/Applications` (All Users) |
+| [**📥 Download Voxel.dmg**](https://github.com/Digimo2020/Voxel---V.002/releases/latest/download/Voxel.dmg) | Standard drag-and-drop disk image | Portable / `/Applications` |
+
+#### Run from Source (macOS)
 ```bash
 git clone https://github.com/Digimo2020/Voxel---V.002.git
 cd Voxel---V.002
@@ -43,63 +71,110 @@ chmod +x run.sh
 ./run.sh
 ```
 
-### Building macOS Installers (.app, .dmg & .pkg)
+---
+
+### ⊞ For Windows Users
+
+| Package Format | Description | Target |
+| :--- | :--- | :--- |
+| [**📥 Download Voxel.exe**](https://github.com/Digimo2020/Voxel---V.002/releases/latest/download/Voxel.exe) *(Recommended)* | Zero-dependency standalone Windows executable | Windows 10 / 11 |
+
+#### Run from Source (Windows)
+```powershell
+git clone https://github.com/Digimo2020/Voxel---V.002.git
+cd Voxel---V.002
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python main.py
+```
+*(Or double-click `run.bat`).*
+
+---
+
+## ⌨️ Workflow & Keyboard Shortcuts
+
+```text
+  1. Highlight text in any app (Browser, Word, Slack, PDF, Terminal)
+                         │
+                         ▼
+  2. Floating Voxel Logo fades in smoothly near your cursor
+                         │
+                         ▼
+  3. Click the Logo  — OR —  press Global Hotkey:
+       • macOS:   Cmd + Option + S
+       • Windows: Ctrl + Alt + S
+                         │
+                         ▼
+  4. Frosted Glass Capsule Player slides up in the bottom-right corner
+                         │
+                         ▼
+  5. 3 Voice Lines inside the mic animate in sync with real-time speech!
+```
+
+---
+
+## 🛠️ Building Packages from Source
+
+### Building on macOS (`.app`, `.dmg` & `.pkg`)
 ```bash
 chmod +x build_mac.sh
 ./build_mac.sh
 ```
-This generates:
-- System-wide Installer : `dist/Voxel.pkg` (for all users)
-- Standalone App Bundle : `dist/Voxel.app`
-- Drag-and-Drop Image   : `dist/Voxel.dmg`
+Outputs:
+- **`dist/Voxel.app`**: Native standalone application bundle.
+- **`dist/Voxel.pkg`**: System-wide installer for `/Applications` with embedded UX assets.
+- **`dist/Voxel.dmg`**: Drag-and-drop installer disk image.
+
+### Building on Windows (`.exe`)
+```powershell
+.\build_exe.bat
+```
+Outputs:
+- **`dist/Voxel.exe`**: Zero-dependency standalone executable.
 
 ---
 
-## 💻 Quick Start on Windows
-
-### Standalone Executable (.exe)
-Download `Voxel.exe` from the [Releases](https://github.com/Digimo2020/Voxel---V.002/releases) tab and double-click to run.
-
-*(Note: In the in-app Settings dialog and Menu Bar, download options are platform-filtered: macOS installers are invisible on Windows, and Windows executables are invisible on macOS).*
-
----
-
-## ⌨️ Workflow & Shortcuts
-
-1. **Highlight text** in any document, browser, PDF, or text editor.
-2. The **Voxel Logo badge** smoothly fades in near your cursor.
-3. Click the logo (or press `Cmd+Alt+S` on Mac / `Ctrl+Alt+S` on Windows) to start listening.
-4. The capsule mini-player slides up smoothly in the bottom-right corner.
-5. The 3 voice lines inside the microphone animate in sync with playback.
-6. Adjust speed, switch voices, view speech history, or configure preferences anytime.
-
----
-
-## 🗺 Repository Architecture
+## 🗺️ Repository Architecture
 
 ```text
-main.py                      Application entry point & event orchestrator
-src/config.py                Voxel brand tokens, themes, voice presets & paths
-src/selection_listener.py    Global mouse drag & hotkey interception (macOS & Windows)
-src/tts_engine.py            QtMultimedia player, Edge-TTS & native macOS 'say' fallback
-src/ui/voxel_logo_widget.py  Vector Voxel logo with 40 FPS voice-reactive wave animation
-src/ui/floating_bubble.py    Floating Voxel logo trigger with smooth fade animations
-src/ui/mini_player.py        Frosted glass capsule player with glowing controls
-src/ui/tray_icon.py          Menu bar & system tray controller
-src/ui/settings_dialog.py    Preferences, about dialog & macOS accessibility checker
-src/ui/history_dialog.py     Persistent JSON speech history viewer & replay
-src/utils/mac_permissions.py macOS Accessibility check and System Settings URL launcher
-src/utils/clipboard.py       Safe clipboard extraction with original contents restoration
-src/utils/settings.py        Cross-platform preferences (~/Library/Application Support/Voxel)
-src/utils/history.py         Cross-platform history database
-assets/icons.py              High-DPI vector icons (cradle, mic, play, pause, stop, etc.)
-build_mac.sh                 Automated macOS .app and .dmg compiler
-run.sh                       One-click macOS launcher
-.github/workflows/build.yml  Multi-platform automated CI/CD for macOS & Windows releases
+main.py                      Application entry point & event coordinator
+run.sh                       One-click macOS development launcher
+run.bat                      One-click Windows development launcher
+build_mac.sh                 Compiles Voxel.app, Voxel.dmg and Voxel.pkg
+build_exe.bat                Compiles Voxel.exe for Windows
+assets/
+ ├── banner.png              Official repository showcase banner
+ ├── icon.icns               High-DPI Retina macOS application icon
+ ├── icon_1024.png           1024x1024 master icon artwork
+ ├── voxel_mac_preview.png   High-resolution micro-UI layout snapshot
+ ├── icons.py                QPainter vector graphics generator
+ └── branding/               Official design system guidelines & themes
+src/
+ ├── config.py               Theme tokens, voice profiles, and platform flags
+ ├── selection_listener.py   Global mouse drag & hotkey interception (macOS/Win)
+ ├── tts_engine.py           PyQt6.QtMultimedia player & neural Edge-TTS with fallback
+ ├── ui/
+ │    ├── voxel_logo_widget.py Voice-reactive animated mic logo (40 FPS)
+ │    ├── floating_bubble.py   Smooth fade-in selection trigger badge
+ │    ├── mini_player.py       Frosted glass capsule player with glowing controls
+ │    ├── tray_icon.py         macOS Menu Bar / Windows System Tray controller
+ │    ├── settings_dialog.py   Preferences & OS-adaptive download center
+ │    └── history_dialog.py    Persistent JSON speech history & replay
+ └── utils/
+      ├── mac_permissions.py  macOS Accessibility permission helper
+      ├── clipboard.py        Safe clipboard extraction & restoration
+      ├── settings.py         Cross-platform settings (~/Library/Application Support/Voxel)
+      ├── history.py          Speech history persistence
+      └── version.py          Base-10 rollover version tracking
+.github/workflows/
+ └── build.yml               Automated multi-platform CI/CD (macOS & Windows releases)
 ```
 
 ---
 
-## 📄 License
+## 📄 License & Community
 
-Distributed under the [MIT License](LICENSE). Created and maintained by **Digimo2020**.
+- **License**: Distributed under the [MIT License](LICENSE).
+- **Author & Maintainer**: [Digimo2020](https://github.com/Digimo2020)
+- **Repository**: [https://github.com/Digimo2020/Voxel---V.002](https://github.com/Digimo2020/Voxel---V.002)
