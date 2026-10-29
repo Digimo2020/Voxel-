@@ -9,6 +9,18 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.01] - 2026-10-29
+
+### Added & Enhanced
+- **High-Definition PNG Branding Integration Across 3 Surfaces**:
+  - Replaced SVG rendering with high-resolution 32-bit transparent PNG assets formatted with clean square aspect-ratios to ensure crisp, un-distorted presentation:
+    - **Startup / System Tray Logo**: `assets/branding/png/tray_bar_logo_square.png` rendered at crisp DPI-aware icon sizes for the Windows notification area / taskbar tray.
+    - **Main Application Logo & Window Icon**: `assets/branding/png/app_logo_square.png` applied to all application windows, taskbar groupings, and converted into multi-resolution `assets/icon.ico` (16, 24, 32, 48, 64, 128, 256 px).
+    - **Text Selection Bubble Trigger**: `assets/branding/png/selection_bubble_logo_square.png` rendered inside `src/ui/floating_bubble.py` with smooth hover glow effects whenever text is selected on screen.
+  - Preserved previous standalone builds (`Voxel-v1.0.06.exe` through `Voxel-v1.1.00.exe`) and produced new `Voxel-v1.1.01.exe`.
+
+---
+
 ## [v1.1.00] - 2026-10-29
 
 ### Added & Enhanced

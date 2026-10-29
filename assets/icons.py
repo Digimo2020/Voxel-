@@ -286,25 +286,79 @@ def create_voxel_round_glass_pixmap(size: int = 32) -> QPixmap:
     return pix
 
 
+def _get_asset_path(rel_path: str) -> str:
+    """Finds an asset file path across project, parent, cwd, or PyInstaller _MEIPASS."""
+    base_dir = os.path.dirname(__file__)
+    candidate_paths = [
+        os.path.join(base_dir, rel_path),
+        os.path.join(base_dir, "..", "assets", rel_path),
+        os.path.join(os.getcwd(), "assets", rel_path),
+        os.path.join(os.getcwd(), rel_path),
+    ]
+    if hasattr(sys, "_MEIPASS"):
+        candidate_paths.insert(0, os.path.join(sys._MEIPASS, "assets", rel_path))
+        candidate_paths.insert(1, os.path.join(sys._MEIPASS, rel_path))
+    for p in candidate_paths:
+        if os.path.exists(p):
+            return p
+    return ""
+
+
+def get_selection_bubble_pixmap(size: int = 40) -> QPixmap:
+    """Returns the official selection bubble logo pixmap smoothly scaled to size."""
+    path = _get_asset_path("branding/png/selection_bubble_logo_square.png") or _get_asset_path("branding/png/selection_bubble_logo.png")
+    if path and os.path.exists(path):
+        src_pix = QPixmap(path)
+        if not src_pix.isNull():
+            return src_pix.scaled(
+                size, size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+    return create_voxel_round_glass_pixmap(size)
+
+
 def create_tray_icon(size: int = 32) -> QIcon:
     """
-    Menu bar / system tray icon rendered with the official Voxel Logo SVG from fiNAL.
+    Menu bar / system tray / startup bar icon rendered with official tray_bar_logo.png.
     Supports 16, 20, 24, 32, 48, 64 px for native HiDPI rendering.
     """
     icon = QIcon()
-    for sz in [16, 20, 24, 32, 48, 64]:
-        icon.addPixmap(create_svg_tray_pixmap(sz))
+    path = _get_asset_path("branding/png/tray_bar_logo_square.png") or _get_asset_path("branding/png/tray_bar_logo.png")
+    if path and os.path.exists(path):
+        src_pix = QPixmap(path)
+        for sz in [16, 20, 24, 32, 48, 64]:
+            scaled = src_pix.scaled(
+                sz, sz,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            icon.addPixmap(scaled)
+    else:
+        for sz in [16, 20, 24, 32, 48, 64]:
+            icon.addPixmap(create_voxel_round_glass_pixmap(sz))
     return icon
 
 
 def create_app_icon(size: int = 64) -> QIcon:
     """
-    App window and taskbar icon rendered with the official Voxel Logo SVG from fiNAL.
+    App window and taskbar icon rendered with official app_logo.png.
     Supports 16, 20, 24, 32, 48, 64, 128, 256 px.
     """
     icon = QIcon()
-    for sz in [16, 20, 24, 32, 48, 64, 128, 256]:
-        icon.addPixmap(create_svg_tray_pixmap(sz))
+    path = _get_asset_path("branding/png/app_logo_square.png") or _get_asset_path("branding/png/app_logo.png")
+    if path and os.path.exists(path):
+        src_pix = QPixmap(path)
+        for sz in [16, 20, 24, 32, 48, 64, 128, 256]:
+            scaled = src_pix.scaled(
+                sz, sz,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            icon.addPixmap(scaled)
+    else:
+        for sz in [16, 20, 24, 32, 48, 64, 128, 256]:
+            icon.addPixmap(create_voxel_round_glass_pixmap(sz))
     return icon
 
 
