@@ -25,7 +25,7 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{APP_NAME} — Settings & Preferences")
-        self.setFixedSize(540, 530)
+        self.setFixedSize(540, 580)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(f"""
             QDialog {{
@@ -221,7 +221,7 @@ class SettingsDialog(QDialog):
 
         if IS_MAC:
             # macOS .pkg Option
-            pkg_box = QGroupBox("🍎 macOS System-Wide Installer (.pkg)", tab_downloads)
+            pkg_box = QGroupBox(f"🍎 macOS System-Wide Installer ({VERSION})", tab_downloads)
             pkg_layout = QVBoxLayout(pkg_box)
             pkg_layout.setSpacing(8)
 
@@ -235,20 +235,20 @@ class SettingsDialog(QDialog):
             pkg_layout.addWidget(lbl_pkg_desc)
 
             pkg_row = QHBoxLayout()
-            pkg_row.addWidget(QLabel("Target: <b>/Applications (System)</b>", tab_downloads))
+            pkg_row.addWidget(QLabel(f"Target: <b>/Applications ({VERSION})</b>", tab_downloads))
             pkg_row.addStretch()
 
-            btn_pkg = QPushButton("📥 Download Voxel.pkg", tab_downloads)
+            btn_pkg = QPushButton(f"📥 Download Voxel-{VERSION}.pkg", tab_downloads)
             btn_pkg.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_pkg.setStyleSheet("background-color: #0084FF; color: #FFFFFF; padding: 6px 14px;")
-            pkg_url = f"{GITHUB_URL}/releases/latest/download/Voxel.pkg"
+            btn_pkg.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 6px 14px;")
+            pkg_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.pkg"
             btn_pkg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(pkg_url)))
             pkg_row.addWidget(btn_pkg)
             pkg_layout.addLayout(pkg_row)
             layout_down.addWidget(pkg_box)
 
             # macOS .dmg Option
-            dmg_box = QGroupBox("💿 macOS Drag-and-Drop Disk Image (.dmg)", tab_downloads)
+            dmg_box = QGroupBox(f"💿 macOS Drag-and-Drop Disk Image ({VERSION})", tab_downloads)
             dmg_layout = QVBoxLayout(dmg_box)
             dmg_layout.setSpacing(8)
 
@@ -262,12 +262,13 @@ class SettingsDialog(QDialog):
             dmg_layout.addWidget(lbl_dmg_desc)
 
             dmg_row = QHBoxLayout()
-            dmg_row.addWidget(QLabel("Target: <b>Portable / User Folder</b>", tab_downloads))
+            dmg_row.addWidget(QLabel(f"Target: <b>Portable / Applications ({VERSION})</b>", tab_downloads))
             dmg_row.addStretch()
 
-            btn_dmg = QPushButton("📥 Download Voxel.dmg", tab_downloads)
+            btn_dmg = QPushButton(f"📥 Download Voxel-{VERSION}.dmg", tab_downloads)
             btn_dmg.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            dmg_url = f"{GITHUB_URL}/releases/latest/download/Voxel.dmg"
+            btn_dmg.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 6px 14px;")
+            dmg_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.dmg"
             btn_dmg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(dmg_url)))
             dmg_row.addWidget(btn_dmg)
             dmg_layout.addLayout(dmg_row)
@@ -275,7 +276,7 @@ class SettingsDialog(QDialog):
 
         else:
             # Windows .exe Option
-            win_box = QGroupBox("⊞ Windows Standalone Executable (.exe)", tab_downloads)
+            win_box = QGroupBox(f"⊞ Windows Standalone Executable ({VERSION})", tab_downloads)
             win_layout = QVBoxLayout(win_box)
             win_layout.setSpacing(8)
 
@@ -289,13 +290,13 @@ class SettingsDialog(QDialog):
             win_layout.addWidget(lbl_win_desc)
 
             win_row = QHBoxLayout()
-            win_row.addWidget(QLabel("Target: <b>Windows 10 / 11</b>", tab_downloads))
+            win_row.addWidget(QLabel(f"Target: <b>Windows 10 / 11 ({VERSION})</b>", tab_downloads))
             win_row.addStretch()
 
-            btn_win = QPushButton("📥 Download Voxel.exe", tab_downloads)
+            btn_win = QPushButton(f"📥 Download Voxel-{VERSION}.exe", tab_downloads)
             btn_win.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_win.setStyleSheet("background-color: #0084FF; color: #FFFFFF; padding: 6px 14px;")
-            win_url = f"{GITHUB_URL}/releases/latest/download/Voxel.exe"
+            btn_win.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 6px 14px;")
+            win_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.exe"
             btn_win.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(win_url)))
             win_row.addWidget(btn_win)
             win_layout.addLayout(win_row)
@@ -305,6 +306,38 @@ class SettingsDialog(QDialog):
             lbl_filter = QLabel("ℹ️ <i>macOS packages are hidden because you are on Windows.</i>", tab_downloads)
             lbl_filter.setStyleSheet("color: #64748B; font-size: 11px;")
             layout_down.addWidget(lbl_filter)
+
+        # Historical Releases & Versions Archive
+        archive_box = QGroupBox("📦 Historical Versions Archive", tab_downloads)
+        archive_layout = QVBoxLayout(archive_box)
+        archive_layout.setSpacing(8)
+
+        archive_desc = QLabel(
+            "Access past builds, notes, and release assets at any time:",
+            tab_downloads
+        )
+        archive_desc.setStyleSheet("color: #94A3B8; font-size: 11px;")
+        archive_layout.addWidget(archive_desc)
+
+        ver_list = QLabel(
+            "• <b>v1.0.03 (Current)</b> — Ultra-compact frosted player (310×48), Play/Pause, speed dropdown<br>"
+            "• <b>v1.0.02</b> — Voxel rebrand, Dark Obsidian theme, macOS PKG wizard<br>"
+            "• <b>v1.0.01</b> — Initial Text 2 Voice release, Edge-TTS neural engine",
+            tab_downloads
+        )
+        ver_list.setStyleSheet("color: #CBD5E1; font-size: 11px; line-height: 1.4;")
+        archive_layout.addWidget(ver_list)
+
+        archive_row = QHBoxLayout()
+        archive_row.addStretch()
+        btn_archive = QPushButton("🌐 View All Versions on GitHub", tab_downloads)
+        btn_archive.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_archive.setStyleSheet("background-color: #334155; color: #FFFFFF; font-size: 11px; padding: 5px 12px; border-radius: 4px;")
+        btn_archive.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(f"{GITHUB_URL}/releases")))
+        archive_row.addWidget(btn_archive)
+        archive_layout.addLayout(archive_row)
+
+        layout_down.addWidget(archive_box)
 
         layout_down.addStretch()
         self.tabs.addTab(tab_downloads, "📥 Downloads")

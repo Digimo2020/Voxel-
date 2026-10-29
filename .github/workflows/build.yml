@@ -45,9 +45,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Voxel-macOS-Package
+        if-no-files-found: warn
         path: |
           dist/Voxel.pkg
+          dist/Voxel-*.pkg
           dist/Voxel.dmg
+          dist/Voxel-*.dmg
           dist/Voxel-macOS.zip
 
     - name: Release macOS Assets
@@ -60,6 +63,7 @@ jobs:
           dist/Voxel.dmg
           dist/Voxel-*.dmg
           dist/Voxel-macOS.zip
+        fail_on_unmatched_files: false
         generate_release_notes: true
 
   build-windows:
@@ -90,6 +94,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Voxel-Windows-EXE
+        if-no-files-found: warn
         path: |
           dist/Voxel.exe
           dist/Voxel-*.exe
@@ -101,4 +106,5 @@ jobs:
         files: |
           dist/Voxel.exe
           dist/Voxel-*.exe
+        fail_on_unmatched_files: false
         generate_release_notes: true

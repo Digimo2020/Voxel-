@@ -137,28 +137,12 @@ We provide two distinct native installation methods for Mac users:
 
 ## 🚀 Quick Download & Installation
 
-###  For macOS Users
-
-| Package Format | Description | Target |
-| :--- | :--- | :--- |
-| [**📥 Download Voxel.pkg**](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.pkg) *(Recommended)* | Apple System-Wide Installer with embedded UX design preview wizard | `/Applications` (All Users) |
-| [**📥 Download Voxel.dmg**](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) | Standard drag-and-drop disk image | Portable / `/Applications` |
-
-#### Run from Source (macOS)
-```bash
-git clone https://github.com/Digimo2020/Voxel-.git
-cd Voxel-
-chmod +x run.sh
-./run.sh
-```
-
----
-
 ### ⊞ For Windows Users
 
-| Package Format | Description | Target |
-| :--- | :--- | :--- |
-| [**📥 Download Voxel.exe**](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) *(Recommended)* | Zero-dependency standalone Windows executable | Windows 10 / 11 |
+| Package Format | Version | Description | Target | Direct Download |
+| :--- | :---: | :--- | :---: | :---: |
+| **Voxel Windows Standalone** | **`v1.0.03`** *(Latest)* | Zero-dependency standalone portable executable | Windows 10 / 11 | [**📥 Download Voxel-v1.0.03.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.exe) *(Recommended)* |
+| **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
 #### Run from Source (Windows)
 ```powershell
@@ -170,6 +154,39 @@ pip install -r requirements.txt
 python main.py
 ```
 *(Or double-click `run.bat`).*
+
+---
+
+###  For macOS Users
+
+| Package Format | Version | Description | Target | Direct Download |
+| :--- | :---: | :--- | :---: | :---: |
+| **Apple System Package (.pkg)** | **`v1.0.03`** *(Latest)* | Guided Apple Installer with embedded UX preview wizard | `/Applications` (All Users) | [**📥 Download Voxel-v1.0.03.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.pkg) *(Recommended)* |
+| **Apple Disk Image (.dmg)** | **`v1.0.03`** *(Latest)* | Standard drag-and-drop disk image | Portable / `/Applications` | [**📥 Download Voxel-v1.0.03.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.dmg) |
+| **Apple Package (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.pkg` | `/Applications` | [📥 Download Voxel.pkg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.pkg) |
+| **Apple DMG (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.dmg` | Portable | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
+
+#### Run from Source (macOS)
+```bash
+git clone https://github.com/Digimo2020/Voxel-.git
+cd Voxel-
+chmod +x run.sh
+./run.sh
+```
+
+---
+
+## 📦 Releases & Version Archive (Historical Builds)
+
+All past and current versions are preserved below for historical reference and instant download:
+
+| Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
+| :---: | :---: | :---: | :---: | :---: | :--- |
+| **`v1.0.03`** | 🟢 **Latest** | [**📥 Voxel-v1.0.03.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.exe) | [**📥 Voxel-v1.0.03.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.pkg) | [**📥 Voxel-v1.0.03.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.dmg) | • Redesigned ultra-compact frosted acrylic glass player (310×48 capsule)<br>• Combined Play/Pause toggle (`▶` / `⏸`) with cyan glowing aura<br>• Clickable speed dropdown pill (`1.0x ▾`)<br>• Smooth 280ms fade-in and 1.0s auto-close fade-out<br>• Dual Obsidian Glass & Translucent themes |
+| **`v1.0.02`** | 📦 Archived | [📥 Voxel-v1.0.02.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.02/Voxel-v1.0.02.exe) | [📥 Voxel-v1.0.02.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.02/Voxel.pkg) | *(Bundled in .pkg)* | • Rebranded application from Text 2 Voice to **Voxel**<br>• Introduced Dark Obsidian Glass theme with high-contrast text<br>• Added macOS `.pkg` wizard with embedded UX previews<br>• Fixed VOXEL vector logo geometry width |
+| **`v1.0.01`** | 📦 Archived | [📥 Text2Voice-v1.0.01.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.01/Text2Voice-v1.0.01.exe) | [📥 Text2Voice-v1.0.01.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.01/Text2Voice.pkg) | *(Bundled in .pkg)* | • Initial release of Text 2 Voice desktop application<br>• Microsoft Edge-TTS neural voice streaming with offline fallback<br>• Floating trigger badge and animated mic equalizer |
+
+> 🔗 *To download release source code or view automated CI builds, visit the [GitHub Releases Directory](https://github.com/Digimo2020/Voxel-/releases).*
 
 ---
 

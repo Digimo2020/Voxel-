@@ -106,10 +106,33 @@ with open('build/pkg_resources/welcome.html', 'w', encoding='utf-8') as f:
     f.write(html)
 "
 
+VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.03")
+PLAIN_VER="${VERSION#v}"
+
+# Generate Distribution.xml dynamically for productbuild
+cat << EOF > build/Distribution.xml
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <title>Voxel</title>
+    <welcome file="welcome.html"/>
+    <options customize="never" require-scripts="false"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.digimo.voxel.app"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="com.digimo.voxel.app" visible="false">
+        <pkg-ref id="com.digimo.voxel.app"/>
+    </choice>
+    <pkg-ref id="com.digimo.voxel.app" version="${PLAIN_VER}" onConclusion="none">VoxelComponent.pkg</pkg-ref>
+</installer-gui-script>
+EOF
+
 # Component package installed to /Applications
 pkgbuild --root "$PKG_ROOT" \
          --identifier "com.digimo.voxel.app" \
-         --version "1.0.01" \
+         --version "${PLAIN_VER}" \
          --install-location "/Applications" \
          "dist/VoxelComponent.pkg"
 
