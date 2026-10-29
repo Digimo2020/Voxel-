@@ -320,7 +320,8 @@ class SettingsDialog(QDialog):
         archive_layout.addWidget(archive_desc)
 
         ver_list = QLabel(
-            f"• <b>{VERSION} (Current)</b> — Light glass round tray icon, single-instance lock (prevents duplicate icons)<br>"
+            f"• <b>{VERSION} (Current)</b> — Fix QBackingStore/SubWindow crash on macOS, thread-safe collision detection, valid ad-hoc codesign<br>"
+            "• <b>v1.0.06</b> — Light glass round tray icon, single-instance lock (prevents duplicate icons)<br>"
             "• <b>v1.0.05</b> — Round glass tray icon, multi-resolution HiDPI icons, embedded .ico<br>"
             "• <b>v1.0.04</b> — Bluish frosted glass floating trigger, Digimo product attribution & disclaimer<br>"
             "• <b>v1.0.03</b> — Ultra-compact frosted player (310×48), Play/Pause, speed dropdown<br>"

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer, QRectF, QPointF
 from PyQt6.QtGui import (
     QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent,
-    QRadialGradient, QEnterEvent
+    QRadialGradient, QLinearGradient, QEnterEvent
 )
 
 from src.config import BUBBLE_SIZE, BUBBLE_TIMEOUT_SECONDS, THEME
@@ -124,63 +124,64 @@ class FloatingBubble(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        s = float(self.width())
-        cx, cy = s / 2.0, s / 2.0
+            s = float(self.width())
+            cx, cy = s / 2.0, s / 2.0
 
-        # Ambient bluish glass aura / shadow
-        aura = QRadialGradient(cx, cy, s / 2.0)
-        alpha_aura = 75 if self.is_hovered else 40
-        aura.setColorAt(0.0, QColor(0, 140, 255, alpha_aura))
-        aura.setColorAt(0.65, QColor(99, 102, 241, int(alpha_aura * 0.45)))
-        aura.setColorAt(1.0, QColor(0, 0, 0, 0))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(aura))
-        painter.drawEllipse(QRectF(0, 0, s, s))
+            # Ambient bluish glass aura / shadow
+            aura = QRadialGradient(cx, cy, s / 2.0)
+            alpha_aura = 75 if self.is_hovered else 40
+            aura.setColorAt(0.0, QColor(0, 140, 255, alpha_aura))
+            aura.setColorAt(0.65, QColor(99, 102, 241, int(alpha_aura * 0.45)))
+            aura.setColorAt(1.0, QColor(0, 0, 0, 0))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(aura))
+            painter.drawEllipse(QRectF(0, 0, s, s))
 
-        # Frosted Bluish Glass Circle Background
-        badge_pad = 2.0
-        badge_rect = QRectF(badge_pad, badge_pad, s - 2 * badge_pad, s - 2 * badge_pad)
+            # Frosted Bluish Glass Circle Background
+            badge_pad = 2.0
+            badge_rect = QRectF(badge_pad, badge_pad, s - 2 * badge_pad, s - 2 * badge_pad)
 
-        # Translucent bluish acrylic gradient
-        bg_grad = QRadialGradient(cx, cy * 0.72, s * 0.70)
-        if self.is_hovered:
-            bg_grad.setColorAt(0.0, QColor(0, 160, 255, 235))   # Electric cyan-blue highlight
-            bg_grad.setColorAt(0.45, QColor(16, 68, 155, 220))  # Sapphire glass
-            bg_grad.setColorAt(0.85, QColor(10, 32, 85, 205))   # Deep azure
-            bg_grad.setColorAt(1.0, QColor(8, 22, 60, 195))     # Vignette edge
-            border_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomLeft())
-            border_grad.setColorAt(0.0, QColor(220, 245, 255, 240))
-            border_grad.setColorAt(0.45, QColor(56, 189, 248, 210))
-            border_grad.setColorAt(1.0, QColor(139, 92, 246, 190))
-            border_pen = QPen(QBrush(border_grad), 1.5)
-        else:
-            bg_grad.setColorAt(0.0, QColor(30, 125, 245, 195))  # Smooth bluish glass tone
-            bg_grad.setColorAt(0.40, QColor(14, 52, 125, 180))  # Frosted glass depth
-            bg_grad.setColorAt(0.80, QColor(8, 28, 75, 175))    # Translucent deep blue
-            bg_grad.setColorAt(1.0, QColor(6, 18, 50, 165))     # Soft boundary
-            border_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomLeft())
-            border_grad.setColorAt(0.0, QColor(190, 230, 255, 190))
-            border_grad.setColorAt(0.45, QColor(56, 189, 248, 140))
-            border_grad.setColorAt(1.0, QColor(129, 140, 248, 110))
-            border_pen = QPen(QBrush(border_grad), 1.3)
+            # Translucent bluish acrylic gradient
+            bg_grad = QRadialGradient(cx, cy * 0.72, s * 0.70)
+            if self.is_hovered:
+                bg_grad.setColorAt(0.0, QColor(0, 160, 255, 235))   # Electric cyan-blue highlight
+                bg_grad.setColorAt(0.45, QColor(16, 68, 155, 220))  # Sapphire glass
+                bg_grad.setColorAt(0.85, QColor(10, 32, 85, 205))   # Deep azure
+                bg_grad.setColorAt(1.0, QColor(8, 22, 60, 195))     # Vignette edge
+                border_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomLeft())
+                border_grad.setColorAt(0.0, QColor(220, 245, 255, 240))
+                border_grad.setColorAt(0.45, QColor(56, 189, 248, 210))
+                border_grad.setColorAt(1.0, QColor(139, 92, 246, 190))
+                border_pen = QPen(QBrush(border_grad), 1.5)
+            else:
+                bg_grad.setColorAt(0.0, QColor(30, 125, 245, 195))  # Smooth bluish glass tone
+                bg_grad.setColorAt(0.40, QColor(14, 52, 125, 180))  # Frosted glass depth
+                bg_grad.setColorAt(0.80, QColor(8, 28, 75, 175))    # Translucent deep blue
+                bg_grad.setColorAt(1.0, QColor(6, 18, 50, 165))     # Soft boundary
+                border_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomLeft())
+                border_grad.setColorAt(0.0, QColor(190, 230, 255, 190))
+                border_grad.setColorAt(0.45, QColor(56, 189, 248, 140))
+                border_grad.setColorAt(1.0, QColor(129, 140, 248, 110))
+                border_pen = QPen(QBrush(border_grad), 1.3)
 
-        painter.setBrush(QBrush(bg_grad))
-        painter.setPen(border_pen)
-        painter.drawEllipse(badge_rect)
+            painter.setBrush(QBrush(bg_grad))
+            painter.setPen(border_pen)
+            painter.drawEllipse(badge_rect)
 
-        # Specular Glass Gloss Arc / Highlight on upper dome
-        gloss_w = (s - 2 * badge_pad) * 0.76
-        gloss_h = (s - 2 * badge_pad) * 0.40
-        gloss_rect = QRectF(cx - gloss_w / 2.0, badge_pad + 2.5, gloss_w, gloss_h)
-        gloss_grad = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
-        gloss_alpha = 130 if self.is_hovered else 85
-        gloss_grad.setColorAt(0.0, QColor(255, 255, 255, gloss_alpha))
-        gloss_grad.setColorAt(0.65, QColor(180, 230, 255, int(gloss_alpha * 0.35)))
-        gloss_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setBrush(QBrush(gloss_grad))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(gloss_rect)
-
-        painter.end()
+            # Specular Glass Gloss Arc / Highlight on upper dome
+            gloss_w = (s - 2 * badge_pad) * 0.76
+            gloss_h = (s - 2 * badge_pad) * 0.40
+            gloss_rect = QRectF(cx - gloss_w / 2.0, badge_pad + 2.5, gloss_w, gloss_h)
+            gloss_grad = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
+            gloss_alpha = 130 if self.is_hovered else 85
+            gloss_grad.setColorAt(0.0, QColor(255, 255, 255, gloss_alpha))
+            gloss_grad.setColorAt(0.65, QColor(180, 230, 255, int(gloss_alpha * 0.35)))
+            gloss_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
+            painter.setBrush(QBrush(gloss_grad))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(gloss_rect)
+        finally:
+            painter.end()

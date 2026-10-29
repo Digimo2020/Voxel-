@@ -126,7 +126,7 @@ class MiniPlayer(QWidget):
 
         # Frameless, transparent floating tool window
         self.setWindowFlags(
-            Qt.WindowType.SubWindow |
+            Qt.WindowType.Tool |
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.NoDropShadowWindowHint
@@ -134,12 +134,6 @@ class MiniPlayer(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(48)
         self.setFixedWidth(310)
-
-        # Soft ethereal drop shadow for frosted glass depth
-        self.shadow_effect = QGraphicsDropShadowEffect(self)
-        self.shadow_effect.setBlurRadius(24)
-        self.shadow_effect.setOffset(0, 6)
-        self.setGraphicsEffect(self.shadow_effect)
 
         # Connect TTS engine signals
         self.tts.playback_started.connect(self._on_playback_started)
@@ -267,7 +261,6 @@ class MiniPlayer(QWidget):
             """)
             for sep in self._separators:
                 sep.setStyleSheet("background-color: rgba(255, 255, 255, 0.16);")
-            self.shadow_effect.setColor(QColor(0, 0, 0, 120))
 
         else:
             # ── Signature Frosted Glass (Light Acrylic Ethereal) ────────
@@ -311,7 +304,6 @@ class MiniPlayer(QWidget):
             """)
             for sep in self._separators:
                 sep.setStyleSheet("background-color: rgba(140, 160, 200, 0.30);")
-            self.shadow_effect.setColor(QColor(100, 140, 220, 80))
 
         self.update()
 
