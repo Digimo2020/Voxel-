@@ -21,6 +21,7 @@ taskkill /F /IM Voxel-%VERSION%.exe 2>nul
 
 :: 3. Run PyInstaller
 pyinstaller --noconfirm --onefile --windowed --name "Voxel" ^
+    --icon "assets/icon.ico" ^
     --collect-all edge_tts ^
     --collect-all certifi ^
     --hidden-import pynput.keyboard._win32 ^

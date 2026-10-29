@@ -92,35 +92,173 @@ def create_voxel_icon_pixmap(size: int = 64) -> QPixmap:
     return pix
 
 
-def create_app_icon(size: int = 64) -> QIcon:
-    """App Icon with frosted squircle and Voxel microphone."""
+def create_voxel_round_glass_pixmap(size: int = 32) -> QPixmap:
+    """
+    Renders an ultra-sharp, large Voxel microphone logo centered inside
+    a circular frosted bluish glass badge with specular gloss highlight and refractive rim.
+    Maximized area to ensure maximum legibility and presence in system tray and taskbars.
+    """
     pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
 
     painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-    # Rounded squircle background
-    r = size * 0.22
-    painter.setBrush(QBrush(QColor("#131625")))
-    painter.setPen(QPen(QColor(255, 255, 255, 45), 1.2))
-    painter.drawRoundedRect(QRectF(2, 2, size - 4, size - 4), r, r)
+    s = float(size)
+    cx, cy = s / 2.0, s / 2.0
+
+    # 1. Subtle Outer Cyan/Violet Glow
+    glow_rad = s / 2.0
+    glow = QRadialGradient(cx, cy, glow_rad)
+    glow.setColorAt(0.70, QColor(0, 132, 255, 60))
+    glow.setColorAt(0.95, QColor(124, 58, 237, 25))
+    glow.setColorAt(1.0, QColor(0, 0, 0, 0))
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QBrush(glow))
+    painter.drawEllipse(QRectF(0, 0, s, s))
+
+    # 2. Round Frosted Glass Circle (Maximizing size in tray area)
+    pad = max(1.0, s * 0.04)
+    badge_rect = QRectF(pad, pad, s - 2 * pad, s - 2 * pad)
+
+    bg_grad = QRadialGradient(cx, cy * 0.70, (s - 2 * pad) * 0.72)
+    bg_grad.setColorAt(0.0, QColor(0, 160, 255, 235))   # Luminous cyan highlight
+    bg_grad.setColorAt(0.38, QColor(16, 68, 155, 225))  # Frosted sapphire glass
+    bg_grad.setColorAt(0.80, QColor(10, 30, 85, 215))   # Translucent deep azure
+    bg_grad.setColorAt(1.0, QColor(6, 18, 50, 205))     # Deep boundary
+
+    border_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomLeft())
+    border_grad.setColorAt(0.0, QColor(220, 245, 255, 240))  # Specular bright rim top
+    border_grad.setColorAt(0.45, QColor(56, 189, 248, 200))  # Cyan glow
+    border_grad.setColorAt(1.0, QColor(139, 92, 246, 180))   # Violet glow bottom
+
+    border_w = max(1.0, s * 0.045)
+    border_pen = QPen(QBrush(border_grad), border_w)
+
+    painter.setBrush(QBrush(bg_grad))
+    painter.setPen(border_pen)
+    painter.drawEllipse(badge_rect)
+
+    # 3. Specular Glass Gloss Arc (Upper Dome Sheen)
+    gloss_w = (s - 2 * pad) * 0.78
+    gloss_h = (s - 2 * pad) * 0.40
+    gloss_rect = QRectF(cx - gloss_w / 2.0, pad + max(0.5, s * 0.03), gloss_w, gloss_h)
+    gloss_grad = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
+    gloss_grad.setColorAt(0.0, QColor(255, 255, 255, 130))
+    gloss_grad.setColorAt(0.65, QColor(180, 230, 255, 40))
+    gloss_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
+    painter.setBrush(QBrush(gloss_grad))
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.drawEllipse(gloss_rect)
+
+    # 4. Large Centered Logo Vector ("as big as you can do in this area")
+    usable_d = (s - 2 * pad) * 0.84
+    scale = usable_d / 71.5
+    logo_cy = cy - 6.5 * scale
+
+    # Cradle
+    cradle_stroke = max(1.4, 7.8 * scale)
+    grad_cradle = QLinearGradient(cx - 30 * scale, logo_cy + 30 * scale, cx + 30 * scale, logo_cy - 30 * scale)
+    grad_cradle.setColorAt(0.0, QColor("#A78BFA"))  # Bright violet
+    grad_cradle.setColorAt(0.4, QColor("#818CF8"))  # Periwinkle/indigo
+    grad_cradle.setColorAt(1.0, QColor("#38BDF8"))  # Bright sky cyan
+
+    pen_cradle = QPen(
+        QBrush(grad_cradle),
+        cradle_stroke,
+        Qt.PenStyle.SolidLine,
+        Qt.PenCapStyle.RoundCap,
+        Qt.PenJoinStyle.RoundJoin
+    )
+    painter.setPen(pen_cradle)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+
+    cradle_path = QPainterPath()
+    cradle_path.moveTo(cx - 26 * scale, logo_cy - 10 * scale)
+    cradle_path.cubicTo(
+        cx - 26 * scale, logo_cy + 18 * scale,
+        cx - 18 * scale, logo_cy + 28 * scale,
+        cx - 10 * scale, logo_cy + 32 * scale
+    )
+    cradle_path.lineTo(cx - 15 * scale, logo_cy + 44 * scale)
+    cradle_path.lineTo(cx - 2 * scale, logo_cy + 33 * scale)
+    cradle_path.cubicTo(
+        cx + 16 * scale, logo_cy + 33 * scale,
+        cx + 26 * scale, logo_cy + 20 * scale,
+        cx + 26 * scale, logo_cy - 10 * scale
+    )
+    painter.drawPath(cradle_path)
+
+    # Microphone capsule
+    mic_w = 34 * scale
+    mic_h = 45 * scale
+    mic_x = cx - mic_w / 2.0
+    mic_y = logo_cy - mic_h / 2.0 - 5 * scale
+    mic_r = mic_w / 2.0
+
+    grad_mic = QLinearGradient(mic_x, mic_y + mic_h, mic_x + mic_w, mic_y)
+    grad_mic.setColorAt(0.0, QColor("#0072FF"))
+    grad_mic.setColorAt(1.0, QColor("#38BDF8"))
+
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QBrush(grad_mic))
+    painter.drawRoundedRect(QRectF(mic_x, mic_y, mic_w, mic_h), mic_r, mic_r)
+
+    # Glass Specular Highlight on Mic Capsule
+    spec_w = mic_w * 0.70
+    spec_h = mic_h * 0.36
+    spec_x = cx - spec_w / 2.0
+    spec_y = mic_y + 1.8 * scale
+    spec_grad = QLinearGradient(spec_x, spec_y, spec_x, spec_y + spec_h)
+    spec_grad.setColorAt(0.0, QColor(255, 255, 255, 170))
+    spec_grad.setColorAt(0.7, QColor(255, 255, 255, 40))
+    spec_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
+    painter.setBrush(QBrush(spec_grad))
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.drawRoundedRect(QRectF(spec_x, spec_y, spec_w, spec_h), spec_w / 2.0, spec_w / 2.0)
+
+    # 3 lines
+    line_thickness = max(1.2, 3.6 * scale)
+    line_pen = QPen(QColor("#FFFFFF"), line_thickness, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(line_pen)
+
+    hw_top = 7.0 * scale
+    hw_mid = 10.0 * scale
+    hw_bot = 8.0 * scale
+
+    y_top = logo_cy - 10 * scale
+    y_mid = logo_cy - 4 * scale
+    y_bot = logo_cy + 2 * scale
+
+    painter.drawLine(QPointF(cx - hw_top, y_top), QPointF(cx + hw_top, y_top))
+    painter.drawLine(QPointF(cx - hw_mid, y_mid), QPointF(cx + hw_mid, y_mid))
+    painter.drawLine(QPointF(cx - hw_bot, y_bot), QPointF(cx + hw_bot, y_bot))
+
     painter.end()
-
-    # Draw logo centered
-    logo_pix = create_voxel_icon_pixmap(int(size * 0.72))
-    painter = QPainter(pix)
-    offset = int(size * 0.14)
-    painter.drawPixmap(offset, offset, logo_pix)
-    painter.end()
-
-    return QIcon(pix)
+    return pix
 
 
 def create_tray_icon(size: int = 32) -> QIcon:
-    """Menu bar / tray icon."""
-    pix = create_voxel_icon_pixmap(size)
-    return QIcon(pix)
+    """
+    Menu bar / system tray icon with multi-resolution round glass shape.
+    Supports 16, 20, 24, 32, 48, 64 px for native HiDPI rendering.
+    """
+    icon = QIcon()
+    for sz in [16, 20, 24, 32, 48, 64]:
+        icon.addPixmap(create_voxel_round_glass_pixmap(sz))
+    return icon
+
+
+def create_app_icon(size: int = 64) -> QIcon:
+    """
+    App window icon with multi-resolution round glass shape and large Voxel microphone.
+    Supports 16, 20, 24, 32, 48, 64, 128, 256 px.
+    """
+    icon = QIcon()
+    for sz in [16, 20, 24, 32, 48, 64, 128, 256]:
+        icon.addPixmap(create_voxel_round_glass_pixmap(sz))
+    return icon
 
 
 def create_play_icon(size: int = 24, color: str = "#FFFFFF") -> QIcon:

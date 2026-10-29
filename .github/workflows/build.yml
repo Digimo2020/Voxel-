@@ -87,7 +87,7 @@ jobs:
 
     - name: Compile Standalone Windows Executable
       run: |
-        pyinstaller --noconfirm --onefile --windowed --name "Voxel" --collect-all edge_tts --collect-all certifi --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 main.py
+        pyinstaller --noconfirm --onefile --windowed --name "Voxel" --icon "assets/icon.ico" --collect-all edge_tts --collect-all certifi --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 main.py
         python -c "from src.utils.version import CURRENT_VERSION; import shutil; shutil.copy('dist/Voxel.exe', f'dist/Voxel-{CURRENT_VERSION}.exe'); print(f'Created dist/Voxel-{CURRENT_VERSION}.exe')"
 
     - name: Upload Windows Artifact
