@@ -47,6 +47,11 @@ mkdir -p "dist/Voxel.app/Contents/Resources/screenshots"
 cp assets/branding/*.png "dist/Voxel.app/Contents/Resources/screenshots/" 2>/dev/null || true
 cp assets/voxel_mac_preview.png "dist/Voxel.app/Contents/Resources/screenshots/" 2>/dev/null || true
 
+# 2.5 Re-sign application bundle (ad-hoc) after Plist & Resource modifications
+echo "2.5 Signing Voxel.app bundle (ad-hoc)..."
+codesign --force --deep --sign - "dist/Voxel.app"
+codesign --verify --verbose=2 "dist/Voxel.app"
+
 # 3. Build .pkg installer (targeting /Applications for all users)
 echo "3. Building installable .pkg for /Applications..."
 PKG_ROOT="build/pkg_root"
@@ -153,6 +158,21 @@ if command -v hdiutil &> /dev/null; then
     mkdir -p "$DMG_DIR"
     cp -R "dist/Voxel.app" "$DMG_DIR/"
     ln -s /Applications "$DMG_DIR/Applications"
+
+    cat << 'EOF' > "$DMG_DIR/Fix Gatekeeper (If App Damaged).command"
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo "=========================================================="
+echo " Voxel - Removing Gatekeeper Quarantine on macOS"
+echo "=========================================================="
+xattr -cr /Applications/Voxel.app 2>/dev/null || true
+xattr -cr "$DIR/Voxel.app" 2>/dev/null || true
+echo "Success! Quarantine attributes cleared."
+echo "You can now open Voxel normally from Applications."
+echo "=========================================================="
+EOF
+    chmod +x "$DMG_DIR/Fix Gatekeeper (If App Damaged).command"
+
     hdiutil create -volname "Voxel" -srcfolder "$DMG_DIR" -ov -format UDZO "dist/Voxel.dmg" 2>/dev/null || true
     rm -rf "$DMG_DIR"
 fi

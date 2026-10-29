@@ -166,6 +166,26 @@ python main.py
 | **Apple Package (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.pkg` | `/Applications` | [📥 Download Voxel.pkg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.pkg) |
 | **Apple DMG (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.dmg` | Portable | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
+> [!TIP]
+> #### 🛡️ Fixing "Voxel is damaged and can't be opened" on macOS
+> Because Voxel is a free open-source project built without a paid Apple Developer ID signature ($99/yr), macOS Gatekeeper attaches a quarantine flag to files downloaded via Chrome or Safari.
+>
+> If macOS shows **`"Voxel" is damaged and can't be opened. You should move it to the Trash`**:
+> 
+> **Option 1 (Fastest — 1-Line Terminal Fix)**:
+> ```bash
+> xattr -cr /Applications/Voxel.app
+> ```
+> *Press Enter, then open Voxel normally from your Applications folder or Launchpad!*
+> 
+> **Option 2 (macOS System Settings)**:
+> 1. Open **System Settings** → **Privacy & Security**.
+> 2. Scroll down to the **Security** section.
+> 3. Click **"Open Anyway"** next to the notification for Voxel.
+> 
+> **Option 3 (From Disk Image)**:
+> Inside `Voxel.dmg`, simply double-click **`Fix Gatekeeper (If App Damaged).command`**.
+
 #### Run from Source (macOS)
 ```bash
 git clone https://github.com/Digimo2020/Voxel-.git
