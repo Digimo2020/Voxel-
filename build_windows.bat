@@ -1,46 +1,64 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 
 echo ===================================================
-echo   Voxel - Windows Standalone Executable Builder
+echo   Voxel - Windows Standalone Package Builder
 echo ===================================================
 
-:: 1. Extract Current Version
-for /f "tokens=2 delims==" %%i in ('findstr "CURRENT_VERSION" src\utils\version.py') do (
-    set RAW_VER=%%i
+for /f "tokens=2 delims==" %%i in ('findstr "CURRENT_VERSION" src\utils\version.py') do set "RAW_VER=%%i"
+set "VERSION=%RAW_VER:"=%"
+set "VERSION=%VERSION: =%"
+if not defined VERSION (
+    echo [ERROR] Could not read CURRENT_VERSION from src\utils\version.py
+    exit /b 1
 )
-:: Trim quotes and spaces
-set VERSION=%RAW_VER:"=%
-set VERSION=%VERSION: =%
 
-echo Building Voxel %VERSION% for Windows...
+set "PACKAGE_DIR=dist\Voxel-%VERSION%"
+echo Building Voxel %VERSION% into %PACKAGE_DIR%...
 
-:: 2. Stop any running Voxel instances
-taskkill /F /IM Voxel.exe 2>nul
-taskkill /F /IM Voxel-%VERSION%.exe 2>nul
-
-:: 3. Run PyInstaller
-pyinstaller --noconfirm --onefile --windowed --name "Voxel" ^
-    --icon "assets/icon.ico" ^
+pyinstaller --clean --noconfirm --onedir --windowed --name "Voxel" ^
+    --distpath "%PACKAGE_DIR%" ^
+    --workpath "build\windows-%VERSION%" ^
+    --icon "assets\icon.ico" ^
     --collect-all edge_tts ^
     --collect-all certifi ^
+    --collect-all PyQt6.QtMultimedia ^
+    --hidden-import PyQt6.QtMultimedia ^
     --hidden-import pynput.keyboard._win32 ^
     --hidden-import pynput.mouse._win32 ^
     main.py
 
-if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] PyInstaller build failed!
-    exit /b %ERRORLEVEL%
+if errorlevel 1 (
+    echo [ERROR] PyInstaller build failed.
+    exit /b 1
 )
 
-:: 4. Archive versioned executable (preserving previous versions in dist\)
-copy /Y "dist\Voxel.exe" "dist\Voxel-%VERSION%.exe"
+copy /Y "%PACKAGE_DIR%\Voxel\Voxel.exe" "%PACKAGE_DIR%\Voxel\Voxel-%VERSION%.exe" >nul
+if errorlevel 1 (
+    echo [ERROR] Could not create the versioned executable.
+    exit /b 1
+)
+
+if defined VOXEL_SIGN_CERT (
+    if not defined VOXEL_SIGN_PASSWORD (
+        echo [ERROR] VOXEL_SIGN_CERT is set but VOXEL_SIGN_PASSWORD is missing.
+        exit /b 1
+    )
+    where signtool.exe >nul 2>nul
+    if errorlevel 1 (
+        echo [ERROR] signtool.exe is required when VOXEL_SIGN_CERT is set.
+        exit /b 1
+    )
+    for /r "%PACKAGE_DIR%\Voxel" %%F in (*.exe *.dll) do (
+        signtool sign /fd SHA256 /f "%VOXEL_SIGN_CERT%" /p "%VOXEL_SIGN_PASSWORD%" /tr https://timestamp.digicert.com /td SHA256 "%%F"
+        if errorlevel 1 exit /b 1
+    )
+) else (
+    echo [NOTICE] Package is unsigned. Set VOXEL_SIGN_CERT and VOXEL_SIGN_PASSWORD to sign all EXE and DLL files.
+)
 
 echo ===================================================
-echo   BUILD COMPLETE!
-echo   - Latest Executable   : dist\Voxel.exe
-echo   - Versioned Executable: dist\Voxel-%VERSION%.exe
-echo   - All previous versions preserved in dist\
+echo   BUILD COMPLETE
+echo   Package folder: %PACKAGE_DIR%\Voxel
+echo   Distribute the entire Voxel folder, not only Voxel.exe.
 echo ===================================================
-dir dist\*.exe
-pause
