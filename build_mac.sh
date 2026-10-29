@@ -134,6 +134,10 @@ if command -v hdiutil &> /dev/null; then
     rm -rf "$DMG_DIR"
 fi
 
+VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.03")
+cp dist/Voxel.pkg "dist/Voxel-${VERSION}.pkg" 2>/dev/null || true
+cp dist/Voxel.dmg "dist/Voxel-${VERSION}.dmg" 2>/dev/null || true
+
 echo "=============================================="
 echo " BUILD COMPLETE!"
 echo " - Standalone App Bundle : dist/Voxel.app"
