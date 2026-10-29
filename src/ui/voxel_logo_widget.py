@@ -152,6 +152,19 @@ class VoxelLogoWidget(QWidget):
         painter.setBrush(QBrush(grad_mic))
         painter.drawRoundedRect(QRectF(mic_x, mic_y, mic_w, mic_h), mic_r, mic_r)
 
+        # 3b. Glass Specular Dome on Mic Capsule (Glossy Glass Effect)
+        spec_w = mic_w * 0.70
+        spec_h = mic_h * 0.36
+        spec_x = cx - spec_w / 2.0
+        spec_y = mic_y + 2.0 * scale
+        spec_grad = QLinearGradient(spec_x, spec_y, spec_x, spec_y + spec_h)
+        spec_grad.setColorAt(0.0, QColor(255, 255, 255, 140))
+        spec_grad.setColorAt(0.65, QColor(255, 255, 255, 30))
+        spec_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
+        painter.setBrush(QBrush(spec_grad))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRoundedRect(QRectF(spec_x, spec_y, spec_w, spec_h), spec_w / 2.0, spec_w / 2.0)
+
         # 4. Three Voice Lines Inside the Microphone (Animated)
         line_thickness = max(1.8, 3.8 * scale)
         line_pen = QPen(QColor("#FFFFFF"), line_thickness, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)

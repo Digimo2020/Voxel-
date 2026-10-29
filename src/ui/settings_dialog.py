@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QCursor, QDesktopServices
 
-from src.config import THEME, VOICES, SPEED_STEPS, VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC
+from src.config import THEME, VOICES, SPEED_STEPS, VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC, COMPANY_NAME, COMPANY_URL
 from src.utils.settings import settings_db
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from src.ui.voxel_logo_widget import VoxelLogoWidget
@@ -25,7 +25,7 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{APP_NAME} — Settings & Preferences")
-        self.setFixedSize(540, 580)
+        self.setFixedSize(560, 640)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(f"""
             QDialog {{
@@ -320,7 +320,8 @@ class SettingsDialog(QDialog):
         archive_layout.addWidget(archive_desc)
 
         ver_list = QLabel(
-            "• <b>v1.0.03 (Current)</b> — Ultra-compact frosted player (310×48), Play/Pause, speed dropdown<br>"
+            f"• <b>{VERSION} (Current)</b> — Bluish glass floating trigger, Digimo product attribution & disclaimer<br>"
+            "• <b>v1.0.03</b> — Ultra-compact frosted player (310×48), Play/Pause, speed dropdown<br>"
             "• <b>v1.0.02</b> — Voxel rebrand, Dark Obsidian theme, macOS PKG wizard<br>"
             "• <b>v1.0.01</b> — Initial Text 2 Voice release, Edge-TTS neural engine",
             tab_downloads
@@ -350,7 +351,7 @@ class SettingsDialog(QDialog):
 
         # Header with Logo & Brand
         header_row = QHBoxLayout()
-        header_logo = VoxelLogoWidget(size=44, animated=True, parent=tab_about)
+        header_logo = VoxelLogoWidget(size=46, animated=True, parent=tab_about)
         header_row.addWidget(header_logo)
 
         header_text = QVBoxLayout()
@@ -358,8 +359,8 @@ class SettingsDialog(QDialog):
         title_lbl.setStyleSheet("color: #FFFFFF; font-size: 20px; font-weight: 800;")
         header_text.addWidget(title_lbl)
 
-        sub_lbl = QLabel(f"{APP_TAGLINE}", self)
-        sub_lbl.setStyleSheet("color: #0084FF; font-size: 11px; font-weight: 700; letter-spacing: 1px;")
+        sub_lbl = QLabel(f"{APP_TAGLINE}  •  A {COMPANY_NAME} Product", self)
+        sub_lbl.setStyleSheet("color: #0084FF; font-size: 11px; font-weight: 700; letter-spacing: 0.8px;")
         header_text.addWidget(sub_lbl)
         header_row.addLayout(header_text)
         header_row.addStretch()
@@ -368,45 +369,89 @@ class SettingsDialog(QDialog):
         # Version Pill Box
         ver_box = QGroupBox("Version Information", self)
         ver_layout = QVBoxLayout(ver_box)
-        ver_layout.setSpacing(6)
+        ver_layout.setSpacing(4)
 
-        lbl_ver = QLabel(f"Current Version: <b><font color='#0084FF'>{VERSION}</font></b>", self)
+        lbl_ver = QLabel(f"Current Version: <b><font color='#0084FF'>{VERSION}</font></b>  <font color='#64748B'>(Base-10 Rollover)</font>", self)
         ver_layout.addWidget(lbl_ver)
 
         lbl_ver_rule = QLabel(
-            "Structure: <code>v&lt;Major&gt;.&lt;Minor&gt;.&lt;Patch:02d&gt;</code><br>"
-            "Base-10 rollover scheme: increments patch, minor on 10th, major on 100th.", self
+            "Structure: <code>v&lt;Major&gt;.&lt;Minor&gt;.&lt;Patch:02d&gt;</code> • "
+            "Local machine operation only • No telemetry", self
         )
         lbl_ver_rule.setStyleSheet("color: #94A3B8; font-size: 11px;")
         ver_layout.addWidget(lbl_ver_rule)
         layout_about.addWidget(ver_box)
 
-        # GitHub Project Info Box
-        gh_box = QGroupBox("Open Source Repository", self)
-        gh_layout = QVBoxLayout(gh_box)
-        gh_layout.setSpacing(8)
+        # Digimo & Open Source Box
+        digimo_box = QGroupBox("🏢 Digimo Product & Open Source Freedom", self)
+        digimo_layout = QVBoxLayout(digimo_box)
+        digimo_layout.setSpacing(8)
 
-        lbl_author = QLabel("Created & Maintained by: <b>Digimo2020</b>", self)
-        gh_layout.addWidget(lbl_author)
+        lbl_digimo_desc = QLabel(
+            f"Voxel is an open-source product from <b>{COMPANY_NAME}</b>.<br>"
+            "This software is <b>completely free and open source</b> with no copyright restrictions. "
+            "Anyone is welcome to experiment, build upon it, make it more modern, and contribute.",
+            self
+        )
+        lbl_digimo_desc.setStyleSheet("color: #E2E8F0; font-size: 12px; line-height: 1.45;")
+        lbl_digimo_desc.setWordWrap(True)
+        digimo_layout.addWidget(lbl_digimo_desc)
 
-        btn_gh = QPushButton(f"🌐 GitHub: {GITHUB_URL}", self)
+        links_row = QHBoxLayout()
+        btn_website = QPushButton(f"🌐 Visit Digimo ({COMPANY_URL})", self)
+        btn_website.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_website.setStyleSheet("""
+            QPushButton {
+                background-color: #0084FF;
+                color: #FFFFFF;
+                font-weight: 700;
+                padding: 6px 14px;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #0072FF;
+            }
+        """)
+        btn_website.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(COMPANY_URL)))
+        links_row.addWidget(btn_website)
+
+        btn_gh = QPushButton("🐙 GitHub Repository", self)
         btn_gh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_gh.setStyleSheet("""
-            QPushButton {{
+            QPushButton {
                 background-color: rgba(0, 132, 255, 0.15);
                 border: 1px solid rgba(0, 132, 255, 0.5);
                 color: #38BDF8;
-                padding: 6px 12px;
-            }}
-            QPushButton:hover {{
+                padding: 6px 14px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
                 background-color: rgba(0, 132, 255, 0.3);
                 color: #FFFFFF;
-            }}
+            }
         """)
         btn_gh.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
-        gh_layout.addWidget(btn_gh)
+        links_row.addWidget(btn_gh)
+        digimo_layout.addLayout(links_row)
+        layout_about.addWidget(digimo_box)
 
-        layout_about.addWidget(gh_box)
+        # Disclaimer & Setup Guide Box
+        disclaimer_box = QGroupBox("⚖️ Disclaimer & Setup Guide", self)
+        disclaimer_layout = QVBoxLayout(disclaimer_box)
+        disclaimer_layout.setSpacing(6)
+
+        lbl_disclaimer = QLabel(
+            "<b>Disclaimer:</b> Provided 'as is' for personal and experimental use. "
+            "Digimo and creators assume no responsibility or liability for any use or outcome. "
+            "Please read the included setup guides and documentation before configuring on your machine.",
+            self
+        )
+        lbl_disclaimer.setStyleSheet("color: #94A3B8; font-size: 11px; line-height: 1.4;")
+        lbl_disclaimer.setWordWrap(True)
+        disclaimer_layout.addWidget(lbl_disclaimer)
+
+        layout_about.addWidget(disclaimer_box)
         layout_about.addStretch()
 
         self.tabs.addTab(tab_about, "ℹ️ About Voxel")

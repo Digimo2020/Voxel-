@@ -10,6 +10,8 @@ APP_NAME = "Voxel"
 APP_TAGLINE = "TEXT TO SPEECH, ANYWHERE"
 VERSION = CURRENT_VERSION
 GITHUB_URL = GITHUB_REPO_URL
+COMPANY_NAME = "Digimo"
+COMPANY_URL = "https://www.digimo.pt/"
 IS_MAC = sys.platform == "darwin"
 
 # Voice Profiles (Edge-TTS Neural Voices)
