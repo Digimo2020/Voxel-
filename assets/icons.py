@@ -7,7 +7,51 @@ from PyQt6.QtGui import (
     QPainterPath, QLinearGradient, QRadialGradient
 )
 from PyQt6.QtCore import Qt, QPointF, QRectF
+import os
+import sys
 import math
+
+_SVG_RENDERER = None
+
+def _get_final_svg_renderer():
+    """Lazily loads the official Voxel Logo SVG from assets/branding/svg/fiNAL/."""
+    global _SVG_RENDERER
+    if _SVG_RENDERER is not None:
+        return _SVG_RENDERER
+    try:
+        from PyQt6.QtSvg import QSvgRenderer
+        base_dir = os.path.dirname(__file__)
+        candidate_paths = [
+            os.path.join(base_dir, "branding", "svg", "fiNAL", "Voxel Logo.svg"),
+            os.path.join(base_dir, "..", "assets", "branding", "svg", "fiNAL", "Voxel Logo.svg"),
+            os.path.join(os.getcwd(), "assets", "branding", "svg", "fiNAL", "Voxel Logo.svg"),
+        ]
+        if hasattr(sys, "_MEIPASS"):
+            candidate_paths.insert(0, os.path.join(sys._MEIPASS, "assets", "branding", "svg", "fiNAL", "Voxel Logo.svg"))
+        for p in candidate_paths:
+            if os.path.exists(p):
+                renderer = QSvgRenderer(p)
+                if renderer.isValid():
+                    _SVG_RENDERER = renderer
+                    return _SVG_RENDERER
+    except Exception:
+        pass
+    return None
+
+
+def create_svg_tray_pixmap(size: int = 32) -> QPixmap:
+    """Renders the official fiNAL Voxel Logo SVG into an anti-aliased QPixmap."""
+    renderer = _get_final_svg_renderer()
+    if renderer is not None:
+        pix = QPixmap(size, size)
+        pix.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pix)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        renderer.render(painter, QRectF(0, 0, float(size), float(size)))
+        painter.end()
+        return pix
+    return create_voxel_round_glass_pixmap(size)
 
 
 def create_voxel_icon_pixmap(size: int = 64) -> QPixmap:
@@ -244,23 +288,23 @@ def create_voxel_round_glass_pixmap(size: int = 32) -> QPixmap:
 
 def create_tray_icon(size: int = 32) -> QIcon:
     """
-    Menu bar / system tray icon with multi-resolution round glass shape.
+    Menu bar / system tray icon rendered with the official Voxel Logo SVG from fiNAL.
     Supports 16, 20, 24, 32, 48, 64 px for native HiDPI rendering.
     """
     icon = QIcon()
     for sz in [16, 20, 24, 32, 48, 64]:
-        icon.addPixmap(create_voxel_round_glass_pixmap(sz))
+        icon.addPixmap(create_svg_tray_pixmap(sz))
     return icon
 
 
 def create_app_icon(size: int = 64) -> QIcon:
     """
-    App window icon with multi-resolution round glass shape and large Voxel microphone.
+    App window and taskbar icon rendered with the official Voxel Logo SVG from fiNAL.
     Supports 16, 20, 24, 32, 48, 64, 128, 256 px.
     """
     icon = QIcon()
     for sz in [16, 20, 24, 32, 48, 64, 128, 256]:
-        icon.addPixmap(create_voxel_round_glass_pixmap(sz))
+        icon.addPixmap(create_svg_tray_pixmap(sz))
     return icon
 
 

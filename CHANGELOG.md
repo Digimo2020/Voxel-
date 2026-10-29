@@ -9,6 +9,17 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.00] - 2026-10-29
+
+### Added & Enhanced
+- **Official Vector SVG Startup Bar & System Tray Logo**:
+  - Integrated the official vector logo from `assets/branding/svg/fiNAL/Voxel Logo.svg`.
+  - Replaced procedural icon generation in `assets/icons.py` with direct `QSvgRenderer` vector rendering across all resolutions (16px, 20px, 24px, 32px, 48px, 64px, 128px, 256px).
+  - Regenerated `assets/icon.ico` with full multi-size Windows icon layers matching the official logo.
+  - Bundled asset paths in PyInstaller standalone packages (`--add-data "assets;assets"`).
+
+---
+
 ## [v1.0.09] - 2026-10-29
 
 ### Fixed

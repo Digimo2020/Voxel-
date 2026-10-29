@@ -9,6 +9,7 @@ echo.
 
 python -m PyInstaller --noconfirm --onefile --windowed --name "Voxel" ^
     --icon "assets/icon.ico" ^
+    --add-data "assets;assets" ^
     --collect-all edge_tts ^
     --collect-all certifi ^
     --hidden-import pynput.keyboard._win32 ^
