@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.0.08-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.08"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.0.09-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.09"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
   <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
@@ -141,7 +141,7 @@ We provide two distinct native installation methods for Mac users:
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel Windows Standalone** | **`v1.0.08`** *(Latest)* | Zero-dependency standalone portable executable with embedded icon & single-instance lock | Windows 10 / 11 | [**📥 Download Voxel-v1.0.08.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.exe) *(Recommended)* |
+| **Voxel Windows Standalone** | **`v1.0.09`** *(Latest)* | Zero-dependency standalone portable executable with embedded icon & single-instance lock | Windows 10 / 11 | [**📥 Download Voxel-v1.0.09.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.exe) *(Recommended)* |
 | **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
 #### Run from Source (Windows)
@@ -161,8 +161,8 @@ python main.py
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Apple System Package (.pkg)** | **`v1.0.08`** *(Latest)* | Guided Apple Installer with embedded UX preview wizard | `/Applications` (All Users) | [**📥 Download Voxel-v1.0.08.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.pkg) *(Recommended)* |
-| **Apple Disk Image (.dmg)** | **`v1.0.08`** *(Latest)* | Standard drag-and-drop disk image | Portable / `/Applications` | [**📥 Download Voxel-v1.0.08.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.dmg) |
+| **Apple System Package (.pkg)** | **`v1.0.09`** *(Latest)* | Guided Apple Installer with embedded UX preview wizard | `/Applications` (All Users) | [**📥 Download Voxel-v1.0.09.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.pkg) *(Recommended)* |
+| **Apple Disk Image (.dmg)** | **`v1.0.09`** *(Latest)* | Standard drag-and-drop disk image | Portable / `/Applications` | [**📥 Download Voxel-v1.0.09.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.dmg) |
 | **Apple Package (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.pkg` | `/Applications` | [📥 Download Voxel.pkg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.pkg) |
 | **Apple DMG (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.dmg` | Portable | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
@@ -202,7 +202,8 @@ All past and current versions are preserved below for historical reference and i
 
 | Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
 | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`v1.0.08`** | 🟢 **Latest** | [**📥 Voxel-v1.0.08.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.exe) | [**📥 Voxel-v1.0.08.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.pkg) | [**📥 Voxel-v1.0.08.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.dmg) | • Automatic Windows native MCI audio engine fallback (bypasses Windows Application Control policy blocking QtMultimedia)<br>• Thread-safe queued audio playback dispatch<br>• Universal Python 3.14+ launcher and PyInstaller builder<br>• Preserved historical version archive policy (`VERSIONING_RULES.md`) |
+| **`v1.0.09`** | 🟢 **Latest** | [**📥 Voxel-v1.0.09.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.exe) | [**📥 Voxel-v1.0.09.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.pkg) | [**📥 Voxel-v1.0.09.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.dmg) | • Excluded unused `QtMultimedia`, `windowsmediaplugin.dll`, and `ffmpegmediaplugin.dll` from Windows executable<br>• Fully resolves Windows 11 Smart App Control (SAC) *"Part of this app has been blocked"* alert<br>• Zero-dependency native Windows MCI (`winmm.dll`) audio playback<br>• Preserved historical version archive policy (`VERSIONING_RULES.md`) |
+| **`v1.0.08`** | 📦 Archived | [📥 Voxel-v1.0.08.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.exe) | [📥 Voxel-v1.0.08.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.pkg) | [📥 Voxel-v1.0.08.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.dmg) | • Automatic Windows native MCI audio engine fallback<br>• Thread-safe queued audio playback dispatch<br>• Universal Python 3.14+ launcher and PyInstaller builder |
 | **`v1.0.07`** | 📦 Archived | [📥 Voxel-v1.0.07.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.07/Voxel-v1.0.07.exe) | [📥 Voxel-v1.0.07.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.07/Voxel-v1.0.07.pkg) | [📥 Voxel-v1.0.07.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.07/Voxel-v1.0.07.dmg) | • Fixed macOS `QPaintDevice::devicePixelRatio` crash in `QBackingStore::flush`<br>• Fixed missing `QLinearGradient` and exception safety in floating trigger `paintEvent`<br>• Switched MiniPlayer window flags from invalid `SubWindow` to `Tool`<br>• Thread-safe collision geometry caching (eliminates cross-thread QWidget access)<br>• Automated ad-hoc codesigning verification and gatekeeper bypass helper |
 | **`v1.0.06`** | 📦 Archived | [📥 Voxel-v1.0.06.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.06/Voxel-v1.0.06.exe) | [📥 Voxel-v1.0.06.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.06/Voxel-v1.0.06.pkg) | [📥 Voxel-v1.0.06.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.06/Voxel-v1.0.06.dmg) | • Light frosted glass round tray icon (larger & high contrast for light taskbars)<br>• Single-instance process lock (prevents duplicate tray icons)<br>• Embedded Windows .ico application icon<br>• Preserved historical release archive |
 | **`v1.0.05`** | 📦 Archived | [📥 Voxel-v1.0.05.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.05/Voxel-v1.0.05.exe) | [📥 Voxel-v1.0.05.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.05/Voxel-v1.0.05.pkg) | [📥 Voxel-v1.0.05.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.05/Voxel-v1.0.05.dmg) | • Large round glass tray icon maximized for taskbar legibility<br>• Multi-resolution HiDPI icons (16–256px) for Windows & macOS<br>• Embedded Windows .ico application icon |

@@ -16,17 +16,25 @@ import edge_tts
 from PyQt6.QtCore import QObject, pyqtSignal, QUrl, QTimer, Qt
 import ctypes
 
-try:
-    from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
-    HAS_QT_MULTIMEDIA = True
-except (ImportError, Exception) as _qt_media_err:
-    print(f"[TTS Engine] QtMultimedia unavailable ({_qt_media_err}), falling back to native OS audio.")
+from src.config import VOICES, DEFAULT_SPEED, DEFAULT_VOICE_INDEX, IS_MAC
+from src.utils.history import history_db
+
+if IS_MAC:
+    try:
+        from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+        HAS_QT_MULTIMEDIA = True
+    except (ImportError, Exception) as _qt_media_err:
+        print(f"[TTS Engine] QtMultimedia unavailable ({_qt_media_err}), falling back to native macOS audio.")
+        HAS_QT_MULTIMEDIA = False
+        QMediaPlayer = None
+        QAudioOutput = None
+else:
+    # On Windows, use native Windows MCI (winmm.dll) directly.
+    # This prevents Windows Smart App Control (SAC) from triggering "Part of this app has been blocked"
+    # caused by unsigned ffmpegmediaplugin.dll and QtMultimedia.pyd.
     HAS_QT_MULTIMEDIA = False
     QMediaPlayer = None
     QAudioOutput = None
-
-from src.config import VOICES, DEFAULT_SPEED, DEFAULT_VOICE_INDEX, IS_MAC
-from src.utils.history import history_db
 
 
 class TTSEngine(QObject):

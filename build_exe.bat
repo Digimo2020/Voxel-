@@ -13,6 +13,13 @@ python -m PyInstaller --noconfirm --onefile --windowed --name "Voxel" ^
     --collect-all certifi ^
     --hidden-import pynput.keyboard._win32 ^
     --hidden-import pynput.mouse._win32 ^
+    --exclude-module PyQt6.QtMultimedia ^
+    --exclude-module PyQt6.QtMultimediaWidgets ^
+    --exclude-module PyQt6.QtQml ^
+    --exclude-module PyQt6.QtQuick ^
+    --exclude-module PyQt6.QtSql ^
+    --exclude-module PyQt6.QtTest ^
+    --exclude-module PyQt6.QtXml ^
     main.py
 
 echo.

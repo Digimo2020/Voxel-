@@ -9,6 +9,17 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.0.09] - 2026-10-29
+
+### Fixed
+- **Windows Smart App Control (SAC) "Part of this app has been blocked" Resolution**:
+  - Excluded unused `PyQt6.QtMultimedia`, `windowsmediaplugin.dll`, and `ffmpegmediaplugin.dll` from the PyInstaller standalone build.
+  - Microsoft Smart App Control in Windows 11 previously flagged unsigned `ffmpegmediaplugin.dll` unpacked to `%TEMP%`.
+  - Switched Windows audio exclusively to native Windows Media Control Interface (`winmm.dll`), which is fully recognized and trusted by Windows Security.
+  - Reduced executable footprint and improved startup launch time.
+
+---
+
 ## [v1.0.08] - 2026-10-29
 
 ### Fixed & Enhanced
