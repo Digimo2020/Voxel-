@@ -1,12 +1,15 @@
 """
 Frosted Glass Mini Player Capsule widget for Voxel.
 Faithfully implements the Voxel branding and visual design:
-- Sleek translucent acrylic capsule with subtle border and drop shadow.
+- Sleek translucent acrylic capsule with subtle glass specular highlights and drop shadow.
+- Fully supports Dark Glass (Obsidian) and Frosted Glass (Light Acrylic) themes.
 - Animated Voxel microphone logo whose 3 voice lines and radial glow react in real-time to speech playback.
+- Displays full "Voxel" brand name without clipping.
 - Glowing gradient Play/Pause circular button.
-- Segmented Speed control pill [- 1.0x +].
+- Segmented Speed control pill [- 1.0x +] with ample padding.
 - Quick voice selector pill with pop-up menu.
 - Smooth slide-up and fade-in animations on bottom-right of the screen.
+- Configurable auto-close behavior with smooth 1-second fade-out after speech playback completes.
 """
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QPushButton, QLabel, QApplication,
@@ -106,6 +109,7 @@ class MiniPlayer(QWidget):
     """
     Translucent frosted glass capsule player.
     Animates smoothly from the bottom right above the dock/taskbar.
+    Supports Dark Glass (Obsidian) and Frosted Glass (Light Acrylic) themes.
     """
     closed = pyqtSignal()
     settings_requested = pyqtSignal()
@@ -116,6 +120,8 @@ class MiniPlayer(QWidget):
         self._drag_pos = QPoint()
         self._is_dragging = False
         self._user_moved = False
+        self._theme_mode = "dark_glass"
+        self._separators = []
 
         # Frameless, transparent floating tool window
         self.setWindowFlags(
@@ -126,7 +132,14 @@ class MiniPlayer(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(54)
-        self.setFixedWidth(430)
+        self.setFixedWidth(480)  # Generous width so "Voxel", "1.0x", and labels never clip
+
+        # Soft drop shadow for floating glass illusion
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(28)
+        shadow.setColor(QColor(0, 0, 0, 110))
+        shadow.setOffset(0, 8)
+        self.setGraphicsEffect(shadow)
 
         # Connect TTS engine signals
         self.tts.playback_started.connect(self._on_playback_started)
@@ -137,6 +150,7 @@ class MiniPlayer(QWidget):
 
         self._init_ui()
         self._init_animations()
+        self.apply_theme(settings_db.get("theme_mode", "dark_glass"))
 
     def _init_ui(self):
         layout = QHBoxLayout(self)
@@ -154,6 +168,8 @@ class MiniPlayer(QWidget):
         brand_layout.addWidget(self.logo)
 
         self.lbl_brand = QLabel("Voxel", brand_widget)
+        self.lbl_brand.setMinimumWidth(48)
+        self.lbl_brand.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.lbl_brand.setStyleSheet(f"""
             QLabel {{
                 color: #FFFFFF;
@@ -196,24 +212,25 @@ class MiniPlayer(QWidget):
         layout.addWidget(self.btn_stop)
 
         # Separator Line
-        layout.addWidget(self._create_separator())
+        sep1 = self._create_separator()
+        layout.addWidget(sep1)
 
         # 4. Speed Pill Container [- 1.0x +]
-        speed_pill = QWidget(self)
-        speed_pill.setFixedHeight(30)
-        speed_pill.setStyleSheet("""
+        self.speed_pill = QWidget(self)
+        self.speed_pill.setFixedHeight(30)
+        self.speed_pill.setStyleSheet("""
             QWidget {
                 background-color: rgba(255, 255, 255, 0.08);
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 border-radius: 15px;
             }
         """)
-        speed_layout = QHBoxLayout(speed_pill)
+        speed_layout = QHBoxLayout(self.speed_pill)
         speed_layout.setContentsMargins(4, 0, 4, 0)
         speed_layout.setSpacing(2)
 
         # Minus button
-        self.btn_speed_down = QPushButton(speed_pill)
+        self.btn_speed_down = QPushButton(self.speed_pill)
         self.btn_speed_down.setFixedSize(22, 22)
         self.btn_speed_down.setIcon(create_minus_icon(14, "#CBD5E1"))
         self.btn_speed_down.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -225,7 +242,9 @@ class MiniPlayer(QWidget):
         speed_layout.addWidget(self.btn_speed_down)
 
         # Speed Label
-        self.lbl_speed = QLabel(f"{DEFAULT_SPEED}x", speed_pill)
+        self.lbl_speed = QLabel(f"{DEFAULT_SPEED}x", self.speed_pill)
+        self.lbl_speed.setMinimumWidth(38)
+        self.lbl_speed.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_speed.setStyleSheet(f"""
             QLabel {{
                 color: #FFFFFF;
@@ -240,7 +259,7 @@ class MiniPlayer(QWidget):
         speed_layout.addWidget(self.lbl_speed)
 
         # Plus button
-        self.btn_speed_up = QPushButton(speed_pill)
+        self.btn_speed_up = QPushButton(self.speed_pill)
         self.btn_speed_up.setFixedSize(22, 22)
         self.btn_speed_up.setIcon(create_plus_icon(14, "#CBD5E1"))
         self.btn_speed_up.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -251,14 +270,16 @@ class MiniPlayer(QWidget):
         self.btn_speed_up.clicked.connect(self._increase_speed)
         speed_layout.addWidget(self.btn_speed_up)
 
-        layout.addWidget(speed_pill)
+        layout.addWidget(self.speed_pill)
 
         # Separator Line
-        layout.addWidget(self._create_separator())
+        sep2 = self._create_separator()
+        layout.addWidget(sep2)
 
         # 5. Voice Selector Pill with Chevron
         self.btn_voice = QPushButton(self)
         self.btn_voice.setFixedHeight(30)
+        self.btn_voice.setMinimumWidth(80)
         self.btn_voice.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_voice.setStyleSheet(f"""
             QPushButton {{
@@ -289,7 +310,7 @@ class MiniPlayer(QWidget):
         self.btn_settings.setFixedSize(28, 28)
         self.btn_settings.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_settings.setIcon(create_gear_icon(16, "#94A3B8"))
-        self.btn_settings.setToolTip("Settings & About")
+        self.btn_settings.setToolTip("Settings & Preferences")
         self.btn_settings.setStyleSheet("""
             QPushButton {
                 background: transparent;
@@ -325,8 +346,160 @@ class MiniPlayer(QWidget):
     def _create_separator(self) -> QWidget:
         sep = QWidget(self)
         sep.setFixedSize(1, 18)
-        sep.setStyleSheet("background-color: rgba(255, 255, 255, 0.12);")
+        sep.setStyleSheet("background-color: rgba(255, 255, 255, 0.14);")
+        self._separators.append(sep)
         return sep
+
+    def apply_theme(self, theme_mode: str = "dark_glass"):
+        """Switches player between Dark Glass (Obsidian) and Frosted Glass (Light) appearance."""
+        self._theme_mode = theme_mode
+
+        if theme_mode == "light_glass":
+            # ── Light Frosted Glass Styling ─────────────────────────────
+            self.lbl_brand.setStyleSheet(f"""
+                QLabel {{
+                    color: #111B2E;
+                    font-family: {FONT_FAMILY};
+                    font-size: 15px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                }}
+            """)
+            self.lbl_speed.setStyleSheet(f"""
+                QLabel {{
+                    color: #111B2E;
+                    font-family: {FONT_FAMILY};
+                    font-size: 11px;
+                    font-weight: 600;
+                    border: none;
+                    background: transparent;
+                    padding: 0 4px;
+                }}
+            """)
+            self.btn_speed_down.setIcon(create_minus_icon(14, "#475569"))
+            self.btn_speed_up.setIcon(create_plus_icon(14, "#475569"))
+            self.speed_pill.setStyleSheet("""
+                QWidget {
+                    background-color: rgba(0, 0, 0, 0.06);
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 15px;
+                }
+            """)
+            self.btn_stop.setIcon(create_stop_icon(16, "#475569"))
+            self.btn_stop.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(0, 0, 0, 0.06);
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 15px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(248, 113, 113, 0.20);
+                    border-color: rgba(248, 113, 113, 0.50);
+                }
+            """)
+            self.btn_voice.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: rgba(0, 0, 0, 0.06);
+                    color: #111B2E;
+                    font-family: {FONT_FAMILY};
+                    font-size: 11px;
+                    font-weight: 600;
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 15px;
+                    padding: 0 10px;
+                    text-align: center;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(0, 0, 0, 0.12);
+                }}
+            """)
+            self.btn_settings.setIcon(create_gear_icon(16, "#475569"))
+            self.btn_settings.setStyleSheet("""
+                QPushButton { background: transparent; border: none; border-radius: 14px; }
+                QPushButton:hover { background-color: rgba(0, 0, 0, 0.08); }
+            """)
+            self.btn_close.setIcon(create_close_icon(16, "#475569"))
+            self.btn_close.setStyleSheet("""
+                QPushButton { background: transparent; border: none; border-radius: 14px; }
+                QPushButton:hover { background-color: rgba(0, 0, 0, 0.08); }
+            """)
+            for sep in self._separators:
+                sep.setStyleSheet("background-color: rgba(0, 0, 0, 0.14);")
+
+        else:
+            # ── Dark Frosted Glass Styling (Default Obsidian) ───────────
+            self.lbl_brand.setStyleSheet(f"""
+                QLabel {{
+                    color: #FFFFFF;
+                    font-family: {FONT_FAMILY};
+                    font-size: 15px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                }}
+            """)
+            self.lbl_speed.setStyleSheet(f"""
+                QLabel {{
+                    color: #FFFFFF;
+                    font-family: {FONT_FAMILY};
+                    font-size: 11px;
+                    font-weight: 600;
+                    border: none;
+                    background: transparent;
+                    padding: 0 4px;
+                }}
+            """)
+            self.btn_speed_down.setIcon(create_minus_icon(14, "#CBD5E1"))
+            self.btn_speed_up.setIcon(create_plus_icon(14, "#CBD5E1"))
+            self.speed_pill.setStyleSheet("""
+                QWidget {
+                    background-color: rgba(255, 255, 255, 0.08);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 15px;
+                }
+            """)
+            self.btn_stop.setIcon(create_stop_icon(16, "#94A3B8"))
+            self.btn_stop.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 0.08);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 15px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(248, 113, 113, 0.20);
+                    border-color: rgba(248, 113, 113, 0.50);
+                }
+            """)
+            self.btn_voice.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: rgba(255, 255, 255, 0.08);
+                    color: #FFFFFF;
+                    font-family: {FONT_FAMILY};
+                    font-size: 11px;
+                    font-weight: 500;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 15px;
+                    padding: 0 10px;
+                    text-align: center;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(255, 255, 255, 0.18);
+                    border-color: rgba(255, 255, 255, 0.30);
+                }}
+            """)
+            self.btn_settings.setIcon(create_gear_icon(16, "#94A3B8"))
+            self.btn_settings.setStyleSheet("""
+                QPushButton { background: transparent; border: none; border-radius: 14px; }
+                QPushButton:hover { background-color: rgba(255, 255, 255, 0.14); }
+            """)
+            self.btn_close.setIcon(create_close_icon(16, "#94A3B8"))
+            self.btn_close.setStyleSheet("""
+                QPushButton { background: transparent; border: none; border-radius: 14px; }
+                QPushButton:hover { background-color: rgba(255, 255, 255, 0.14); }
+            """)
+            for sep in self._separators:
+                sep.setStyleSheet("background-color: rgba(255, 255, 255, 0.14);")
+
+        self.update()
 
     def _init_animations(self):
         # Entry animation group (Slide up + Fade in)
@@ -356,6 +529,11 @@ class MiniPlayer(QWidget):
         self.anim_group_out.addAnimation(self.fade_anim_out)
         self.anim_group_out.finished.connect(self._on_exit_finished)
 
+        # Smooth auto-close fade-out animation
+        self.auto_close_anim = QPropertyAnimation(self, b"windowOpacity")
+        self.auto_close_anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self.auto_close_anim.finished.connect(self._on_auto_close_finished)
+
     def _get_bottom_right_pos(self) -> QPoint:
         """Calculates bottom-right docking position above dock/taskbar."""
         screen = QApplication.primaryScreen()
@@ -371,6 +549,8 @@ class MiniPlayer(QWidget):
     def play_text(self, text: str, show_at_pos: QPoint = None):
         """Starts speaking text and animates the player in at the configured position."""
         self.anim_group_out.stop()
+        self.auto_close_anim.stop()
+        self.setWindowOpacity(1.0)
 
         dock_mode = settings_db.get("dock_position", "bottom_right")
         if dock_mode == "near_cursor" and show_at_pos:
@@ -402,11 +582,17 @@ class MiniPlayer(QWidget):
     def _show_voice_menu(self):
         """Opens popup menu with available voices."""
         menu = QMenu(self)
+        is_light = (self._theme_mode == "light_glass")
+
+        bg = "#F8FAFF" if is_light else "#161926"
+        fg = "#111B2E" if is_light else "#FFFFFF"
+        border = "rgba(0,0,0,0.12)" if is_light else "rgba(255,255,255,0.16)"
+
         menu.setStyleSheet(f"""
             QMenu {{
-                background-color: #161926;
-                color: #FFFFFF;
-                border: 1px solid rgba(255, 255, 255, 0.16);
+                background-color: {bg};
+                color: {fg};
+                border: 1px solid {border};
                 border-radius: 8px;
                 padding: 4px;
                 font-family: {FONT_FAMILY};
@@ -430,7 +616,6 @@ class MiniPlayer(QWidget):
             action.triggered.connect(lambda checked, idx=i: self._on_voice_selected(idx))
             menu.addAction(action)
 
-        # Position menu above voice button
         btn_geo = self.btn_voice.geometry()
         pos = self.mapToGlobal(QPoint(btn_geo.left(), btn_geo.top() - 10))
         menu.exec(pos)
@@ -441,6 +626,8 @@ class MiniPlayer(QWidget):
         settings_db.set("default_voice", self.tts.current_voice["id"])
 
     def _toggle_play_pause(self):
+        self.auto_close_anim.stop()
+        self.setWindowOpacity(1.0)
         self.tts.toggle_play_pause()
 
     def _stop_playback(self):
@@ -469,6 +656,7 @@ class MiniPlayer(QWidget):
     def hide_player(self):
         """Animates out and hides."""
         self._stop_playback()
+        self.auto_close_anim.stop()
         self.anim_group_in.stop()
 
         curr_pos = self.pos()
@@ -484,25 +672,66 @@ class MiniPlayer(QWidget):
 
     def _on_exit_finished(self):
         self.hide()
+        self.setWindowOpacity(1.0)
         self._user_moved = False
         self.closed.emit()
 
+    # ─── Auto-Close Fadeout ──────────────────────────────────────────
+    def _start_auto_close_fadeout(self, duration_sec: float):
+        """Smoothly fades out player over duration_sec and dismisses it."""
+        self.auto_close_anim.stop()
+        self.auto_close_anim.setDuration(int(duration_sec * 1000))
+        self.auto_close_anim.setStartValue(self.windowOpacity())
+        self.auto_close_anim.setEndValue(0.0)
+        self.auto_close_anim.start()
+
+    def _on_auto_close_finished(self):
+        """Hides player once fadeout is complete."""
+        if self.windowOpacity() <= 0.05:
+            self.hide()
+            self.setWindowOpacity(1.0)
+            self._user_moved = False
+            self.closed.emit()
+
+    def enterEvent(self, event):
+        """Interrupts auto-close if user hovers mouse over player."""
+        if self.auto_close_anim.state() == QPropertyAnimation.State.Running:
+            self.auto_close_anim.stop()
+            self.setWindowOpacity(1.0)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Restarts auto-close fadeout if user leaves and playback has ended."""
+        if not self.btn_play_pause.is_playing and self.isVisible():
+            if settings_db.get("auto_close_finished", True):
+                delay = float(settings_db.get("auto_close_delay", 1.0))
+                self._start_auto_close_fadeout(delay)
+        super().leaveEvent(event)
+
     # Audio Engine Callbacks
     def _on_playback_started(self):
+        self.auto_close_anim.stop()
+        self.setWindowOpacity(1.0)
         self.btn_play_pause.set_playing(True)
         self.logo.start_voice_animation()
 
     def _on_playback_paused(self):
+        self.auto_close_anim.stop()
         self.btn_play_pause.set_playing(False)
         self.logo.stop_voice_animation()
 
     def _on_playback_resumed(self):
+        self.auto_close_anim.stop()
+        self.setWindowOpacity(1.0)
         self.btn_play_pause.set_playing(True)
         self.logo.start_voice_animation()
 
     def _on_playback_finished(self):
         self.btn_play_pause.set_playing(False)
         self.logo.stop_voice_animation()
+        if settings_db.get("auto_close_finished", True):
+            delay_sec = float(settings_db.get("auto_close_delay", 1.0))
+            self._start_auto_close_fadeout(delay_sec)
 
     def _on_playback_error(self, err: str):
         self.btn_play_pause.set_playing(False)
@@ -511,6 +740,8 @@ class MiniPlayer(QWidget):
     # Window Dragging
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
+            self.auto_close_anim.stop()
+            self.setWindowOpacity(1.0)
             self._is_dragging = True
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
@@ -534,9 +765,43 @@ class MiniPlayer(QWidget):
 
         capsule_rect = QRectF(1.0, 1.0, w - 2.0, h - 2.0)
 
-        # Translucent Acrylic Glass Background
-        painter.setBrush(QBrush(QColor(18, 21, 34, 225)))  # ~88% opacity
-        painter.setPen(QPen(QColor(255, 255, 255, 35), 1.2))
-        painter.drawRoundedRect(capsule_rect, r, r)
+        if self._theme_mode == "light_glass":
+            # ── Light Frosted Glass Acrylic ─────────────────────────────
+            grad = QLinearGradient(0, 0, 0, h)
+            grad.setColorAt(0.0, QColor(248, 250, 255, 215))  # ~84% opacity
+            grad.setColorAt(1.0, QColor(228, 236, 250, 225))  # ~88% opacity
+
+            painter.setBrush(QBrush(grad))
+            painter.setPen(QPen(QColor(255, 255, 255, 240), 1.2))
+            painter.drawRoundedRect(capsule_rect, r, r)
+
+            # Specular top highlight for glass shine
+            shine_rect = QRectF(r / 2.0, 2.0, w - r, h * 0.45)
+            shine = QLinearGradient(0, 2.0, 0, h * 0.45)
+            shine.setColorAt(0.0, QColor(255, 255, 255, 140))
+            shine.setColorAt(1.0, QColor(255, 255, 255, 10))
+            painter.setBrush(QBrush(shine))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(shine_rect, r * 0.8, r * 0.8)
+
+        else:
+            # ── Dark Frosted Glass (Obsidian Glass) ──────────────────────
+            # Translucent dark body with gradient (~82% opacity)
+            grad = QLinearGradient(0, 0, 0, h)
+            grad.setColorAt(0.0, QColor(20, 26, 42, 210))  # Translucent navy
+            grad.setColorAt(1.0, QColor(10, 14, 26, 220))  # Translucent deep obsidian
+
+            painter.setBrush(QBrush(grad))
+            painter.setPen(QPen(QColor(255, 255, 255, 42), 1.2))  # Subtle frosted edge
+            painter.drawRoundedRect(capsule_rect, r, r)
+
+            # Specular top glass refraction highlight
+            shine_rect = QRectF(r / 2.0, 2.0, w - r, h * 0.45)
+            shine = QLinearGradient(0, 2.0, 0, h * 0.45)
+            shine.setColorAt(0.0, QColor(255, 255, 255, 55))
+            shine.setColorAt(1.0, QColor(255, 255, 255, 0))
+            painter.setBrush(QBrush(shine))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(shine_rect, r * 0.8, r * 0.8)
 
         painter.end()

@@ -78,6 +78,10 @@ class VoxelApp:
         saved_timeout = settings_db.get("bubble_timeout", 4.0)
         self.bubble.hide_timer.setInterval(int(saved_timeout * 1000))
 
+        # 4. Player Theme
+        saved_theme = settings_db.get("theme_mode", "dark_glass")
+        self.player.apply_theme(saved_theme)
+
     def is_inside_any_widget(self, x: int, y: int) -> bool:
         """Returns True if point (x, y) is inside the Bubble, Player, or Settings window."""
         pt = QPoint(x, y)

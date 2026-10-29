@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.01"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.0.02-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.02"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
   <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
