@@ -106,7 +106,7 @@ with open('build/pkg_resources/welcome.html', 'w', encoding='utf-8') as f:
     f.write(html)
 "
 
-VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.05")
+VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.06")
 PLAIN_VER="${VERSION#v}"
 
 # Generate Distribution.xml dynamically for productbuild
@@ -157,7 +157,7 @@ if command -v hdiutil &> /dev/null; then
     rm -rf "$DMG_DIR"
 fi
 
-VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.05")
+VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.06")
 cp dist/Voxel.pkg "dist/Voxel-${VERSION}.pkg" 2>/dev/null || true
 cp dist/Voxel.dmg "dist/Voxel-${VERSION}.dmg" 2>/dev/null || true
 

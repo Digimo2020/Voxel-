@@ -212,6 +212,40 @@ class VoxelApp:
         self.app.quit()
 
 
+_single_instance_handle = None
+
+
+def acquire_single_instance_lock():
+    """
+    Guarantees only a single instance of Voxel runs at any time,
+    preventing duplicate tray icons and background hook conflicts.
+    """
+    global _single_instance_handle
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            mutex_name = "Voxel_SingleInstance_Mutex_Digimo"
+            mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
+            if ctypes.windll.kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+                return False
+            _single_instance_handle = mutex
+            return True
+        except Exception as e:
+            print(f"[Voxel] Mutex warning: {e}", file=sys.stderr)
+            return True
+    else:
+        from PyQt6.QtCore import QSharedMemory
+        shared_mem = QSharedMemory("Voxel_SingleInstance_Digimo")
+        if not shared_mem.create(1):
+            return False
+        _single_instance_handle = shared_mem
+        return True
+
+
 if __name__ == "__main__":
+    if not acquire_single_instance_lock():
+        print(f"[Voxel] Another instance is already running in the system tray. Exiting duplicate.", file=sys.stderr)
+        sys.exit(0)
+
     app_instance = VoxelApp()
     app_instance.start()

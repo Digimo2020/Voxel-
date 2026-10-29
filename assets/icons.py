@@ -95,8 +95,8 @@ def create_voxel_icon_pixmap(size: int = 64) -> QPixmap:
 def create_voxel_round_glass_pixmap(size: int = 32) -> QPixmap:
     """
     Renders an ultra-sharp, large Voxel microphone logo centered inside
-    a circular frosted bluish glass badge with specular gloss highlight and refractive rim.
-    Maximized area to ensure maximum legibility and presence in system tray and taskbars.
+    a circular frosted light glass badge with specular gloss highlight and refractive rim.
+    Features a clean, bright, light translucent glass background and maximized size for taskbars.
     """
     pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
@@ -108,61 +108,64 @@ def create_voxel_round_glass_pixmap(size: int = 32) -> QPixmap:
     s = float(size)
     cx, cy = s / 2.0, s / 2.0
 
-    # 1. Subtle Outer Cyan/Violet Glow
-    glow_rad = s / 2.0
-    glow = QRadialGradient(cx, cy, glow_rad)
-    glow.setColorAt(0.70, QColor(0, 132, 255, 60))
-    glow.setColorAt(0.95, QColor(124, 58, 237, 25))
-    glow.setColorAt(1.0, QColor(0, 0, 0, 0))
+    # 1. Subtle soft ambient shadow to define circular contour on all taskbar colors
+    shadow_rad = s / 2.0
+    shadow = QRadialGradient(cx, cy + s * 0.04, shadow_rad)
+    shadow.setColorAt(0.70, QColor(0, 80, 180, 35))
+    shadow.setColorAt(0.92, QColor(0, 40, 100, 15))
+    shadow.setColorAt(1.0, QColor(0, 0, 0, 0))
     painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(QBrush(glow))
+    painter.setBrush(QBrush(shadow))
     painter.drawEllipse(QRectF(0, 0, s, s))
 
-    # 2. Round Frosted Glass Circle (Maximizing size in tray area)
-    pad = max(1.0, s * 0.04)
+    # 2. Round Shape - Maximized size with minimal edge margin
+    pad = max(0.5, s * 0.02)
     badge_rect = QRectF(pad, pad, s - 2 * pad, s - 2 * pad)
 
-    bg_grad = QRadialGradient(cx, cy * 0.70, (s - 2 * pad) * 0.72)
-    bg_grad.setColorAt(0.0, QColor(0, 160, 255, 235))   # Luminous cyan highlight
-    bg_grad.setColorAt(0.38, QColor(16, 68, 155, 225))  # Frosted sapphire glass
-    bg_grad.setColorAt(0.80, QColor(10, 30, 85, 215))   # Translucent deep azure
-    bg_grad.setColorAt(1.0, QColor(6, 18, 50, 205))     # Deep boundary
+    # 3. Bright, Light Frosted Glass Background (Translucent Icy Glass)
+    bg_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomRight())
+    bg_grad.setColorAt(0.0, QColor(255, 255, 255, 245))       # Pure bright frosted white top
+    bg_grad.setColorAt(0.35, QColor(240, 249, 255, 235))      # Crisp icy white-blue
+    bg_grad.setColorAt(0.75, QColor(219, 234, 254, 225))      # Translucent light azure glass
+    bg_grad.setColorAt(1.0, QColor(191, 219, 254, 230))       # Soft light sapphire bottom
 
+    # Crisp glass refractive rim
     border_grad = QLinearGradient(badge_rect.topLeft(), badge_rect.bottomLeft())
-    border_grad.setColorAt(0.0, QColor(220, 245, 255, 240))  # Specular bright rim top
-    border_grad.setColorAt(0.45, QColor(56, 189, 248, 200))  # Cyan glow
-    border_grad.setColorAt(1.0, QColor(139, 92, 246, 180))   # Violet glow bottom
+    border_grad.setColorAt(0.0, QColor(255, 255, 255, 255))   # Bright white specular edge top
+    border_grad.setColorAt(0.40, QColor(56, 189, 248, 180))   # Vibrant cyan glass rim
+    border_grad.setColorAt(1.0, QColor(147, 51, 234, 160))    # Delicate violet refraction bottom
 
-    border_w = max(1.0, s * 0.045)
+    border_w = max(1.1, s * 0.045)
     border_pen = QPen(QBrush(border_grad), border_w)
 
     painter.setBrush(QBrush(bg_grad))
     painter.setPen(border_pen)
     painter.drawEllipse(badge_rect)
 
-    # 3. Specular Glass Gloss Arc (Upper Dome Sheen)
-    gloss_w = (s - 2 * pad) * 0.78
-    gloss_h = (s - 2 * pad) * 0.40
-    gloss_rect = QRectF(cx - gloss_w / 2.0, pad + max(0.5, s * 0.03), gloss_w, gloss_h)
+    # 4. Glossy Glass Specular Sheen (Top Crescent Reflection)
+    gloss_w = (s - 2 * pad) * 0.82
+    gloss_h = (s - 2 * pad) * 0.44
+    gloss_rect = QRectF(cx - gloss_w / 2.0, pad + max(0.4, s * 0.02), gloss_w, gloss_h)
     gloss_grad = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
-    gloss_grad.setColorAt(0.0, QColor(255, 255, 255, 130))
-    gloss_grad.setColorAt(0.65, QColor(180, 230, 255, 40))
+    gloss_grad.setColorAt(0.0, QColor(255, 255, 255, 200))
+    gloss_grad.setColorAt(0.55, QColor(255, 255, 255, 90))
     gloss_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
     painter.setBrush(QBrush(gloss_grad))
     painter.setPen(Qt.PenStyle.NoPen)
     painter.drawEllipse(gloss_rect)
 
-    # 4. Large Centered Logo Vector ("as big as you can do in this area")
-    usable_d = (s - 2 * pad) * 0.84
+    # 5. Large Centered Logo Vector ("make it little bit bigger")
+    # Fills ~88% of circle diameter with bold strokes
+    usable_d = (s - 2 * pad) * 0.88
     scale = usable_d / 71.5
     logo_cy = cy - 6.5 * scale
 
-    # Cradle
-    cradle_stroke = max(1.4, 7.8 * scale)
+    # Cradle: Rich high-contrast gradient so it pops against the light background
+    cradle_stroke = max(1.6, 8.4 * scale)
     grad_cradle = QLinearGradient(cx - 30 * scale, logo_cy + 30 * scale, cx + 30 * scale, logo_cy - 30 * scale)
-    grad_cradle.setColorAt(0.0, QColor("#A78BFA"))  # Bright violet
-    grad_cradle.setColorAt(0.4, QColor("#818CF8"))  # Periwinkle/indigo
-    grad_cradle.setColorAt(1.0, QColor("#38BDF8"))  # Bright sky cyan
+    grad_cradle.setColorAt(0.0, QColor("#6D28D9"))  # Deep rich violet
+    grad_cradle.setColorAt(0.35, QColor("#4F46E5")) # Indigo
+    grad_cradle.setColorAt(1.0, QColor("#0284C7"))  # Electric cyan-blue
 
     pen_cradle = QPen(
         QBrush(grad_cradle),
@@ -198,34 +201,34 @@ def create_voxel_round_glass_pixmap(size: int = 32) -> QPixmap:
     mic_r = mic_w / 2.0
 
     grad_mic = QLinearGradient(mic_x, mic_y + mic_h, mic_x + mic_w, mic_y)
-    grad_mic.setColorAt(0.0, QColor("#0072FF"))
-    grad_mic.setColorAt(1.0, QColor("#38BDF8"))
+    grad_mic.setColorAt(0.0, QColor("#0369A1"))  # Deep ocean blue base
+    grad_mic.setColorAt(1.0, QColor("#0EA5E9"))  # Bright sky blue top
 
     painter.setPen(Qt.PenStyle.NoPen)
     painter.setBrush(QBrush(grad_mic))
     painter.drawRoundedRect(QRectF(mic_x, mic_y, mic_w, mic_h), mic_r, mic_r)
 
     # Glass Specular Highlight on Mic Capsule
-    spec_w = mic_w * 0.70
-    spec_h = mic_h * 0.36
+    spec_w = mic_w * 0.72
+    spec_h = mic_h * 0.38
     spec_x = cx - spec_w / 2.0
-    spec_y = mic_y + 1.8 * scale
+    spec_y = mic_y + 1.6 * scale
     spec_grad = QLinearGradient(spec_x, spec_y, spec_x, spec_y + spec_h)
-    spec_grad.setColorAt(0.0, QColor(255, 255, 255, 170))
-    spec_grad.setColorAt(0.7, QColor(255, 255, 255, 40))
+    spec_grad.setColorAt(0.0, QColor(255, 255, 255, 200))
+    spec_grad.setColorAt(0.7, QColor(255, 255, 255, 60))
     spec_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
     painter.setBrush(QBrush(spec_grad))
     painter.setPen(Qt.PenStyle.NoPen)
     painter.drawRoundedRect(QRectF(spec_x, spec_y, spec_w, spec_h), spec_w / 2.0, spec_w / 2.0)
 
-    # 3 lines
-    line_thickness = max(1.2, 3.6 * scale)
+    # 3 lines (Crisp pure white with high contrast)
+    line_thickness = max(1.4, 3.8 * scale)
     line_pen = QPen(QColor("#FFFFFF"), line_thickness, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
     painter.setPen(line_pen)
 
-    hw_top = 7.0 * scale
-    hw_mid = 10.0 * scale
-    hw_bot = 8.0 * scale
+    hw_top = 7.2 * scale
+    hw_mid = 10.2 * scale
+    hw_bot = 8.2 * scale
 
     y_top = logo_cy - 10 * scale
     y_mid = logo_cy - 4 * scale
