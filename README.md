@@ -5,10 +5,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel---V.002/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.01"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.0.01-0084FF?style=for-the-badge&logo=apple" alt="Version v1.0.01"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://github.com/Digimo2020/Voxel---V.002"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
-  <a href="https://github.com/Digimo2020/Voxel---V.002/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel---V.002/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
+  <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
 </p>
 
 ---
@@ -60,13 +60,13 @@ Featuring a **voice-reactive microphone logo** with real-time waveform equalizer
 
 | Package Format | Description | Target |
 | :--- | :--- | :--- |
-| [**📥 Download Voxel.pkg**](https://github.com/Digimo2020/Voxel---V.002/releases/latest/download/Voxel.pkg) *(Recommended)* | Apple System-Wide Installer with embedded UX design preview wizard | `/Applications` (All Users) |
-| [**📥 Download Voxel.dmg**](https://github.com/Digimo2020/Voxel---V.002/releases/latest/download/Voxel.dmg) | Standard drag-and-drop disk image | Portable / `/Applications` |
+| [**📥 Download Voxel.pkg**](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.pkg) *(Recommended)* | Apple System-Wide Installer with embedded UX design preview wizard | `/Applications` (All Users) |
+| [**📥 Download Voxel.dmg**](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) | Standard drag-and-drop disk image | Portable / `/Applications` |
 
 #### Run from Source (macOS)
 ```bash
-git clone https://github.com/Digimo2020/Voxel---V.002.git
-cd Voxel---V.002
+git clone https://github.com/Digimo2020/Voxel-.git
+cd Voxel-
 chmod +x run.sh
 ./run.sh
 ```
@@ -77,12 +77,12 @@ chmod +x run.sh
 
 | Package Format | Description | Target |
 | :--- | :--- | :--- |
-| [**📥 Download Voxel.exe**](https://github.com/Digimo2020/Voxel---V.002/releases/latest/download/Voxel.exe) *(Recommended)* | Zero-dependency standalone Windows executable | Windows 10 / 11 |
+| [**📥 Download Voxel.exe**](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) *(Recommended)* | Zero-dependency standalone Windows executable | Windows 10 / 11 |
 
 #### Run from Source (Windows)
 ```powershell
-git clone https://github.com/Digimo2020/Voxel---V.002.git
-cd Voxel---V.002
+git clone https://github.com/Digimo2020/Voxel-.git
+cd Voxel-
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -177,4 +177,4 @@ src/
 
 - **License**: Distributed under the [MIT License](LICENSE).
 - **Author & Maintainer**: [Digimo2020](https://github.com/Digimo2020)
-- **Repository**: [https://github.com/Digimo2020/Voxel---V.002](https://github.com/Digimo2020/Voxel---V.002)
+- **Repository**: [https://github.com/Digimo2020/Voxel-](https://github.com/Digimo2020/Voxel-)

@@ -12,8 +12,8 @@ Thank you for your interest in contributing to **Text 2 Voice**! We welcome comm
 
 ### 2. Fork and Clone
 ```bash
-git clone https://github.com/Digimo2020/Text-2-Voice.git
-cd Text-2-Voice
+git clone https://github.com/Digimo2020/Voxel-.git
+cd Voxel-
 ```
 
 ### 3. Create a Virtual Environment

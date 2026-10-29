@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 echo ========================================================
 echo   Push Text 2 Voice to GitHub
-echo   Repository: https://github.com/Digimo2020/Text-2-Voice.git
+echo   Repository: https://github.com/Digimo2020/Voxel-.git
 echo ========================================================
 echo.
 
@@ -26,7 +26,7 @@ if errorlevel 1 (
 for /f "delims=" %%R in ('git remote get-url origin 2^>nul') do set "REMOTE=%%R"
 if not defined REMOTE (
   echo ERROR: No origin remote is configured.
-  echo Configure origin as https://github.com/Digimo2020/Text-2-Voice.git
+  echo Configure origin as https://github.com/Digimo2020/Voxel-.git
   pause
   exit /b 1
 )

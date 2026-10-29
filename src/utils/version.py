@@ -7,7 +7,7 @@ Format: v<Major>.<Minor>.<Patch:02d>  (e.g., v1.0.01)
 import re
 
 CURRENT_VERSION = "v1.0.01"
-GITHUB_REPO_URL = "https://github.com/Digimo2020/Text-2-Voice"
+GITHUB_REPO_URL = "https://github.com/Digimo2020/Voxel-"
 
 
 def parse_version(ver_str: str) -> tuple:

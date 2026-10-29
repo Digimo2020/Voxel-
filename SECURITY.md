@@ -11,7 +11,7 @@
 If you discover a security vulnerability within Text 2 Voice, please report it responsibly:
 
 1. **Do not** open a public GitHub issue for security vulnerabilities.
-2. Email your findings directly to the repository maintainer or open a private [GitHub Security Advisory](https://github.com/Digimo2020/Text-2-Voice/security/advisories/new).
+2. Email your findings directly to the repository maintainer or open a private [GitHub Security Advisory](https://github.com/Digimo2020/Voxel-/security/advisories/new).
 3. Please include:
    - Detailed description of the vulnerability.
    - Steps to reproduce or proof-of-concept.
