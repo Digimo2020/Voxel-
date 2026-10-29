@@ -72,7 +72,7 @@ class VoxelApp:
         # 2. Speed
         saved_speed = settings_db.get("default_speed", 1.0)
         self.tts.set_speed(saved_speed)
-        self.player.lbl_speed.setText(f"{saved_speed}x")
+        self.player.btn_speed.setText(f"{saved_speed}x ▾")
 
         # 3. Bubble timeout
         saved_timeout = settings_db.get("bubble_timeout", 4.0)

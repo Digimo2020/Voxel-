@@ -141,10 +141,10 @@ class SettingsDialog(QDialog):
             self.combo_speed.addItem(f"{s}x", s)
         form.addRow(self._make_field_label("Default Speed:"), self.combo_speed)
 
-        # 3. Player Theme (Dark Glass vs Frosted Glass)
+        # 3. Player Theme (Frosted Glass vs Dark Glass)
         self.combo_theme = QComboBox(self)
-        self.combo_theme.addItem("Dark Glass (Obsidian Glass)", "dark_glass")
         self.combo_theme.addItem("Frosted Glass (Light Acrylic)", "light_glass")
+        self.combo_theme.addItem("Dark Glass (Obsidian Glass)", "light_glass")
         form.addRow(self._make_field_label("Player Theme:"), self.combo_theme)
 
         # 4. Docking Position
@@ -418,7 +418,7 @@ class SettingsDialog(QDialog):
         if idx_sp >= 0:
             self.combo_speed.setCurrentIndex(idx_sp)
 
-        theme_mode = settings_db.get("theme_mode", "dark_glass")
+        theme_mode = settings_db.get("theme_mode", "light_glass")
         idx_th = self.combo_theme.findData(theme_mode)
         if idx_th >= 0:
             self.combo_theme.setCurrentIndex(idx_th)

@@ -9,6 +9,19 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.0.03] - 2026-10-29
+
+### Added
+- **Streamlined Ultra-Compact Frosted Glass Player** (`src/ui/mini_player.py`):
+  - Reduced capsule footprint from 480px to **310px width x 48px height** for a minimal desktop presence.
+  - Authentic signature frosted glass appearance matching the reference mockup: translucent milky glass fill, luminous white specular edge crescent, and celestial blue/lavender shadow.
+  - **Single Play/Pause Toggle**: Removed redundant Stop button; circular glowing gradient button smoothly toggles between Play (▶) and Pause (⏸), allowing instant replay.
+  - **Clickable Speed Dropdown Pill**: Replaced plus/minus buttons with a single glass pill (`1.0x ▾`) that opens a speed preset menu.
+  - **Streamlined Layout**: Removed in-player voice artist selector to keep the player focused and compact.
+  - **Smooth Fade-In & Fade-Out**: Fades in with gentle slide-up on launch, and fades out smoothly over 1.0s upon speech completion.
+
+---
+
 ## [v1.0.02] - 2026-10-29
 
 ### Added
