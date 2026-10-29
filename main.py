@@ -82,28 +82,17 @@ class VoxelApp:
         saved_theme = settings_db.get("theme_mode", "dark_glass")
         self.player.apply_theme(saved_theme)
 
-        # Thread-safe geometry cache for background collision detection
-        self._cached_widget_rects = {}
-
-    def update_cached_rect(self, name: str, widget):
-        """Thread-safe update of widget bounding box for background collision checks."""
-        try:
-            if widget.isVisible():
-                g = widget.geometry()
-                self._cached_widget_rects[name] = (g.x(), g.y(), g.width(), g.height())
-            else:
-                self._cached_widget_rects.pop(name, None)
-        except Exception:
-            pass
-
     def is_inside_any_widget(self, x: int, y: int) -> bool:
-        """
-        Thread-safe check invoked from background pynput listener thread.
-        Never calls QWidget GUI methods directly across threads.
-        """
-        for rx, ry, rw, rh in list(self._cached_widget_rects.values()):
-            if rx <= x <= rx + rw and ry <= y <= ry + rh:
-                return True
+        """Returns True if point (x, y) is inside the Bubble, Player, or Settings window."""
+        pt = QPoint(x, y)
+        if self.bubble.isVisible() and self.bubble.geometry().contains(pt):
+            return True
+        if self.player.isVisible() and self.player.geometry().contains(pt):
+            return True
+        if self.settings_dialog.isVisible() and self.settings_dialog.geometry().contains(pt):
+            return True
+        if self.history_dialog.isVisible() and self.history_dialog.geometry().contains(pt):
+            return True
         return False
 
     def _connect_signals(self):
@@ -111,7 +100,7 @@ class VoxelApp:
         self.listener.text_selected.connect(self._on_text_selected, Qt.ConnectionType.QueuedConnection)
 
         # 2. Bubble clicked -> Launch playback & open Mini Player
-        self.bubble.clicked.connect(self._on_bubble_clicked, Qt.ConnectionType.QueuedConnection)
+        self.bubble.clicked.connect(self._on_bubble_clicked)
 
         # 3. User clicked empty outside space -> Fade out bubble
         self.listener.clicked_outside.connect(self._on_clicked_outside, Qt.ConnectionType.QueuedConnection)
@@ -122,15 +111,12 @@ class VoxelApp:
         self.tray.settings_requested.connect(self._show_settings)
         self.tray.read_clipboard_requested.connect(self._on_read_clipboard_requested)
         self.player.settings_requested.connect(self._show_settings)
-        self.player.closed.connect(lambda: self._cached_widget_rects.pop("player", None))
-        self.settings_dialog.finished.connect(lambda: self._cached_widget_rects.pop("settings", None))
-        self.history_dialog.finished.connect(lambda: self._cached_widget_rects.pop("history", None))
         self.history_dialog.replay_requested.connect(self._replay_history)
         self.settings_dialog.settings_applied.connect(self._on_settings_applied)
         self.tray.quit_requested.connect(self.quit)
 
         # 5. Permission guidance on macOS
-        self.listener.permission_needed.connect(self._on_permission_needed, Qt.ConnectionType.QueuedConnection)
+        self.listener.permission_needed.connect(self._on_permission_needed)
 
         # App shutdown hook
         self.app.aboutToQuit.connect(self._cleanup)
@@ -139,19 +125,15 @@ class VoxelApp:
         """Called when text is selected in any application."""
         if settings_db.get("selection_popup_enabled", True):
             self.bubble.show_at(text, x, y)
-            self.update_cached_rect("bubble", self.bubble)
 
     def _on_bubble_clicked(self, text: str):
         """Called when user clicks the floating Voxel logo."""
-        self._cached_widget_rects.pop("bubble", None)
         self.player.play_text(text)
-        self.update_cached_rect("player", self.player)
 
     def _on_clicked_outside(self):
         """Called when user clicks elsewhere on screen."""
         if self.bubble.isVisible():
             self.bubble.fade_out()
-        self._cached_widget_rects.pop("bubble", None)
 
     def _on_read_clipboard_requested(self):
         """Reads current system clipboard aloud directly."""
@@ -178,7 +160,6 @@ class VoxelApp:
             self.history_dialog.load_history()
             self.history_dialog.show()
             self.history_dialog.activateWindow()
-            self.update_cached_rect("history", self.history_dialog)
         except Exception as e:
             print(f"[Voxel] Error showing history dialog: {e}", file=sys.stderr)
 
@@ -188,7 +169,6 @@ class VoxelApp:
             self.settings_dialog.load_values()
             self.settings_dialog.show()
             self.settings_dialog.activateWindow()
-            self.update_cached_rect("settings", self.settings_dialog)
         except Exception as e:
             print(f"[Voxel] Error showing settings dialog: {e}", file=sys.stderr)
 

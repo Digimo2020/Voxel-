@@ -2,6 +2,7 @@
 TTS Engine & Audio Player using Edge-TTS Neural Voices and Native macOS Speech Fallback.
 Powered by PyQt6.QtMultimedia for zero-dependency, ultra-smooth playback on macOS and Windows.
 """
+from __future__ import annotations
 import os
 import sys
 import time
@@ -12,8 +13,17 @@ import subprocess
 from typing import Optional
 
 import edge_tts
-from PyQt6.QtCore import QObject, pyqtSignal, QUrl
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtCore import QObject, pyqtSignal, QUrl, QTimer, Qt
+import ctypes
+
+try:
+    from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+    HAS_QT_MULTIMEDIA = True
+except (ImportError, Exception) as _qt_media_err:
+    print(f"[TTS Engine] QtMultimedia unavailable ({_qt_media_err}), falling back to native OS audio.")
+    HAS_QT_MULTIMEDIA = False
+    QMediaPlayer = None
+    QAudioOutput = None
 
 from src.config import VOICES, DEFAULT_SPEED, DEFAULT_VOICE_INDEX, IS_MAC
 from src.utils.history import history_db
@@ -28,6 +38,7 @@ class TTSEngine(QObject):
     playback_resumed = pyqtSignal()
     playback_finished = pyqtSignal()
     playback_error = pyqtSignal(str)
+    _request_play = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -41,16 +52,31 @@ class TTSEngine(QObject):
         self._stop_event = threading.Event()
         self._temp_audio_file: Optional[str] = None
 
-        # Native Qt Audio Player & Output
-        self.player = QMediaPlayer(self)
-        self.audio_output = QAudioOutput(self)
-        self.player.setAudioOutput(self.audio_output)
-        self.audio_output.setVolume(1.0)
+        self._request_play.connect(self._play_file, Qt.ConnectionType.QueuedConnection)
 
-        # Connect Qt Player Signals
-        self.player.playbackStateChanged.connect(self._on_player_state_changed)
-        self.player.mediaStatusChanged.connect(self._on_media_status_changed)
-        self.player.errorOccurred.connect(self._on_player_error)
+        if HAS_QT_MULTIMEDIA:
+            # Native Qt Audio Player & Output
+            self.player = QMediaPlayer(self)
+            self.audio_output = QAudioOutput(self)
+            self.player.setAudioOutput(self.audio_output)
+            self.audio_output.setVolume(1.0)
+
+            # Connect Qt Player Signals
+            self.player.playbackStateChanged.connect(self._on_player_state_changed)
+            self.player.mediaStatusChanged.connect(self._on_media_status_changed)
+            self.player.errorOccurred.connect(self._on_player_error)
+        else:
+            self.player = None
+            self.audio_output = None
+            if not IS_MAC:
+                self.winmm = ctypes.windll.winmm
+                self.mci_alias = f"voxel_mci_{os.getpid()}"
+                self.mci_timer = QTimer(self)
+                self.mci_timer.setInterval(100)
+                self.mci_timer.timeout.connect(self._on_mci_poll)
+            else:
+                self.winmm = None
+                self._mac_audio_proc = None
 
     @property
     def current_voice(self) -> dict:
@@ -96,14 +122,20 @@ class TTSEngine(QObject):
     def pause(self):
         """Pauses currently playing speech."""
         if self.is_speaking and not self.is_paused:
-            self.player.pause()
+            if HAS_QT_MULTIMEDIA and self.player:
+                self.player.pause()
+            elif not IS_MAC and getattr(self, "winmm", None):
+                self.winmm.mciSendStringW(f"pause {self.mci_alias}", None, 0, None)
             self.is_paused = True
             self.playback_paused.emit()
 
     def resume(self):
         """Resumes paused speech."""
         if self.is_speaking and self.is_paused:
-            self.player.play()
+            if HAS_QT_MULTIMEDIA and self.player:
+                self.player.play()
+            elif not IS_MAC and getattr(self, "winmm", None):
+                self.winmm.mciSendStringW(f"resume {self.mci_alias}", None, 0, None)
             self.is_paused = False
             self.playback_resumed.emit()
 
@@ -122,7 +154,20 @@ class TTSEngine(QObject):
     def stop(self):
         """Stops current synthesis and audio playback immediately."""
         self._stop_event.set()
-        self.player.stop()
+        if HAS_QT_MULTIMEDIA and self.player:
+            self.player.stop()
+        elif not IS_MAC and getattr(self, "winmm", None):
+            if hasattr(self, "mci_timer"):
+                self.mci_timer.stop()
+            self.winmm.mciSendStringW(f"stop {self.mci_alias}", None, 0, None)
+            self.winmm.mciSendStringW(f"close {self.mci_alias}", None, 0, None)
+        elif IS_MAC and getattr(self, "_mac_audio_proc", None):
+            try:
+                self._mac_audio_proc.terminate()
+            except Exception:
+                pass
+            self._mac_audio_proc = None
+
         self.is_speaking = False
         self.is_paused = False
         self._clean_temp_audio()
@@ -162,9 +207,8 @@ class TTSEngine(QObject):
                 self.playback_error.emit("Failed to synthesize speech.")
             return
 
-        # Play generated audio on main thread via QMediaPlayer
-        # Queue player.setSource and play
-        self._play_file(self._temp_audio_file)
+        # Play generated audio on main thread via Qt queued signal
+        self._request_play.emit(self._temp_audio_file)
 
     def _synthesize_offline(self, text: str, speed: float, out_path: str) -> bool:
         """Synthesizes speech using native macOS 'say' command or Windows fallback."""
@@ -198,16 +242,51 @@ class TTSEngine(QObject):
         return False
 
     def _play_file(self, file_path: str):
-        """Loads and starts playback on QMediaPlayer."""
+        """Loads and starts playback on QMediaPlayer or Windows MCI."""
         if not file_path or not os.path.exists(file_path):
             return
 
-        url = QUrl.fromLocalFile(file_path)
-        self.player.setSource(url)
-        self.player.play()
+        if HAS_QT_MULTIMEDIA and self.player:
+            url = QUrl.fromLocalFile(file_path)
+            self.player.setSource(url)
+            self.player.play()
+        elif not IS_MAC and getattr(self, "winmm", None):
+            self.winmm.mciSendStringW(f"close {self.mci_alias}", None, 0, None)
+            ret = self.winmm.mciSendStringW(f'open "{file_path}" type mpegvideo alias {self.mci_alias}', None, 0, None)
+            if ret != 0:
+                print(f"[TTS Engine] Windows MCI open error: {ret}")
+                self.playback_error.emit(f"Windows audio playback error (code {ret})")
+                return
+            ret_play = self.winmm.mciSendStringW(f"play {self.mci_alias}", None, 0, None)
+            if ret_play != 0:
+                print(f"[TTS Engine] Windows MCI play error: {ret_play}")
+                self.playback_error.emit(f"Windows audio play error (code {ret_play})")
+                return
+            self.mci_timer.start()
+        elif IS_MAC:
+            try:
+                self._mac_audio_proc = subprocess.Popen(["/usr/bin/afplay", file_path])
+            except Exception as e:
+                self.playback_error.emit(str(e))
+                return
+
         self.is_speaking = True
         self.is_paused = False
         self.playback_started.emit()
+
+    def _on_mci_poll(self):
+        """Polls Windows MCI playback status and signals completion when stopped."""
+        if not getattr(self, "winmm", None):
+            return
+        buf = ctypes.create_unicode_buffer(128)
+        self.winmm.mciSendStringW(f"status {self.mci_alias} mode", buf, 128, None)
+        mode = buf.value
+        if mode == "stopped" and self.is_speaking and not self.is_paused:
+            self.is_speaking = False
+            self.mci_timer.stop()
+            self.winmm.mciSendStringW(f"close {self.mci_alias}", None, 0, None)
+            self.playback_finished.emit()
+            self._clean_temp_audio()
 
     def _on_player_state_changed(self, state: QMediaPlayer.PlaybackState):
         if state == QMediaPlayer.PlaybackState.StoppedState:

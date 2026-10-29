@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+cd /d "%~dp0"
+
 echo ===================================================
 echo   Voxel - Windows Standalone Executable Builder
 echo ===================================================
@@ -20,7 +22,7 @@ taskkill /F /IM Voxel.exe 2>nul
 taskkill /F /IM Voxel-%VERSION%.exe 2>nul
 
 :: 3. Run PyInstaller
-pyinstaller --noconfirm --onefile --windowed --name "Voxel" ^
+python -m PyInstaller --noconfirm --onefile --windowed --name "Voxel" ^
     --icon "assets/icon.ico" ^
     --collect-all edge_tts ^
     --collect-all certifi ^

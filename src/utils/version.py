@@ -6,7 +6,7 @@ Format: v<Major>.<Minor>.<Patch:02d>  (e.g., v1.0.01)
 """
 import re
 
-CURRENT_VERSION = "v1.0.07"
+CURRENT_VERSION = "v1.0.08"
 GITHUB_REPO_URL = "https://github.com/Digimo2020/Voxel-"
 
 

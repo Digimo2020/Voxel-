@@ -9,7 +9,31 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
-## [v1.0.03] - 2026-10-29
+## [v1.0.08] - 2026-10-29
+
+### Fixed & Enhanced
+- **Windows Application Control / AppLocker Crash Resolution**:
+  - Implemented automatic native Windows Media Control Interface (`winmm.dll`) audio playback engine in `src/tts_engine.py`.
+  - Bypasses DLL blockage of `Qt6Multimedia.dll` by Windows AppLocker and WDAC security policies.
+- **Thread-Safe Audio Playback Dispatch**:
+  - Replaced direct background thread GUI calls with Qt Queued Connections (`_request_play` signal) to prevent UI thread lockups and race conditions.
+- **Universal Batch Launchers & PyInstaller**:
+  - Upgraded `run.bat` to detect and run Python from system PATH and modern Python 3.14+ installations automatically.
+  - Enhanced `build_windows.bat` and `build_exe.bat` to build standalone versioned executable `Voxel-v1.0.08.exe` alongside `Voxel.exe`.
+- **Global Deployment & Versioning Standards**:
+  - Created `VERSIONING_RULES.md` and added strict version archiving preserving every previous standalone executable build.
+
+---
+
+## [v1.0.07] - 2026-10-29
+
+### Fixed
+- **macOS QPaintDevice & Windowing Crash Resolution**:
+  - Resolved `QPaintDevice::devicePixelRatio` crash in `QBackingStore::flush`.
+  - Fixed missing `QLinearGradient` and exception safety in floating trigger `paintEvent`.
+  - Switched MiniPlayer window flags from invalid `SubWindow` to `Tool`.
+  - Thread-safe collision geometry caching (eliminates cross-thread QWidget access).
+  - Automated ad-hoc codesigning verification and gatekeeper bypass helper.
 
 ### Added
 - **Streamlined Ultra-Compact Frosted Glass Player** (`src/ui/mini_player.py`):
