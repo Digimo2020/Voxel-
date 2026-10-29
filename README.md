@@ -54,6 +54,87 @@ Featuring a **voice-reactive microphone logo** with real-time waveform equalizer
 
 ---
 
+## 🧠 How It Works & Technologies Used (Explained Simply)
+
+Ever wondered how Voxel seamlessly detects highlighted text in any app, animates like an equalizer, and reads it aloud with zero lag? Here is the complete breakdown in simple, clear terms:
+
+### 1. The 4-Step Experience (How the Program Operates)
+
+```text
+ ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+ │ 1. You Select   │ ────> │ 2. Floating     │ ────> │ 3. Instant      │ ────> │ 4. Animated     │
+ │    Any Text     │       │    Trigger      │       │    Speech       │       │    Capsule      │
+ │ (Word, Web, PDF)│       │ (Fade-in Badge) │       │ (Neural Voices) │       │ (Equalizer Mic) │
+ └─────────────────┘       └─────────────────┘       └─────────────────┘       └─────────────────┘
+```
+
+1. **Selection Detection (`pynput`)**:
+   - Voxel runs a lightweight background daemon that monitors mouse release events and keyboard shortcuts.
+   - When you finish dragging your mouse over text in any application (Chrome, Safari, Word, Slack, VS Code, or a PDF reader), Voxel checks whether text was highlighted.
+   - **Clipboard Safety**: To read the text, Voxel safely copies it using a temporary bridge, reads the text, and **immediately restores your original clipboard**. Any image, password, or file you previously had copied stays 100% intact!
+
+2. **Floating Vector Trigger (`PyQt6` + `WA_ShowWithoutActivating`)**:
+   - Once text is detected, a subtle circular frosted-glass badge hosting the Voxel logo smoothly fades in near your mouse cursor.
+   - Using native macOS/Windows window manager flags (`Qt.WindowType.ToolTip` and `WA_ShowWithoutActivating`), the bubble **never steals focus or interrupts your typing cursor**.
+
+3. **Neural Speech Synthesis (`edge-tts` + Offline Fallback)**:
+   - Clicking the logo sends the text to the speech engine.
+   - By default, Voxel streams crystal-clear Microsoft Edge Neural AI voices (Jenny, Guy, Sonia, Aria).
+   - **Offline Resilience**: If you are on an airplane or disconnected from Wi-Fi, Voxel automatically falls back to native offline operating system speech synthesis without crashing or throwing an error!
+
+4. **Frosted Glass Capsule Player (`voxel_logo_widget.py` + `QtMultimedia`)**:
+   - The capsule mini-player slides up smoothly in the bottom-right corner with cubic easing.
+   - **Voice-Reactive Animated Mic**: While speaking, an internal 40 FPS timer drives the **3 horizontal equalizer lines** inside the microphone. They pulse, expand, and contract dynamically to simulate audio waveforms, surrounded by a soft breathing radial aura.
+   - On completion or pressing Stop, the waveform gently settles back to resting position.
+
+---
+
+### 2. Technology Stack Breakdown
+
+| Layer | Technology | Why We Chose It |
+| :--- | :--- | :--- |
+| **GUI Framework** | **PyQt6 (Qt 6.7+)** | Native hardware-accelerated rendering, buttery smooth 60 FPS CSS animations, native translucency, and seamless cross-platform styling. |
+| **Vector Graphics** | **`QPainter` Canvas** | All logos, microphone capsules, sound waves, and player controls are pure mathematical vector paths. They remain pixel-sharp on Apple Retina 5K displays and 4K Windows monitors. |
+| **Audio Playback** | **`PyQt6.QtMultimedia`** | Uses system CoreAudio on macOS and DirectSound/WASAPI on Windows. Zero external C-library dependencies (no SDL/pygame compilation issues on new Python releases). |
+| **Neural TTS** | **Microsoft Edge-TTS** | Free, high-fidelity neural text-to-speech with natural intonation, dynamic speed pacing (0.5x to 2.0x), and zero API keys required. |
+| **Offline TTS** | **macOS `/usr/bin/say` / Windows SAPI5** | Instant offline fallback guaranteeing speech even without an internet connection. |
+| **Input Hooks** | **`pynput`** | Low-latency global mouse and keyboard listener thread utilizing macOS CoreGraphics Accessibility and Windows Win32 hooks. |
+| **Clipboard Bridge** | **`pyperclip`** | Non-destructive clipboard capture and automatic state restoration. |
+| **Packaging** | **PyInstaller + macOS Native Tools** | Bundles Python code, Qt runtime, and assets into standalone native binaries without requiring users to install Python. |
+
+---
+
+### 3. macOS vs. Windows Architecture Comparison
+
+| Component |  macOS Implementation | ⊞ Windows Implementation |
+| :--- | :--- | :--- |
+| **Application Windowing** | Frameless borderless window with `NSWindow` shadow and Cocoa layer | Frameless window with Acrylic / DWM blurred border |
+| **Input Hook Backend** | macOS Quartz CoreGraphics Event Tap (requires Accessibility permission) | Win32 Low-Level Mouse & Keyboard Hooks (`SetWindowsHookEx`) |
+| **Audio Driver** | Native Apple CoreAudio via QtMultimedia | WASAPI / DirectSound via QtMultimedia |
+| **Offline Speech Engine** | `/usr/bin/say` with built-in voice selection (`Samantha`, `Alex`) | Windows SAPI5 (`win32com.client` / `pyttsx3`) |
+| **Settings Storage** | `~/Library/Application Support/Voxel/settings.json` | `%LOCALAPPDATA%\Voxel\settings.json` |
+| **Global Activation Key** | `Cmd + Option + S` | `Ctrl + Alt + S` |
+| **Menu / Tray Item** | macOS Menu Bar (Status Bar) with Quick Read | Windows Notification Area (System Tray) |
+| **Installer Formats** | **`.dmg`** (Drag-and-Drop) & **`.pkg`** (All-User System Package) | **`.exe`** (Single-file Portable) |
+
+---
+
+### 4. macOS Installers Explained: `.dmg` vs. `.pkg`
+
+We provide two distinct native installation methods for Mac users:
+
+* 💿 **`Voxel.dmg` (Apple Disk Image)**:
+  - The traditional macOS drag-and-drop experience.
+  - Double-click `Voxel.dmg` to mount the virtual drive, then drag the **Voxel** app icon into your **Applications** folder shortcut.
+  - Ideal for individual users and portable usage.
+
+* 📦 **`Voxel.pkg` (Apple Installer Package)**:
+  - Guided macOS Installation Wizard.
+  - Automatically installs `Voxel.app` into `/Applications` with system-wide permissions for **all user accounts** on the Mac.
+  - Embeds the official high-resolution **UX Design Showcase** and feature highlights directly inside the Apple Installer welcome screen.
+
+---
+
 ## 🚀 Quick Download & Installation
 
 ###  For macOS Users
