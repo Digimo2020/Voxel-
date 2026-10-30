@@ -16,8 +16,8 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget, QLabel,
     QComboBox, QCheckBox, QDoubleSpinBox, QPushButton, QGroupBox, QFormLayout
 )
-from PyQt6.QtCore import Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QCursor, QDesktopServices
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QTimer
+from PyQt6.QtGui import QCursor, QDesktopServices, QPainter, QColor, QBrush, QPen
 
 from src.config import (
     THEME, VOICES, EMOTION_MODES, DEFAULT_EMOTION_MODE, SPEED_STEPS,
@@ -33,13 +33,65 @@ from src.ui.voxel_logo_widget import VoxelLogoWidget
 LINKEDIN_URL = "https://www.linkedin.com/in/fahimdigital/"
 
 
+class EqualizerPreviewWidget(QWidget):
+    """Voice-reactive animated spectrum equalizer visualizer widget."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(32)
+        self.setMinimumWidth(160)
+        self.is_active = False
+        self._levels = [0.15] * 12
+        self._target_levels = [0.15] * 12
+
+        self._timer = QTimer(self)
+        self._timer.setInterval(40)  # ~25 FPS
+        self._timer.timeout.connect(self._update_bars)
+        self._timer.start()
+
+    def set_active(self, active: bool):
+        self.is_active = active
+        self.update()
+
+    def _update_bars(self):
+        import random
+        if self.is_active:
+            for i in range(12):
+                self._levels[i] = random.uniform(0.25, 0.95)
+        else:
+            for i in range(12):
+                self._levels[i] = max(0.12, self._levels[i] * 0.85)
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        w = float(self.width())
+        h = float(self.height())
+        num_bars = len(self._levels)
+        bar_w = 4.0
+        gap = (w - (num_bars * bar_w)) / max(1, num_bars - 1)
+
+        for i, lvl in enumerate(self._levels):
+            x = i * (bar_w + gap)
+            bar_h = max(3.0, h * lvl)
+            y = (h - bar_h) / 2.0
+
+            color = QColor("#0084FF") if self.is_active else QColor(148, 163, 184, 120)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(color))
+            painter.drawRoundedRect(int(x), int(y), int(bar_w), int(bar_h), 2, 2)
+
+        painter.end()
+
+
 class SettingsDialog(QDialog):
     settings_applied = pyqtSignal()
 
     def __init__(self, tts_engine: Optional[TTSEngine] = None, parent=None):
         super().__init__(parent)
         self.tts = tts_engine
-        self.current_theme = settings_db.get("settings_theme", "dark")
+        self.current_theme = settings_db.get("settings_theme", "light")
         self.setWindowTitle(f"{APP_NAME} — Settings & Preferences ({VERSION})")
         self.setFixedSize(620, 710)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
@@ -308,6 +360,9 @@ class SettingsDialog(QDialog):
         self.btn_test_perf.clicked.connect(self._run_performance_test)
         test_row.addWidget(self.btn_test_perf)
 
+        self.equalizer_preview = EqualizerPreviewWidget(box_test)
+        test_row.addWidget(self.equalizer_preview)
+
         self.lbl_test_status = QLabel("Ready to test live audio", box_test)
         self.lbl_test_status.setStyleSheet("color: #0284C7; font-weight: 600; font-size: 12px;")
         test_row.addWidget(self.lbl_test_status)
@@ -422,110 +477,60 @@ class SettingsDialog(QDialog):
         layout_doc.addStretch()
         self.tabs.addTab(tab_doc, "📑 Document Reader")
 
-        # ─── Tab 3: Downloads & Local Files ───────────────────────────
-        tab_downloads = QWidget()
-        layout_down = QVBoxLayout(tab_downloads)
-        layout_down.setContentsMargins(14, 14, 14, 14)
-        layout_down.setSpacing(12)
+        # ─── Tab 3: Appearance & Themes ──────────────────────────────
+        tab_appearance = QWidget()
+        layout_app = QVBoxLayout(tab_appearance)
+        layout_app.setContentsMargins(14, 14, 14, 14)
+        layout_app.setSpacing(12)
 
-        down_header = QLabel(f"📦 Official Download & Local Packages ({VERSION})", tab_downloads)
-        down_header.setStyleSheet("font-size: 14px; font-weight: 700;")
-        layout_down.addWidget(down_header)
+        app_header = QLabel("🎨 Theme Mode & Interface Styling", tab_appearance)
+        app_header.setStyleSheet("font-size: 14px; font-weight: 700;")
+        layout_app.addWidget(app_header)
 
-        if IS_MAC:
-            pkg_box = QGroupBox(f"🍎 macOS System-Wide Installer ({VERSION})", tab_downloads)
-            pkg_layout = QVBoxLayout(pkg_box)
-            pkg_layout.setSpacing(8)
-            lbl_pkg_desc = QLabel(
-                "Standard guided installer wizard with embedded UX design previews. "
-                "Installs Voxel into <code>/Applications</code> for all user accounts.",
-                tab_downloads
-            )
-            lbl_pkg_desc.setWordWrap(True)
-            self._labels_to_theme.append(lbl_pkg_desc)
-            pkg_layout.addWidget(lbl_pkg_desc)
+        theme_box = QGroupBox("Interface Theme", tab_appearance)
+        theme_layout = QVBoxLayout(theme_box)
+        theme_layout.setSpacing(10)
 
-            pkg_row = QHBoxLayout()
-            pkg_row.addWidget(QLabel(f"Target: <b>/Applications ({VERSION})</b>", tab_downloads))
-            pkg_row.addStretch()
-
-            btn_pkg = QPushButton(f"📥 Download Voxel-{VERSION}.pkg", tab_downloads)
-            btn_pkg.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_pkg.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 6px 14px; border: none; border-radius: 5px;")
-            pkg_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.pkg"
-            btn_pkg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(pkg_url)))
-            pkg_row.addWidget(btn_pkg)
-            pkg_layout.addLayout(pkg_row)
-            layout_down.addWidget(pkg_box)
-
-        else:
-            win_box = QGroupBox(f"⊞ Windows Standalone Executable ({VERSION})", tab_downloads)
-            win_layout = QVBoxLayout(win_box)
-            win_layout.setSpacing(8)
-
-            lbl_win_desc = QLabel(
-                "Single zero-dependency portable executable with embedded icon and single-instance lock. "
-                "No Python installation, administrator rights, or setup required.",
-                tab_downloads
-            )
-            lbl_win_desc.setWordWrap(True)
-            self._labels_to_theme.append(lbl_win_desc)
-            win_layout.addWidget(lbl_win_desc)
-
-            win_row = QHBoxLayout()
-            win_row.addWidget(QLabel(f"Target: <b>Windows 10 / 11 ({VERSION})</b>", tab_downloads))
-            win_row.addStretch()
-
-            btn_win = QPushButton(f"📥 Download Voxel-{VERSION}.exe", tab_downloads)
-            btn_win.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_win.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 6px 14px; border: none; border-radius: 5px;")
-            win_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.exe"
-            btn_win.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(win_url)))
-            win_row.addWidget(btn_win)
-            win_layout.addLayout(win_row)
-
-            local_row = QHBoxLayout()
-            btn_open_local = QPushButton("📁 Open Local Computer 'dist' Folder", tab_downloads)
-            btn_open_local.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_open_local.setStyleSheet("background-color: #0284C7; color: #FFFFFF; font-weight: 600; padding: 6px 14px; border: none; border-radius: 5px;")
-            dist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "dist"))
-            btn_open_local.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(dist_path)))
-            local_row.addWidget(btn_open_local)
-            local_row.addStretch()
-            win_layout.addLayout(local_row)
-
-            layout_down.addWidget(win_box)
-
-        archive_box = QGroupBox("📦 Historical Versions Archive", tab_downloads)
-        archive_layout = QVBoxLayout(archive_box)
-        archive_layout.setSpacing(6)
-
-        ver_list = QLabel(
-            f"• <b>{VERSION} (Current)</b> — Light/Dark Settings, Live Test button, Fahim Architecture credits<br>"
-            "• <b>v1.1.04</b> — Smart Document Reader, Emotional Copilot voices, Sub-second pipelining<br>"
-            "• <b>v1.1.03</b> — Vibrant full-frame startup bar logo with maximized white mic<br>"
-            "• <b>v1.1.02</b> — Standalone system tray mic icon maximization<br>"
-            "• <b>v1.1.01</b> — 3-tier PNG icon branding for tray, app, and selection bubble<br>"
-            "• <b>v1.1.00</b> — Vector SVG final logo integration<br>"
-            "• <b>v1.0.09</b> — Smart App Control native MCI audio bypass<br>"
-            "• <b>v1.0.06</b> — Light frosted glass tray icon & single-instance lock",
-            tab_downloads
+        lbl_theme_desc = QLabel(
+            "Choose your preferred appearance mode for Voxel. "
+            "Light Frosted Glass provides clean, crisp contrast for daylight workflows, "
+            "while Dark Obsidian Glass delivers deep frosted acrylic elegance.",
+            theme_box
         )
-        self._labels_to_theme.append(ver_list)
-        archive_layout.addWidget(ver_list)
+        lbl_theme_desc.setWordWrap(True)
+        self._labels_to_theme.append(lbl_theme_desc)
+        theme_layout.addWidget(lbl_theme_desc)
 
-        archive_row = QHBoxLayout()
-        archive_row.addStretch()
-        btn_archive = QPushButton("🌐 View All Versions on GitHub Releases", tab_downloads)
-        btn_archive.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_archive.setStyleSheet("padding: 5px 12px; border-radius: 4px; font-size: 11px;")
-        btn_archive.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(f"{GITHUB_URL}/releases")))
-        archive_row.addWidget(btn_archive)
-        archive_layout.addLayout(archive_row)
+        theme_btn_row = QHBoxLayout()
+        self.btn_set_light = QPushButton("☀️ Light Frosted Glass (Default)", theme_box)
+        self.btn_set_light.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_set_light.setStyleSheet("padding: 8px 16px; font-weight: 700; border-radius: 6px;")
+        self.btn_set_light.clicked.connect(lambda: self.apply_theme("light"))
+        theme_btn_row.addWidget(self.btn_set_light)
 
-        layout_down.addWidget(archive_box)
-        layout_down.addStretch()
-        self.tabs.addTab(tab_downloads, "📥 Downloads & Versions")
+        self.btn_set_dark = QPushButton("🌙 Dark Obsidian Glass", theme_box)
+        self.btn_set_dark.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_set_dark.setStyleSheet("padding: 8px 16px; font-weight: 700; border-radius: 6px;")
+        self.btn_set_dark.clicked.connect(lambda: self.apply_theme("dark"))
+        theme_btn_row.addWidget(self.btn_set_dark)
+        theme_layout.addLayout(theme_btn_row)
+        layout_app.addWidget(theme_box)
+
+        capsule_box = QGroupBox("🫧 Floating Trigger Bubble Appearance", tab_appearance)
+        cap_layout = QVBoxLayout(capsule_box)
+        lbl_cap_desc = QLabel(
+            "The floating selection bubble adapts automatically to your chosen theme. "
+            "In Light mode, it shines with pure frosted glass, specular highlights, and high-contrast iconography. "
+            "In Dark mode, it renders in deep obsidian acrylic with an electric blue hover aura.",
+            capsule_box
+        )
+        lbl_cap_desc.setWordWrap(True)
+        self._labels_to_theme.append(lbl_cap_desc)
+        cap_layout.addWidget(lbl_cap_desc)
+        layout_app.addWidget(capsule_box)
+
+        layout_app.addStretch()
+        self.tabs.addTab(tab_appearance, "🎨 Appearance & Theme")
 
         # ─── Tab 4: About, Creator & Open Source ──────────────────────
         tab_about = QWidget()
@@ -557,6 +562,10 @@ class SettingsDialog(QDialog):
         creator_header = QLabel("<b>Fahim</b> — System Architecture, UX/UI Design & Product Concept", creator_box)
         creator_header.setStyleSheet("color: #0284C7; font-size: 13px; font-weight: 700;")
         creator_layout.addWidget(creator_header)
+
+        ver_lbl = QLabel(f"<b>Application Version:</b> <code>{VERSION}</code>", creator_box)
+        self._labels_to_theme.append(ver_lbl)
+        creator_layout.addWidget(ver_lbl)
 
         creator_desc = QLabel(
             "Voxel was conceived, structurally architected, and designed by <b>Fahim</b> "
@@ -653,6 +662,8 @@ class SettingsDialog(QDialog):
             self.tts.stop()
             self.btn_test_perf.setText("▶ Test Voice & Latency Performance")
             self.lbl_test_status.setText("Test stopped.")
+            if hasattr(self, "equalizer_preview"):
+                self.equalizer_preview.set_active(False)
             return
 
         # Temporarily apply selected voice and parameters
@@ -666,6 +677,8 @@ class SettingsDialog(QDialog):
 
         self.btn_test_perf.setText("⏹ Stop Test")
         self.lbl_test_status.setText("⚡ Synthesizing live test phrase...")
+        if hasattr(self, "equalizer_preview"):
+            self.equalizer_preview.set_active(True)
 
         test_phrase = (
             "Hello! This is a live performance test of Voxel with your selected voice, "
@@ -679,6 +692,8 @@ class SettingsDialog(QDialog):
                 pass
             self.btn_test_perf.setText("▶ Test Voice & Latency Performance")
             self.lbl_test_status.setText("✓ Test completed successfully!")
+            if hasattr(self, "equalizer_preview"):
+                self.equalizer_preview.set_active(False)
 
         self.tts.playback_finished.connect(_on_test_done)
         self.tts.speak(test_phrase)

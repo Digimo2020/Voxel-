@@ -9,6 +9,29 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.06] - 2026-10-30
+
+### Fixed & Enhanced
+- **Full Document Capture Reliability (Google Docs & PDFs)**:
+  - Fixed issue where clicking the document icon mistakenly read only the selected word.
+  - Implemented automatic target window focus restoration before simulating capture keystrokes.
+  - Extended canvas processing timing to 1400ms for heavy Google Docs and eliminated premature fallback to single words.
+- **Instant Audio Playback & Latency Optimization**:
+  - Eliminated playback lag and manual play button stalls.
+  - Pre-buffers first sentence in background with zero-delay dispatch to Windows MCI.
+- **Light & Dark Mode for Floating Selection Bubble**:
+  - Implemented crisp Light Frosted Glass as the default bubble mode with high-contrast icons.
+  - Full theme switching synchronized with Settings dialog.
+- **Tray Icon Activation**:
+  - Changed system tray startup bar icon from single-click to **Double-Click** to open Settings, preventing accidental popups.
+- **Settings Redesign**:
+  - Replaced Downloads tab with a clean **Appearance & Theme** tab featuring one-click Light/Dark toggles.
+  - Added real-time voice-reactive animated spectrum **Equalizer** in the Performance Test section.
+  - Fixed typo in LinkedIn link button to read *"Connect with Fahim on LinkedIn"*.
+  - Kept historical versions preserved and produced `Voxel-v1.1.06.exe`.
+
+---
+
 ## [v1.1.05] - 2026-10-30
 
 ### Fixed & Enhanced

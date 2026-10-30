@@ -43,14 +43,22 @@ def _send_key_combo_win(vk_key: int):
     time.sleep(0.03)
 
 
-def capture_full_document_from_active_window(timeout_ms: int = 800) -> str:
+def capture_full_document_from_active_window(timeout_ms: int = 1400) -> str:
     """
     Simulates select-all (Ctrl+A / Cmd+A) and copy (Ctrl+C / Cmd+C)
     in the currently active application window (Google Docs, Word, PDF, Google Slides).
     
-    Includes Canvas-aware pauses for browser-based editors and safely
-    restores the prior clipboard contents afterwards.
+    Includes Canvas-aware pauses for browser-based editors, foreground window focus restoration,
+    and safely restores the prior clipboard contents afterwards.
     """
+    if IS_WIN and _user32:
+        try:
+            hwnd = _user32.GetForegroundWindow()
+            if hwnd:
+                _user32.SetForegroundWindow(hwnd)
+        except Exception:
+            pass
+
     old_clip = ""
     try:
         old_clip = pyperclip.paste()
@@ -63,28 +71,28 @@ def capture_full_document_from_active_window(timeout_ms: int = 800) -> str:
     except Exception:
         pass
 
-    # Brief delay for any physical mouse release to settle
-    time.sleep(0.06)
+    # Brief delay for mouse release and target window to settle
+    time.sleep(0.12)
 
     # 1. Send Select All (Ctrl+A on Windows, Cmd+A on Mac)
     if IS_WIN and _user32:
         _send_key_combo_win(VK_A)
-        # Google Docs HTML5 Canvas editor needs ~120ms to update internal selection model
-        time.sleep(0.12)
+        # Google Docs HTML5 Canvas editor needs ~180ms to update internal selection model
+        time.sleep(0.18)
         _send_key_combo_win(VK_C)
     else:
         # Cross-platform / macOS pynput & AppleScript
         try:
             with _kb_controller.pressed(MODIFIER_KEY):
-                time.sleep(0.03)
+                time.sleep(0.04)
                 _kb_controller.press("a")
-                time.sleep(0.04)
+                time.sleep(0.05)
                 _kb_controller.release("a")
-            time.sleep(0.12)
+            time.sleep(0.18)
             with _kb_controller.pressed(MODIFIER_KEY):
-                time.sleep(0.03)
-                _kb_controller.press("c")
                 time.sleep(0.04)
+                _kb_controller.press("c")
+                time.sleep(0.05)
                 _kb_controller.release("c")
         except Exception as e:
             print(f"[DocumentReader] Keystroke error: {e}")
@@ -95,10 +103,10 @@ def capture_full_document_from_active_window(timeout_ms: int = 800) -> str:
                     [
                         "osascript", "-e",
                         'tell application "System Events" to keystroke "a" using {command down}\n'
-                        'delay 0.12\n'
+                        'delay 0.18\n'
                         'tell application "System Events" to keystroke "c" using {command down}'
                     ],
-                    timeout=0.8,
+                    timeout=1.2,
                     capture_output=True
                 )
             except Exception:
@@ -110,10 +118,10 @@ def capture_full_document_from_active_window(timeout_ms: int = 800) -> str:
     max_wait = timeout_ms / 1000.0
 
     while time.time() - start_time < max_wait:
-        time.sleep(0.03)
+        time.sleep(0.04)
         try:
             curr = pyperclip.paste()
-            if curr != sentinel:
+            if curr and curr != sentinel:
                 new_text = curr
                 break
         except Exception:
@@ -122,12 +130,12 @@ def capture_full_document_from_active_window(timeout_ms: int = 800) -> str:
     # 3. Deselect text so the document returns to normal visual state
     if IS_WIN and _user32:
         _user32.keybd_event(VK_RIGHT, 0, 0, 0)
-        time.sleep(0.01)
+        time.sleep(0.02)
         _user32.keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
     else:
         try:
             _kb_controller.press(keyboard.Key.right)
-            time.sleep(0.01)
+            time.sleep(0.02)
             _kb_controller.release(keyboard.Key.right)
         except Exception:
             pass

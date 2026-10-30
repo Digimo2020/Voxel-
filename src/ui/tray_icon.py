@@ -30,14 +30,14 @@ class AppTrayIcon(QSystemTrayIcon):
         super().__init__(parent)
         self.tts = tts_engine
         self.setIcon(create_tray_icon(size=32))
-        self.setToolTip(f"{APP_NAME} ({VERSION}) — {APP_TAGLINE}\n• Left-Click: Open Settings\n• Right-Click: Quick Menu")
+        self.setToolTip(f"{APP_NAME} ({VERSION}) — {APP_TAGLINE}\n• Double-Click: Open Settings\n• Right-Click: Quick Menu")
 
         self._init_menu()
         self.activated.connect(self._on_tray_activated)
 
     def _on_tray_activated(self, reason: QSystemTrayIcon.ActivationReason):
-        """Opens Settings dialog immediately when user left-clicks the startup tray icon."""
-        if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
+        """Opens Settings dialog strictly on double-click so single-click never triggers it accidentally."""
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.settings_requested.emit()
 
     def _init_menu(self):

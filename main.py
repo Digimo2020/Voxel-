@@ -80,9 +80,12 @@ class VoxelApp:
         saved_timeout = settings_db.get("bubble_timeout", 4.0)
         self.bubble.hide_timer.setInterval(int(saved_timeout * 1000))
 
-        # 4. Player Theme
-        saved_theme = settings_db.get("theme_mode", "dark_glass")
-        self.player.apply_theme(saved_theme)
+        # 4. Player & Bubble Theme
+        saved_theme = settings_db.get("settings_theme", "light")
+        player_theme = "light_glass" if saved_theme == "light" else "dark_glass"
+        self.player.apply_theme(player_theme)
+        if hasattr(self.bubble, "set_theme_mode"):
+            self.bubble.set_theme_mode(player_theme)
 
         # 5. Emotion & Expressiveness
         saved_emotion = settings_db.get("emotion_mode", DEFAULT_EMOTION_MODE)
@@ -156,24 +159,24 @@ class VoxelApp:
         """
         Captures full document text from active Google Docs, Word, PDF, or Presentation window.
         Uses asynchronous singleShot to allow mouse release and window focus to return to document.
-        Gracefully falls back to selected text if full document capture is unavailable.
+        Does NOT mistakenly downgrade to a single highlighted word when user requested full document.
         """
         active_fallback = fallback_text or getattr(self, "_last_selected_text", "")
 
         def _do_capture():
             try:
-                doc_text = capture_full_document_from_active_window(timeout_ms=750)
-                if doc_text and len(doc_text) >= 10:
+                doc_text = capture_full_document_from_active_window(timeout_ms=1400)
+                if doc_text and len(doc_text) >= 15:
                     self.player.play_text(doc_text)
-                elif active_fallback and len(active_fallback.strip()) >= 2:
-                    # Seamless fallback to highlighted text! No error notification!
-                    self.player.play_text(active_fallback.strip())
                 elif doc_text and len(doc_text) >= 2:
                     self.player.play_text(doc_text)
+                elif active_fallback and len(active_fallback.strip()) >= 20:
+                    # Only fallback if user had previously selected a substantial block of text
+                    self.player.play_text(active_fallback.strip())
                 else:
                     self.tray.showMessage(
                         "Voxel Document Reader",
-                        "No document text could be captured. Please click inside your document or select text to read.",
+                        "Could not capture entire document. Please ensure Google Docs or your document window is open and active.",
                         AppTrayIcon.MessageIcon.Information,
                         3000
                     )
@@ -182,8 +185,8 @@ class VoxelApp:
                 if active_fallback:
                     self.player.play_text(active_fallback)
 
-        # 120ms delay lets mouse release and background document window regain focus
-        QTimer.singleShot(120, _do_capture)
+        # 200ms delay lets mouse release and background document window regain full focus
+        QTimer.singleShot(200, _do_capture)
 
     def _on_open_file_requested(self):
         """Opens file picker dialog to extract and read PDF, Word, or text files directly."""
