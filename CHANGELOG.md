@@ -9,6 +9,17 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.03] - 2026-10-30
+
+### Fixed & Enhanced
+- **Vibrant Full-Frame Startup Bar & System Tray Logo**:
+  - Replaced tray icon with user's official full-color electric blue/purple gradient badge and bold white microphone (`media_1793317370100_47d426df.png`).
+  - Maximized the icon to fill **100% of the tray canvas edge-to-edge** in a smooth Windows 11 Fluent squircle frame.
+  - White microphone enlarged to fill **90.6% of vertical height** and **78.1% of width** for maximum visibility and size in the startup/notification area.
+  - Preserved all prior versions (`v1.0.06` through `v1.1.02`) and produced new standalone executable `Voxel-v1.1.03.exe`.
+
+---
+
 ## [v1.1.02] - 2026-10-30
 
 ### Fixed & Enhanced

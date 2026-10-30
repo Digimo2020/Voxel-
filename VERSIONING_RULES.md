@@ -23,7 +23,8 @@
      - `dist/Voxel-v1.0.09.exe` (kept intact)
      - `dist/Voxel-v1.1.00.exe` (kept intact)
      - `dist/Voxel-v1.1.01.exe` (kept intact)
-     - `dist/Voxel-v1.1.02.exe` (new build)
+     - `dist/Voxel-v1.1.02.exe` (kept intact)
+     - `dist/Voxel-v1.1.03.exe` (new build)
   2. Maintain a `dist/Voxel.exe` alias pointing to the latest version for convenience.
   3. On macOS, maintain the same version preservation:
      - `dist/Voxel-v1.1.00.pkg`
