@@ -9,6 +9,17 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.02] - 2026-10-30
+
+### Fixed & Enhanced
+- **Maximized Standalone System Tray Microphone Icon**:
+  - Removed low-contrast outer container padding and light grey pill background that blended into the Windows taskbar.
+  - Re-rendered vector microphone paths directly to fill 93% vertical height and 79% width of the tray canvas with crisp transparent background.
+  - Sized and weighted to match the visual prominence of standard Windows notification tray icons (PowerToys, Windows Voice Mic, Index).
+  - Preserved all prior version binaries (`v1.0.06` through `v1.1.01`) and produced new `Voxel-v1.1.02.exe`.
+
+---
+
 ## [v1.1.01] - 2026-10-29
 
 ### Added & Enhanced
