@@ -12,6 +12,7 @@ python -m PyInstaller --noconfirm --onefile --windowed --name "Voxel" ^
     --add-data "assets;assets" ^
     --collect-all edge_tts ^
     --collect-all certifi ^
+    --collect-all pypdf ^
     --hidden-import pynput.keyboard._win32 ^
     --hidden-import pynput.mouse._win32 ^
     --exclude-module PyQt6.QtMultimedia ^

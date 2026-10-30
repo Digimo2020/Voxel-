@@ -540,3 +540,29 @@ def create_close_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
 
     painter.end()
     return QIcon(pix)
+
+
+def create_document_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
+    """Document / page icon with folded corner or text lines."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    pen = QPen(QColor(color), 1.5, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+
+    dw = size * 0.65
+    dh = size * 0.80
+    dx = (size - dw) / 2.0
+    dy = (size - dh) / 2.0
+
+    painter.drawRoundedRect(QRectF(dx, dy, dw, dh), 2.0, 2.0)
+    # 3 content lines
+    l_pad = dw * 0.22
+    painter.drawLine(QPointF(dx + l_pad, dy + dh * 0.32), QPointF(dx + dw - l_pad, dy + dh * 0.32))
+    painter.drawLine(QPointF(dx + l_pad, dy + dh * 0.52), QPointF(dx + dw - l_pad, dy + dh * 0.52))
+    painter.drawLine(QPointF(dx + l_pad, dy + dh * 0.72), QPointF(dx + dw - l_pad * 1.5, dy + dh * 0.72))
+
+    painter.end()
+    return QIcon(pix)

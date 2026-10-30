@@ -10,7 +10,7 @@ from typing import Callable, Optional
 from pynput import mouse, keyboard
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from src.config import DRAG_THRESHOLD_PIXELS, MIN_SELECTED_LENGTH, HOTKEY_WINDOWS, HOTKEY_MAC, IS_MAC
+from src.config import DRAG_THRESHOLD_PIXELS, MIN_SELECTED_LENGTH, HOTKEY_WINDOWS, HOTKEY_MAC, HOTKEY_DOC_WINDOWS, HOTKEY_DOC_MAC, IS_MAC
 from src.utils.clipboard import grab_selected_text
 from src.utils.mac_permissions import is_accessibility_trusted
 
@@ -22,6 +22,7 @@ class SelectionListener(QObject):
     text_selected = pyqtSignal(str, int, int)  # (text, cursor_x, cursor_y)
     clicked_outside = pyqtSignal()
     permission_needed = pyqtSignal()
+    document_hotkey_triggered = pyqtSignal()
 
     def __init__(self, is_inside_widget_fn: Optional[Callable[[int, int], bool]] = None, parent=None):
         super().__init__(parent)
@@ -54,11 +55,13 @@ class SelectionListener(QObject):
         except Exception as e:
             print(f"[SelectionListener] Mouse listener start error: {e}")
 
-        # 2. Global Hotkey listener (Cmd+Alt+S on Mac, Ctrl+Alt+S on Windows)
+        # 2. Global Hotkey listeners: Selection (Ctrl+Alt+S) & Document (Ctrl+Alt+D)
         hotkey_str = HOTKEY_MAC if IS_MAC else HOTKEY_WINDOWS
+        hotkey_doc_str = HOTKEY_DOC_MAC if IS_MAC else HOTKEY_DOC_WINDOWS
         try:
             self._keyboard_listener = keyboard.GlobalHotKeys({
-                hotkey_str: self._on_hotkey_triggered
+                hotkey_str: self._on_hotkey_triggered,
+                hotkey_doc_str: self._on_doc_hotkey_triggered
             })
             self._keyboard_listener.daemon = True
             self._keyboard_listener.start()
@@ -139,3 +142,9 @@ class SelectionListener(QObject):
             ctrl = mouse.Controller()
             cx, cy = ctrl.position
             self.text_selected.emit(text, int(cx), int(cy))
+
+    def _on_doc_hotkey_triggered(self):
+        """Triggered when pressing Cmd+Alt+D (or Ctrl+Alt+D) to read entire document."""
+        if not self.is_enabled:
+            return
+        self.document_hotkey_triggered.emit()

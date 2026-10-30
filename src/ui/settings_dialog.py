@@ -1,11 +1,17 @@
 """
-Settings, Downloads & About Dialog for Voxel.
-Allows configuring default voices, speeds, trigger timeouts, dock modes, themes, and auto-close options.
-Features OS-adaptive download options:
-- On macOS: Displays macOS .pkg and .dmg download options; Windows .exe is invisible.
-- On Windows: Displays Windows .exe download option; macOS .pkg and .dmg are invisible.
-All label and text colors are explicitly styled with high-contrast text for dark backgrounds on Windows and macOS.
+Settings, Preferences, Downloads & About Dialog for Voxel.
+Allows configuring:
+- Default voice (including new expressive Copilot neural voices Ava, Andrew, Emma, Brian)
+- Emotion tone & expressiveness modes (Empathetic, Warm, Cheerful, Professional)
+- Playback speeds (0.5x to 2.5x)
+- Sub-second instant playback pre-buffering
+- Launch at system startup (Windows Registry & macOS LaunchAgents)
+- Document & Presentation auto-reader options
+- Themes, docking positions, and auto-close options
+Features high-contrast dark obsidian glass aesthetics and OS-adaptive official download options.
 """
+import os
+import sys
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget, QLabel,
     QComboBox, QCheckBox, QDoubleSpinBox, QPushButton, QGroupBox, QFormLayout
@@ -13,8 +19,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QCursor, QDesktopServices
 
-from src.config import THEME, VOICES, SPEED_STEPS, VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC, COMPANY_NAME, COMPANY_URL
+from src.config import (
+    THEME, VOICES, EMOTION_MODES, DEFAULT_EMOTION_MODE, SPEED_STEPS,
+    VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC,
+    COMPANY_NAME, COMPANY_URL
+)
 from src.utils.settings import settings_db
+from src.utils.startup import is_startup_enabled, set_startup_enabled
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from src.ui.voxel_logo_widget import VoxelLogoWidget
 
@@ -24,8 +35,8 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"{APP_NAME} — Settings & Preferences")
-        self.setFixedSize(560, 640)
+        self.setWindowTitle(f"{APP_NAME} — Settings & Preferences ({VERSION})")
+        self.setFixedSize(600, 680)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(f"""
             QDialog {{
@@ -45,11 +56,12 @@ class SettingsDialog(QDialog):
             QTabBar::tab {{
                 background-color: #1F243B;
                 color: #94A3B8;
-                padding: 8px 18px;
+                padding: 9px 18px;
                 border-top-left-radius: 6px;
                 border-top-right-radius: 6px;
                 margin-right: 4px;
                 font-weight: 600;
+                font-size: 12px;
             }}
             QTabBar::tab:selected {{
                 background-color: #171B2D;
@@ -60,15 +72,17 @@ class SettingsDialog(QDialog):
                 border: 1px solid {THEME["border_window"]};
                 border-radius: 8px;
                 margin-top: 10px;
-                padding-top: 14px;
+                padding: 14px 12px 10px 12px;
                 font-weight: 600;
                 color: #F8FAFF;
             }}
             QGroupBox::title {{
                 color: #38BDF8;
                 subcontrol-origin: margin;
-                left: 10px;
+                left: 12px;
                 padding: 0 4px;
+                font-size: 12px;
+                font-weight: 700;
             }}
             QComboBox, QDoubleSpinBox {{
                 background-color: #242942;
@@ -100,6 +114,7 @@ class SettingsDialog(QDialog):
             }}
             QPushButton:hover {{
                 background-color: #313859;
+                border-color: rgba(0, 132, 255, 0.6);
             }}
         """)
 
@@ -107,7 +122,6 @@ class SettingsDialog(QDialog):
         self.load_values()
 
     def _make_field_label(self, text: str) -> QLabel:
-        """Helper to create high-contrast, crystal clear field labels for Windows & Mac."""
         lbl = QLabel(text, self)
         lbl.setStyleSheet("color: #E2E8F0; font-size: 13px; font-weight: 600;")
         return lbl
@@ -119,67 +133,65 @@ class SettingsDialog(QDialog):
 
         self.tabs = QTabWidget(self)
 
-        # ─── Tab 1: General Preferences ─────────────────────────────
+        # ─── Tab 1: Preferences & Emotion ───────────────────────────
         tab_prefs = QWidget()
         layout_prefs = QVBoxLayout(tab_prefs)
         layout_prefs.setContentsMargins(14, 14, 14, 14)
         layout_prefs.setSpacing(10)
 
-        form = QFormLayout()
-        form.setSpacing(10)
-        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        # Form Group
+        box_voice = QGroupBox("🎙 Voice & Emotional Prosody", tab_prefs)
+        form_voice = QFormLayout(box_voice)
+        form_voice.setSpacing(10)
+        form_voice.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        # 1. Default Voice
-        self.combo_voice = QComboBox(self)
+        # Default Voice
+        self.combo_voice = QComboBox(box_voice)
         for v in VOICES:
             self.combo_voice.addItem(v["label"], v["id"])
-        form.addRow(self._make_field_label("Default Voice:"), self.combo_voice)
+        form_voice.addRow(self._make_field_label("Default Voice:"), self.combo_voice)
 
-        # 2. Default Speed
-        self.combo_speed = QComboBox(self)
+        # Emotion & Expressiveness Mode
+        self.combo_emotion = QComboBox(box_voice)
+        for m in EMOTION_MODES:
+            self.combo_emotion.addItem(m["label"], m["id"])
+        form_voice.addRow(self._make_field_label("Emotion & Tone:"), self.combo_emotion)
+
+        # Default Speed
+        self.combo_speed = QComboBox(box_voice)
         for s in SPEED_STEPS:
             self.combo_speed.addItem(f"{s}x", s)
-        form.addRow(self._make_field_label("Default Speed:"), self.combo_speed)
+        form_voice.addRow(self._make_field_label("Default Speed:"), self.combo_speed)
 
-        # 3. Player Theme (Frosted Glass vs Dark Glass)
-        self.combo_theme = QComboBox(self)
-        self.combo_theme.addItem("Frosted Glass (Light Acrylic)", "light_glass")
-        self.combo_theme.addItem("Dark Glass (Obsidian Glass)", "light_glass")
-        form.addRow(self._make_field_label("Player Theme:"), self.combo_theme)
+        layout_prefs.addWidget(box_voice)
 
-        # 4. Docking Position
-        self.combo_dock = QComboBox(self)
-        self.combo_dock.addItem("Bottom-Right Corner (Animated)", "bottom_right")
-        self.combo_dock.addItem("Near Selection Cursor", "near_cursor")
-        form.addRow(self._make_field_label("Player Position:"), self.combo_dock)
+        # Behavior & Startup Group
+        box_system = QGroupBox("⚙️ System, Startup & Playback", tab_prefs)
+        layout_system = QVBoxLayout(box_system)
+        layout_system.setSpacing(8)
 
-        # 5. Bubble Timeout
-        self.spin_timeout = QDoubleSpinBox(self)
-        self.spin_timeout.setRange(1.5, 12.0)
-        self.spin_timeout.setSingleStep(0.5)
-        self.spin_timeout.setSuffix(" sec")
-        form.addRow(self._make_field_label("Trigger Timeout:"), self.spin_timeout)
+        # Launch at Startup
+        self.chk_startup = QCheckBox("🚀 Launch Voxel automatically on system startup", box_system)
+        layout_system.addWidget(self.chk_startup)
 
-        layout_prefs.addLayout(form)
+        # Pre-buffer on hover (sub-second instant playback)
+        self.chk_prebuffer = QCheckBox("⚡ Instant Playback: Pre-generate first sentence on hover (0ms delay)", box_system)
+        layout_system.addWidget(self.chk_prebuffer)
 
         # Selection trigger checkbox
-        self.chk_trigger = QCheckBox("Show floating Voxel logo badge when selecting text", self)
-        layout_prefs.addWidget(self.chk_trigger)
+        self.chk_trigger = QCheckBox("✨ Show floating Voxel dual-capsule badge when selecting text", box_system)
+        layout_system.addWidget(self.chk_trigger)
 
-        # Auto-Close on Finished Speaking Group
-        autoclose_box = QGroupBox("Playback Completion Behavior", self)
-        autoclose_layout = QVBoxLayout(autoclose_box)
-        autoclose_layout.setSpacing(6)
-
-        self.chk_autoclose = QCheckBox("Automatically close player when speech finishes", autoclose_box)
-        autoclose_layout.addWidget(self.chk_autoclose)
+        # Auto-Close on Finished Speaking
+        self.chk_autoclose = QCheckBox("⏳ Automatically close player when speech finishes", box_system)
+        layout_system.addWidget(self.chk_autoclose)
 
         delay_row = QHBoxLayout()
-        lbl_delay = QLabel("Fade-out duration:", autoclose_box)
+        lbl_delay = QLabel("Fade-out duration:", box_system)
         lbl_delay.setStyleSheet("color: #CBD5E1; font-size: 12px;")
         delay_row.addWidget(lbl_delay)
 
-        self.spin_autoclose_delay = QDoubleSpinBox(autoclose_box)
+        self.spin_autoclose_delay = QDoubleSpinBox(box_system)
         self.spin_autoclose_delay.setRange(0.5, 5.0)
         self.spin_autoclose_delay.setSingleStep(0.5)
         self.spin_autoclose_delay.setValue(1.0)
@@ -187,13 +199,13 @@ class SettingsDialog(QDialog):
         self.spin_autoclose_delay.setFixedWidth(110)
         delay_row.addWidget(self.spin_autoclose_delay)
         delay_row.addStretch()
-        autoclose_layout.addLayout(delay_row)
+        layout_system.addLayout(delay_row)
 
-        layout_prefs.addWidget(autoclose_box)
+        layout_prefs.addWidget(box_system)
 
         # macOS Accessibility Permission Box (Mac only)
         if IS_MAC:
-            perm_box = QGroupBox("macOS System Permissions", self)
+            perm_box = QGroupBox("macOS System Permissions", tab_prefs)
             perm_layout = QHBoxLayout(perm_box)
             trusted = is_accessibility_trusted(prompt=False)
             status_text = "🟢 Granted" if trusted else "⚠️ Accessibility Needed"
@@ -209,22 +221,79 @@ class SettingsDialog(QDialog):
         layout_prefs.addStretch()
         self.tabs.addTab(tab_prefs, "⚙️ Preferences")
 
-        # ─── Tab 2: Downloads & Data (OS-Adaptive) ─────────────────────
+        # ─── Tab 2: Document & Presentation Reader ──────────────────
+        tab_doc = QWidget()
+        layout_doc = QVBoxLayout(tab_doc)
+        layout_doc.setContentsMargins(14, 14, 14, 14)
+        layout_doc.setSpacing(12)
+
+        doc_header = QLabel("📑 Smart Document & Presentation Narration", tab_doc)
+        doc_header.setStyleSheet("color: #38BDF8; font-size: 14px; font-weight: 700;")
+        layout_doc.addWidget(doc_header)
+
+        lbl_doc_info = QLabel(
+            "Voxel can automatically read entire Google Docs, Microsoft Word documents, "
+            "PowerPoint and Google Slides presentations, and PDF files without requiring you "
+            "to manually select hundreds of lines.",
+            tab_doc
+        )
+        lbl_doc_info.setStyleSheet("color: #E2E8F0; font-size: 12px; line-height: 1.45;")
+        lbl_doc_info.setWordWrap(True)
+        layout_doc.addWidget(lbl_doc_info)
+
+        methods_box = QGroupBox("3 Ways to Read Entire Documents", tab_doc)
+        methods_layout = QVBoxLayout(methods_box)
+        methods_layout.setSpacing(8)
+
+        m1 = QLabel("<b>1. Floating Trigger Capsule:</b> Click the right <b>📑 Document icon</b> on the floating badge that appears when you select text.", methods_box)
+        m1.setStyleSheet("color: #CBD5E1; font-size: 12px;")
+        m1.setWordWrap(True)
+        methods_layout.addWidget(m1)
+
+        hotkey_label = "Cmd+Alt+D" if IS_MAC else "Ctrl+Alt+D"
+        m2 = QLabel(f"<b>2. Global Hotkey:</b> Press <b><code>{hotkey_label}</code></b> anytime while viewing any document or presentation tab.", methods_box)
+        m2.setStyleSheet("color: #CBD5E1; font-size: 12px;")
+        m2.setWordWrap(True)
+        methods_layout.addWidget(m2)
+
+        m3 = QLabel("<b>3. Mini Player & Tray Menu:</b> Click the <b>📑 Document button</b> in the player capsule or choose <i>Open File...</i> to pick any PDF/Docx.", methods_box)
+        m3.setStyleSheet("color: #CBD5E1; font-size: 12px;")
+        m3.setWordWrap(True)
+        methods_layout.addWidget(m3)
+
+        layout_doc.addWidget(methods_box)
+
+        # Instant Pipelining Note
+        pipe_box = QGroupBox("⚡ Zero-Delay Continuous Pipelining", tab_doc)
+        pipe_layout = QVBoxLayout(pipe_box)
+        lbl_pipe = QLabel(
+            "Even for 50-page documents or long slide decks, Voxel breaks the content into "
+            "smart sentence chunks and starts speaking the first sentence in <b>under 300 milliseconds</b>! "
+            "Subsequent sentences synthesize continuously in the background for gapless narration.",
+            pipe_box
+        )
+        lbl_pipe.setStyleSheet("color: #94A3B8; font-size: 11px; line-height: 1.4;")
+        lbl_pipe.setWordWrap(True)
+        pipe_layout.addWidget(lbl_pipe)
+        layout_doc.addWidget(pipe_box)
+
+        layout_doc.addStretch()
+        self.tabs.addTab(tab_doc, "📑 Document Reader")
+
+        # ─── Tab 3: Downloads & Local Folder ────────────────────────
         tab_downloads = QWidget()
         layout_down = QVBoxLayout(tab_downloads)
         layout_down.setContentsMargins(14, 14, 14, 14)
         layout_down.setSpacing(12)
 
-        down_header = QLabel("📦 Official Download & Installation Packages", tab_downloads)
+        down_header = QLabel(f"📦 Official Download & Local Packages ({VERSION})", tab_downloads)
         down_header.setStyleSheet("color: #FFFFFF; font-size: 14px; font-weight: 700;")
         layout_down.addWidget(down_header)
 
         if IS_MAC:
-            # macOS .pkg Option
             pkg_box = QGroupBox(f"🍎 macOS System-Wide Installer ({VERSION})", tab_downloads)
             pkg_layout = QVBoxLayout(pkg_box)
             pkg_layout.setSpacing(8)
-
             lbl_pkg_desc = QLabel(
                 "Standard guided installer wizard with embedded UX design previews. "
                 "Installs Voxel into <code>/Applications</code> for all user accounts.",
@@ -247,42 +316,14 @@ class SettingsDialog(QDialog):
             pkg_layout.addLayout(pkg_row)
             layout_down.addWidget(pkg_box)
 
-            # macOS .dmg Option
-            dmg_box = QGroupBox(f"💿 macOS Drag-and-Drop Disk Image ({VERSION})", tab_downloads)
-            dmg_layout = QVBoxLayout(dmg_box)
-            dmg_layout.setSpacing(8)
-
-            lbl_dmg_desc = QLabel(
-                "Traditional Apple disk image format. Mount the DMG and drag Voxel.app directly "
-                "into your Applications folder.",
-                tab_downloads
-            )
-            lbl_dmg_desc.setStyleSheet("color: #94A3B8; font-size: 12px;")
-            lbl_dmg_desc.setWordWrap(True)
-            dmg_layout.addWidget(lbl_dmg_desc)
-
-            dmg_row = QHBoxLayout()
-            dmg_row.addWidget(QLabel(f"Target: <b>Portable / Applications ({VERSION})</b>", tab_downloads))
-            dmg_row.addStretch()
-
-            btn_dmg = QPushButton(f"📥 Download Voxel-{VERSION}.dmg", tab_downloads)
-            btn_dmg.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_dmg.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 6px 14px;")
-            dmg_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.dmg"
-            btn_dmg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(dmg_url)))
-            dmg_row.addWidget(btn_dmg)
-            dmg_layout.addLayout(dmg_row)
-            layout_down.addWidget(dmg_box)
-
         else:
-            # Windows .exe Option
             win_box = QGroupBox(f"⊞ Windows Standalone Executable ({VERSION})", tab_downloads)
             win_layout = QVBoxLayout(win_box)
             win_layout.setSpacing(8)
 
             lbl_win_desc = QLabel(
-                "Single zero-dependency portable executable. No Python installation, "
-                "administrator rights, or complex setup required.",
+                "Single zero-dependency portable executable with embedded icon and single-instance lock. "
+                "No Python installation, administrator rights, or setup required.",
                 tab_downloads
             )
             lbl_win_desc.setStyleSheet("color: #94A3B8; font-size: 12px;")
@@ -301,31 +342,32 @@ class SettingsDialog(QDialog):
             win_row.addWidget(btn_win)
             win_layout.addLayout(win_row)
 
+            # Local folder shortcut button
+            local_row = QHBoxLayout()
+            btn_open_local = QPushButton("📁 Open Local Computer 'dist' Folder", tab_downloads)
+            btn_open_local.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_open_local.setStyleSheet("background-color: #1E293B; color: #38BDF8; font-weight: 600; border: 1px solid #334155;")
+            dist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "dist"))
+            btn_open_local.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(dist_path)))
+            local_row.addWidget(btn_open_local)
+            local_row.addStretch()
+            win_layout.addLayout(local_row)
+
             layout_down.addWidget(win_box)
 
-            lbl_filter = QLabel("ℹ️ <i>macOS packages are hidden because you are on Windows.</i>", tab_downloads)
-            lbl_filter.setStyleSheet("color: #64748B; font-size: 11px;")
-            layout_down.addWidget(lbl_filter)
-
-        # Historical Releases & Versions Archive
+        # Historical Releases Archive
         archive_box = QGroupBox("📦 Historical Versions Archive", tab_downloads)
         archive_layout = QVBoxLayout(archive_box)
-        archive_layout.setSpacing(8)
-
-        archive_desc = QLabel(
-            "Access past builds, notes, and release assets at any time:",
-            tab_downloads
-        )
-        archive_desc.setStyleSheet("color: #94A3B8; font-size: 11px;")
-        archive_layout.addWidget(archive_desc)
+        archive_layout.setSpacing(6)
 
         ver_list = QLabel(
-            f"• <b>{VERSION} (Current)</b> — Light glass round tray icon, single-instance lock (prevents duplicate icons)<br>"
-            "• <b>v1.0.05</b> — Round glass tray icon, multi-resolution HiDPI icons, embedded .ico<br>"
-            "• <b>v1.0.04</b> — Bluish frosted glass floating trigger, Digimo product attribution & disclaimer<br>"
-            "• <b>v1.0.03</b> — Ultra-compact frosted player (310×48), Play/Pause, speed dropdown<br>"
-            "• <b>v1.0.02</b> — Voxel rebrand, Dark Obsidian theme, macOS PKG wizard<br>"
-            "• <b>v1.0.01</b> — Initial Text 2 Voice release, Edge-TTS neural engine",
+            f"• <b>{VERSION} (Current)</b> — Instant document reader, emotional Copilot voices, startup toggle<br>"
+            "• <b>v1.1.03</b> — Vibrant full-frame startup bar logo, maximized white mic icon<br>"
+            "• <b>v1.1.02</b> — Standalone system tray mic icon maximization<br>"
+            "• <b>v1.1.01</b> — 3-tier PNG icon branding for tray, app, and selection bubble<br>"
+            "• <b>v1.1.00</b> — Vector SVG final logo integration<br>"
+            "• <b>v1.0.09</b> — Smart App Control native MCI audio bypass<br>"
+            "• <b>v1.0.06</b> — Light frosted glass tray icon & single-instance lock",
             tab_downloads
         )
         ver_list.setStyleSheet("color: #CBD5E1; font-size: 11px; line-height: 1.4;")
@@ -333,7 +375,7 @@ class SettingsDialog(QDialog):
 
         archive_row = QHBoxLayout()
         archive_row.addStretch()
-        btn_archive = QPushButton("🌐 View All Versions on GitHub", tab_downloads)
+        btn_archive = QPushButton("🌐 View All Versions on GitHub Releases", tab_downloads)
         btn_archive.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_archive.setStyleSheet("background-color: #334155; color: #FFFFFF; font-size: 11px; padding: 5px 12px; border-radius: 4px;")
         btn_archive.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(f"{GITHUB_URL}/releases")))
@@ -341,17 +383,15 @@ class SettingsDialog(QDialog):
         archive_layout.addLayout(archive_row)
 
         layout_down.addWidget(archive_box)
-
         layout_down.addStretch()
-        self.tabs.addTab(tab_downloads, "📥 Downloads")
+        self.tabs.addTab(tab_downloads, "📥 Downloads & Versions")
 
-        # ─── Tab 3: About & Version ──────────────────────────────────
+        # ─── Tab 4: About & Open Source ─────────────────────────────
         tab_about = QWidget()
         layout_about = QVBoxLayout(tab_about)
         layout_about.setContentsMargins(16, 16, 16, 16)
         layout_about.setSpacing(10)
 
-        # Header with Logo & Brand
         header_row = QHBoxLayout()
         header_logo = VoxelLogoWidget(size=46, animated=True, parent=tab_about)
         header_row.addWidget(header_logo)
@@ -372,10 +412,8 @@ class SettingsDialog(QDialog):
         ver_box = QGroupBox("Version Information", self)
         ver_layout = QVBoxLayout(ver_box)
         ver_layout.setSpacing(4)
-
         lbl_ver = QLabel(f"Current Version: <b><font color='#0084FF'>{VERSION}</font></b>  <font color='#64748B'>(Base-10 Rollover)</font>", self)
         ver_layout.addWidget(lbl_ver)
-
         lbl_ver_rule = QLabel(
             "Structure: <code>v&lt;Major&gt;.&lt;Minor&gt;.&lt;Patch:02d&gt;</code> • "
             "Local machine operation only • No telemetry", self
@@ -456,7 +494,7 @@ class SettingsDialog(QDialog):
         layout_about.addWidget(disclaimer_box)
         layout_about.addStretch()
 
-        self.tabs.addTab(tab_about, "ℹ️ About Voxel")
+        self.tabs.addTab(tab_about, "ℹ️ About & Legal")
         main_layout.addWidget(self.tabs)
 
         # Bottom buttons: Save & Cancel
@@ -488,32 +526,33 @@ class SettingsDialog(QDialog):
 
     def load_values(self):
         """Loads saved settings into controls."""
-        voice_id = settings_db.get("default_voice", "en-US-JennyNeural")
+        voice_id = settings_db.get("default_voice", "en-US-AvaNeural")
         idx = self.combo_voice.findData(voice_id)
         if idx >= 0:
             self.combo_voice.setCurrentIndex(idx)
+
+        emotion_mode = settings_db.get("emotion_mode", DEFAULT_EMOTION_MODE)
+        idx_em = self.combo_emotion.findData(emotion_mode)
+        if idx_em >= 0:
+            self.combo_emotion.setCurrentIndex(idx_em)
 
         speed_val = settings_db.get("default_speed", 1.0)
         idx_sp = self.combo_speed.findData(speed_val)
         if idx_sp >= 0:
             self.combo_speed.setCurrentIndex(idx_sp)
 
-        theme_mode = settings_db.get("theme_mode", "light_glass")
-        idx_th = self.combo_theme.findData(theme_mode)
-        if idx_th >= 0:
-            self.combo_theme.setCurrentIndex(idx_th)
+        # Startup on login
+        self.chk_startup.setChecked(is_startup_enabled())
 
-        dock_mode = settings_db.get("dock_position", "bottom_right")
-        idx_dk = self.combo_dock.findData(dock_mode)
-        if idx_dk >= 0:
-            self.combo_dock.setCurrentIndex(idx_dk)
+        # Pre-buffer on hover
+        prebuffer = settings_db.get("prebuffer_enabled", True)
+        self.chk_prebuffer.setChecked(prebuffer)
 
-        timeout = settings_db.get("bubble_timeout", 4.0)
-        self.spin_timeout.setValue(timeout)
-
+        # Selection trigger
         enabled = settings_db.get("selection_popup_enabled", True)
         self.chk_trigger.setChecked(enabled)
 
+        # Auto-close
         autoclose = settings_db.get("auto_close_finished", True)
         self.chk_autoclose.setChecked(autoclose)
 
@@ -521,15 +560,17 @@ class SettingsDialog(QDialog):
         self.spin_autoclose_delay.setValue(delay_val)
 
     def save_and_apply(self):
-        """Saves values and emits signal."""
+        """Saves values, applies startup state, and emits signal."""
         settings_db.set("default_voice", self.combo_voice.currentData())
+        settings_db.set("emotion_mode", self.combo_emotion.currentData())
         settings_db.set("default_speed", self.combo_speed.currentData())
-        settings_db.set("theme_mode", self.combo_theme.currentData())
-        settings_db.set("dock_position", self.combo_dock.currentData())
-        settings_db.set("bubble_timeout", self.spin_timeout.value())
+        settings_db.set("prebuffer_enabled", self.chk_prebuffer.isChecked())
         settings_db.set("selection_popup_enabled", self.chk_trigger.isChecked())
         settings_db.set("auto_close_finished", self.chk_autoclose.isChecked())
         settings_db.set("auto_close_delay", self.spin_autoclose_delay.value())
+
+        # Apply startup state
+        set_startup_enabled(self.chk_startup.isChecked())
 
         self.settings_applied.emit()
         self.close()

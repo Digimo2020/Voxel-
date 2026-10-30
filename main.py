@@ -7,7 +7,7 @@ import sys
 import os
 import traceback
 import pyperclip
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import Qt, QPoint
 
 # Install top-level crash guard so unhandled slot exceptions never abort the process
@@ -20,7 +20,7 @@ def _global_exception_handler(exc_type, exc_value, exc_tb):
 
 sys.excepthook = _global_exception_handler
 
-from src.config import VERSION, VOICES, APP_NAME, APP_TAGLINE, IS_MAC
+from src.config import VERSION, VOICES, APP_NAME, APP_TAGLINE, IS_MAC, DEFAULT_EMOTION_MODE
 from src.tts_engine import TTSEngine
 from src.selection_listener import SelectionListener
 from src.ui.floating_bubble import FloatingBubble
@@ -31,6 +31,7 @@ from src.ui.settings_dialog import SettingsDialog
 from src.utils.settings import settings_db
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from assets.icons import create_app_icon
+from src.utils.document_reader import capture_full_document_from_active_window, extract_text_from_file
 
 
 class VoxelApp:
@@ -82,6 +83,10 @@ class VoxelApp:
         saved_theme = settings_db.get("theme_mode", "dark_glass")
         self.player.apply_theme(saved_theme)
 
+        # 5. Emotion & Expressiveness
+        saved_emotion = settings_db.get("emotion_mode", DEFAULT_EMOTION_MODE)
+        self.tts.set_emotion_mode(saved_emotion)
+
     def is_inside_any_widget(self, x: int, y: int) -> bool:
         """Returns True if point (x, y) is inside the Bubble, Player, or Settings window."""
         pt = QPoint(x, y)
@@ -99,23 +104,33 @@ class VoxelApp:
         # 1. Selection detected -> Show floating Voxel logo
         self.listener.text_selected.connect(self._on_text_selected, Qt.ConnectionType.QueuedConnection)
 
-        # 2. Bubble clicked -> Launch playback & open Mini Player
+        # 2. Bubble actions: Read Selection, Read Document, Open File, Hover Pre-buffer
         self.bubble.clicked.connect(self._on_bubble_clicked)
+        self.bubble.read_document_requested.connect(self._on_read_document_requested)
+        self.bubble.open_file_requested.connect(self._on_open_file_requested)
+        self.bubble.settings_requested.connect(self._show_settings)
+        self.bubble.hovered.connect(self._on_bubble_hovered)
 
         # 3. User clicked empty outside space -> Fade out bubble
         self.listener.clicked_outside.connect(self._on_clicked_outside, Qt.ConnectionType.QueuedConnection)
 
-        # 4. Tray, History, Settings & Direct Clipboard controls
+        # 4. Tray, Player, History, Settings & Document Controls
         self.tray.toggle_enabled_requested.connect(self._on_tray_toggle_enabled)
         self.tray.history_requested.connect(self._show_history)
         self.tray.settings_requested.connect(self._show_settings)
         self.tray.read_clipboard_requested.connect(self._on_read_clipboard_requested)
+        self.tray.read_document_requested.connect(self._on_read_document_requested)
+        self.tray.open_file_requested.connect(self._on_open_file_requested)
+
+        self.player.read_document_requested.connect(self._on_read_document_requested)
         self.player.settings_requested.connect(self._show_settings)
+
         self.history_dialog.replay_requested.connect(self._replay_history)
         self.settings_dialog.settings_applied.connect(self._on_settings_applied)
         self.tray.quit_requested.connect(self.quit)
 
-        # 5. Permission guidance on macOS
+        # 5. Global Hotkeys: Document reader & Permission guidance
+        self.listener.document_hotkey_triggered.connect(self._on_read_document_requested, Qt.ConnectionType.QueuedConnection)
         self.listener.permission_needed.connect(self._on_permission_needed)
 
         # App shutdown hook
@@ -127,8 +142,49 @@ class VoxelApp:
             self.bubble.show_at(text, x, y)
 
     def _on_bubble_clicked(self, text: str):
-        """Called when user clicks the floating Voxel logo."""
+        """Called when user clicks the floating Voxel logo to read selected text."""
         self.player.play_text(text)
+
+    def _on_bubble_hovered(self, text: str):
+        """Pre-buffers first sentence on hover for 0ms sub-second latency playback."""
+        if settings_db.get("prebuffer_enabled", True):
+            self.tts.prefetch(text)
+
+    def _on_read_document_requested(self):
+        """Captures full document text from active Google Docs, Word, PDF, or Presentation window and plays."""
+        try:
+            doc_text = capture_full_document_from_active_window(timeout_ms=500)
+            if doc_text and len(doc_text) >= 2:
+                self.player.play_text(doc_text)
+            else:
+                self.tray.showMessage(
+                    "Voxel Document Reader",
+                    "No document text could be captured. Please make sure Google Docs, Word, PDF, or Slides is active.",
+                    AppTrayIcon.MessageIcon.Information,
+                    3000
+                )
+        except Exception as e:
+            print(f"[Main] Document capture error: {e}", file=sys.stderr)
+
+    def _on_open_file_requested(self):
+        """Opens file picker dialog to extract and read PDF, Word, or text files directly."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            None,
+            "Open Document or Presentation for Narration",
+            "",
+            "Supported Files (*.pdf *.docx *.txt *.md *.rtf *.csv);;PDF Documents (*.pdf);;Word Documents (*.docx);;Text Files (*.txt *.md);;All Files (*)"
+        )
+        if file_path:
+            text = extract_text_from_file(file_path)
+            if text and len(text) >= 2:
+                self.player.play_text(text)
+            else:
+                self.tray.showMessage(
+                    "Voxel File Reader",
+                    "Could not extract readable text from the selected file.",
+                    AppTrayIcon.MessageIcon.Warning,
+                    3000
+                )
 
     def _on_clicked_outside(self):
         """Called when user clicks elsewhere on screen."""

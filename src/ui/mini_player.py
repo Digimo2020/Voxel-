@@ -28,7 +28,7 @@ from src.tts_engine import TTSEngine
 from src.utils.settings import settings_db
 from src.ui.voxel_logo_widget import VoxelLogoWidget
 from assets.icons import (
-    create_play_icon, create_pause_icon, create_gear_icon, create_close_icon
+    create_play_icon, create_pause_icon, create_gear_icon, create_close_icon, create_document_icon
 )
 
 
@@ -114,6 +114,7 @@ class MiniPlayer(QWidget):
     """
     closed = pyqtSignal()
     settings_requested = pyqtSignal()
+    read_document_requested = pyqtSignal()
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
         super().__init__(parent)
@@ -133,7 +134,7 @@ class MiniPlayer(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(48)
-        self.setFixedWidth(310)
+        self.setFixedWidth(346)
 
         # Soft ethereal drop shadow for frosted glass depth
         self.shadow_effect = QGraphicsDropShadowEffect(self)
@@ -147,6 +148,7 @@ class MiniPlayer(QWidget):
         self.tts.playback_resumed.connect(self._on_playback_resumed)
         self.tts.playback_finished.connect(self._on_playback_finished)
         self.tts.playback_error.connect(self._on_playback_error)
+        self.tts.chunk_progress.connect(self._on_chunk_progress)
 
         self._init_ui()
         self._init_animations()
@@ -196,7 +198,17 @@ class MiniPlayer(QWidget):
         # Hairline separator
         layout.addWidget(self._create_separator())
 
-        # 4. Settings Gear Button
+        # 4. Document / Presentation Reader Button
+        self.btn_doc = QPushButton(self)
+        self.btn_doc.setFixedSize(26, 26)
+        self.btn_doc.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_doc.setToolTip("Read Entire Document / Presentation (Ctrl+Alt+D)")
+        self.btn_doc.clicked.connect(self.read_document_requested.emit)
+        layout.addWidget(self.btn_doc)
+
+        layout.addWidget(self._create_separator())
+
+        # 5. Settings Gear Button
         self.btn_settings = QPushButton(self)
         self.btn_settings.setFixedSize(26, 26)
         self.btn_settings.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -255,6 +267,11 @@ class MiniPlayer(QWidget):
                     background-color: rgba(255, 255, 255, 0.28);
                 }}
             """)
+            self.btn_doc.setIcon(create_document_icon(15, "#CBD5E1"))
+            self.btn_doc.setStyleSheet("""
+                QPushButton { background: transparent; border: none; border-radius: 13px; }
+                QPushButton:hover { background-color: rgba(255, 255, 255, 0.14); }
+            """)
             self.btn_settings.setIcon(create_gear_icon(15, "#CBD5E1"))
             self.btn_settings.setStyleSheet("""
                 QPushButton { background: transparent; border: none; border-radius: 13px; }
@@ -298,6 +315,11 @@ class MiniPlayer(QWidget):
                 QPushButton:pressed {{
                     background-color: rgba(230, 240, 255, 0.95);
                 }}
+            """)
+            self.btn_doc.setIcon(create_document_icon(15, "#475569"))
+            self.btn_doc.setStyleSheet("""
+                QPushButton { background: transparent; border: none; border-radius: 13px; }
+                QPushButton:hover { background-color: rgba(0, 0, 0, 0.06); }
             """)
             self.btn_settings.setIcon(create_gear_icon(15, "#475569"))
             self.btn_settings.setStyleSheet("""
@@ -614,3 +636,9 @@ class MiniPlayer(QWidget):
             painter.drawRoundedRect(shine_rect, r * 0.8, r * 0.8)
 
         painter.end()
+
+    def _on_chunk_progress(self, current: int, total: int):
+        if total > 1:
+            self.lbl_brand.setText(f"Voxel {current}/{total}")
+        else:
+            self.lbl_brand.setText("Voxel")

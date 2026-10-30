@@ -1,6 +1,7 @@
 """
 Configuration settings for Voxel (Text to Speech, Anywhere).
-Supports cross-platform presets, macOS native design tokens, and neural voice profiles.
+Supports cross-platform presets, macOS native design tokens, neural voice profiles,
+expressive emotion modes, and document presentation narration.
 """
 import sys
 import os
@@ -14,14 +15,46 @@ COMPANY_NAME = "Digimo"
 COMPANY_URL = "https://www.digimo.pt/"
 IS_MAC = sys.platform == "darwin"
 
-# Voice Profiles (Edge-TTS Neural Voices)
+# Voice Profiles (Edge-TTS Neural Voices with Emotional & Expressive Support)
 VOICES = [
+    {
+        "id": "en-US-AvaNeural",
+        "name": "Ava (Expressive Female)",
+        "gender": "Female",
+        "country": "US",
+        "label": "Ava (US Female — Expressive & Caring)",
+        "short_label": "Ava"
+    },
+    {
+        "id": "en-US-AndrewNeural",
+        "name": "Andrew (Warm Male)",
+        "gender": "Male",
+        "country": "US",
+        "label": "Andrew (US Male — Warm & Authentic)",
+        "short_label": "Andrew"
+    },
+    {
+        "id": "en-US-EmmaNeural",
+        "name": "Emma (Cheerful Female)",
+        "gender": "Female",
+        "country": "US",
+        "label": "Emma (US Female — Cheerful & Clear)",
+        "short_label": "Emma"
+    },
+    {
+        "id": "en-US-BrianNeural",
+        "name": "Brian (Conversational Male)",
+        "gender": "Male",
+        "country": "US",
+        "label": "Brian (US Male — Approachable & Sincere)",
+        "short_label": "Brian"
+    },
     {
         "id": "en-US-JennyNeural",
         "name": "Jenny (Female)",
         "gender": "Female",
         "country": "US",
-        "label": "Jenny (US Female)",
+        "label": "Jenny (US Female — Friendly & Clear)",
         "short_label": "Jenny"
     },
     {
@@ -29,7 +62,7 @@ VOICES = [
         "name": "Guy (Male)",
         "gender": "Male",
         "country": "US",
-        "label": "Guy (US Male)",
+        "label": "Guy (US Male — Passionate & Bold)",
         "short_label": "Guy"
     },
     {
@@ -37,7 +70,7 @@ VOICES = [
         "name": "Sonia (Female)",
         "gender": "Female",
         "country": "UK",
-        "label": "Sonia (UK Female)",
+        "label": "Sonia (UK Female — Articulate)",
         "short_label": "Sonia"
     },
     {
@@ -45,10 +78,43 @@ VOICES = [
         "name": "Aria (Female)",
         "gender": "Female",
         "country": "US",
-        "label": "Aria (US Female)",
+        "label": "Aria (US Female — Confident)",
         "short_label": "Aria"
     }
 ]
+
+# Emotional & Expressive Prosody Presets
+EMOTION_MODES = [
+    {
+        "id": "expressive",
+        "name": "Expressive & Empathetic",
+        "label": "Expressive & Empathetic (Natural inflection & breath pauses)",
+        "pitch": "+2Hz",
+        "rate_adjust": "+0%"
+    },
+    {
+        "id": "warm",
+        "name": "Warm & Storyteller",
+        "label": "Warm & Storyteller (Comforting tone & relaxed pacing)",
+        "pitch": "-1Hz",
+        "rate_adjust": "-2%"
+    },
+    {
+        "id": "cheerful",
+        "name": "Cheerful & Dynamic",
+        "label": "Cheerful & Dynamic (Upbeat presentation energy)",
+        "pitch": "+4Hz",
+        "rate_adjust": "+3%"
+    },
+    {
+        "id": "professional",
+        "name": "Calm & Professional",
+        "label": "Calm & Professional (Clear, articulate formal pacing)",
+        "pitch": "+0Hz",
+        "rate_adjust": "+0%"
+    }
+]
+DEFAULT_EMOTION_MODE = "expressive"
 
 # Offline Fallback Voice IDs (macOS native 'say' or SAPI5 on Windows)
 if IS_MAC:
@@ -61,7 +127,7 @@ else:
 # Playback Speed Presets
 SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
 DEFAULT_SPEED = 1.0
-DEFAULT_VOICE_INDEX = 0  # Jenny (US Female)
+DEFAULT_VOICE_INDEX = 0  # Ava (US Female - Expressive)
 
 # UI Settings
 BUBBLE_SIZE = 38                # Ergonomic 38px floating badge holding the Voxel logo
@@ -69,9 +135,11 @@ BUBBLE_TIMEOUT_SECONDS = 4.0
 MIN_SELECTED_LENGTH = 2
 DRAG_THRESHOLD_PIXELS = 8
 
-# Hotkey fallback (Cmd+Alt+S on Mac, Ctrl+Alt+S on Windows)
+# Global Hotkeys
 HOTKEY_WINDOWS = "<ctrl>+<alt>+s"
 HOTKEY_MAC = "<cmd>+<alt>+s"
+HOTKEY_DOC_WINDOWS = "<ctrl>+<alt>+d"
+HOTKEY_DOC_MAC = "<cmd>+<alt>+d"
 
 # System font stack
 FONT_FAMILY = '".AppleSystemUIFont", "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif'

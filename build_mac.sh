@@ -24,6 +24,8 @@ pyinstaller --noconfirm --windowed \
     --osx-bundle-identifier "com.digimo.voxel" \
     --collect-all edge_tts \
     --collect-all certifi \
+    --collect-all pypdf \
+    --add-data "assets:assets" \
     --hidden-import pynput.keyboard._darwin \
     --hidden-import pynput.mouse._darwin \
     main.py
@@ -111,7 +113,7 @@ with open('build/pkg_resources/welcome.html', 'w', encoding='utf-8') as f:
     f.write(html)
 "
 
-VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.0.06")
+VERSION=$(python3 -c "from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)" 2>/dev/null || echo "v1.1.04")
 PLAIN_VER="${VERSION#v}"
 
 # Generate Distribution.xml dynamically for productbuild

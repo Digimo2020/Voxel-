@@ -27,6 +27,7 @@ python -m PyInstaller --noconfirm --onefile --windowed --name "Voxel" ^
     --add-data "assets;assets" ^
     --collect-all edge_tts ^
     --collect-all certifi ^
+    --collect-all pypdf ^
     --hidden-import pynput.keyboard._win32 ^
     --hidden-import pynput.mouse._win32 ^
     --exclude-module PyQt6.QtMultimedia ^
@@ -48,9 +49,5 @@ copy /Y "dist\Voxel.exe" "dist\Voxel-%VERSION%.exe"
 
 echo ===================================================
 echo   BUILD COMPLETE!
-echo   - Latest Executable   : dist\Voxel.exe
-echo   - Versioned Executable: dist\Voxel-%VERSION%.exe
-echo   - All previous versions preserved in dist\
+echo   Output: dist\Voxel.exe and dist\Voxel-%VERSION%.exe
 echo ===================================================
-dir dist\*.exe
-pause

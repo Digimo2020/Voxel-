@@ -6,7 +6,7 @@ Format: v<Major>.<Minor>.<Patch:02d>  (e.g., v1.0.01)
 """
 import re
 
-CURRENT_VERSION = "v1.1.03"
+CURRENT_VERSION = "v1.1.04"
 GITHUB_REPO_URL = "https://github.com/Digimo2020/Voxel-"
 
 
@@ -23,18 +23,20 @@ def format_version(major: int, minor: int, patch: int) -> str:
     return f"v{major}.{minor}.{patch:02d}"
 
 
-def bump_version(ver_str: str) -> str:
+def get_next_version(current: str) -> str:
     """
-    Bumps version according to the specified 10-cycle rollover rule:
-    e.g. v1.0.01 -> v1.0.02 -> ... -> v1.0.09 -> v1.1.00
-    e.g. v1.9.09 -> v2.0.00
+    Computes the next sequential version following strict base-10 rollover:
+    v1.0.09 -> v1.1.00
+    v1.9.09 -> v2.0.00
     """
-    major, minor, patch = parse_version(ver_str)
-    patch += 1
-    if patch >= 10:
+    major, minor, patch = parse_version(current)
+    if patch >= 9:
         patch = 0
-        minor += 1
-        if minor >= 10:
+        if minor >= 9:
             minor = 0
             major += 1
+        else:
+            minor += 1
+    else:
+        patch += 1
     return format_version(major, minor, patch)

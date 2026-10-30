@@ -9,6 +9,31 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.04] - 2026-10-30
+
+### Added & Enhanced
+- **Smart Document & Presentation Reader (Google Docs / PDF / Slides / Word)**:
+  - Added dedicated **📑 Read Entire Document** action on the floating trigger badge, player capsule bar, tray menu, and global hotkey (`Ctrl+Alt+D` on Windows / `Cmd+Alt+D` on macOS).
+  - Automatically captures the full document or slide presentation from the active window and starts narration immediately without manual copying.
+  - Added direct local file reader supporting `.pdf` (via `pypdf`), `.docx`, `.txt`, `.md`, and `.rtf`.
+- **Expressive Emotion & Neural Copilot Voices**:
+  - Integrated 4 new expressive Copilot neural voices: `Ava (Expressive Female)`, `Andrew (Warm Male)`, `Emma (Cheerful Female)`, and `Brian (Conversational Male)`.
+  - Added 4 Emotion & Prosody Tone Modes: *Expressive & Empathetic*, *Warm & Storyteller*, *Cheerful & Dynamic (for Presentations)*, and *Calm & Professional*.
+  - Intelligent prosody processor cleans URLs, bullet lists, and punctuation for natural human breathing pauses.
+- **Sub-Second Instant Playback & Zero-Delay Pipeline**:
+  - Sentence-pipelined streaming: starts speaking Chunk 0 in **< 300ms** while subsequent chunks synthesize continuously in the background for gapless long-document playback.
+  - Pre-buffering on trigger hover: pre-synthesizes the first sentence while mouse moves toward the badge (0ms start latency on click).
+  - Local disk audio cache prevents re-generating identical phrases or repeated slides.
+- **Left-Click Startup Tray Icon**:
+  - Left-clicking the startup system tray icon now immediately opens the Settings & Preferences dialog.
+- **Redesigned Settings & Preferences Dialog**:
+  - Added **Launch at System Startup** toggle with automatic Windows Registry `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` integration.
+  - High-contrast obsidian glass card aesthetic, tab navigation, and direct button to open the local `dist/` folder on computer.
+- **Dual-Action Floating Trigger Capsule**:
+  - Expanded floating trigger badge with dual actions: Left icon (▶ Read Selected Text) and Right icon (📑 Read Entire Document).
+
+---
+
 ## [v1.1.03] - 2026-10-30
 
 ### Fixed & Enhanced

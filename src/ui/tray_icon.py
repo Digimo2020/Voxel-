@@ -1,6 +1,9 @@
 """
 Menu Bar / System Tray Icon for Voxel.
-Lives in the macOS Menu Bar (or Windows Notification Area) for quick controls and settings.
+Lives in the Windows Notification Area / macOS Menu Bar.
+Supports:
+- Left-click opens Settings & Preferences immediately.
+- Right-click reveals rich context menu including Read Document, File Picker, Voices, History, and Downloads.
 """
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices
@@ -13,21 +16,29 @@ from assets.icons import create_tray_icon
 
 class AppTrayIcon(QSystemTrayIcon):
     """
-    Menu Bar / System Tray icon for quick control, settings access, and status.
+    System Tray / Startup Bar icon for quick controls, document narration, and preferences.
     """
     toggle_enabled_requested = pyqtSignal(bool)
     history_requested = pyqtSignal()
     settings_requested = pyqtSignal()
     read_clipboard_requested = pyqtSignal()
+    read_document_requested = pyqtSignal()
+    open_file_requested = pyqtSignal()
     quit_requested = pyqtSignal()
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
         super().__init__(parent)
         self.tts = tts_engine
         self.setIcon(create_tray_icon(size=32))
-        self.setToolTip(f"{APP_NAME} ({VERSION}) — {APP_TAGLINE}")
+        self.setToolTip(f"{APP_NAME} ({VERSION}) — {APP_TAGLINE}\n• Left-Click: Open Settings\n• Right-Click: Quick Menu")
 
         self._init_menu()
+        self.activated.connect(self._on_tray_activated)
+
+    def _on_tray_activated(self, reason: QSystemTrayIcon.ActivationReason):
+        """Opens Settings dialog immediately when user left-clicks the startup tray icon."""
+        if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
+            self.settings_requested.emit()
 
     def _init_menu(self):
         menu = QMenu()
@@ -53,6 +64,16 @@ class AppTrayIcon(QSystemTrayIcon):
         title_action = menu.addAction(f"🎙 {APP_NAME} ({VERSION})")
         title_action.setEnabled(False)
         menu.addSeparator()
+
+        # Read Entire Document (Google Docs / PDF / Presentation)
+        hotkey_str = "Cmd+Alt+D" if IS_MAC else "Ctrl+Alt+D"
+        read_doc_action = menu.addAction(f"📑 Read Entire Document ({hotkey_str})")
+        read_doc_action.setToolTip("Reads all text from currently active Google Docs, Word, PDF, or Presentation")
+        read_doc_action.triggered.connect(self.read_document_requested.emit)
+
+        # Open & Read Document File
+        open_file_action = menu.addAction("📂 Open & Read File (PDF / Slides / Docs)...")
+        open_file_action.triggered.connect(self.open_file_requested.emit)
 
         # Read Clipboard Directly action
         read_clip = menu.addAction("🔊 Read Current Clipboard")
@@ -88,17 +109,17 @@ class AppTrayIcon(QSystemTrayIcon):
         history_action = menu.addAction("📜 History & Recent Clips...")
         history_action.triggered.connect(self.history_requested.emit)
 
-        # Settings & Downloads dialog
-        settings_action = menu.addAction("⚙️ Settings & Downloads...")
+        # Settings & Preferences dialog
+        settings_action = menu.addAction("⚙️ Settings & Preferences...")
         settings_action.triggered.connect(self.settings_requested.emit)
 
-        # Platform-specific direct download link (OS-adaptive)
+        # Platform-specific direct download link
         if IS_MAC:
-            down_action = menu.addAction("📥 Download macOS Installer (.pkg)...")
-            down_url = f"{GITHUB_URL}/releases/latest/download/Voxel.pkg"
+            down_action = menu.addAction(f"📥 Download macOS Installer ({VERSION})...")
+            down_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.pkg"
         else:
-            down_action = menu.addAction("📥 Download Windows App (.exe)...")
-            down_url = f"{GITHUB_URL}/releases/latest/download/Voxel.exe"
+            down_action = menu.addAction(f"📥 Download Windows App ({VERSION})...")
+            down_url = f"{GITHUB_URL}/releases/download/{VERSION}/Voxel-{VERSION}.exe"
         down_action.triggered.connect(lambda: QDesktopServices.openUrl(QUrl(down_url)))
 
         menu.addSeparator()
