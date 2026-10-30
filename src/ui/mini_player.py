@@ -114,7 +114,7 @@ class MiniPlayer(QWidget):
     """
     closed = pyqtSignal()
     settings_requested = pyqtSignal()
-    read_document_requested = pyqtSignal()
+    read_document_requested = pyqtSignal(str)
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
         super().__init__(parent)
@@ -203,7 +203,7 @@ class MiniPlayer(QWidget):
         self.btn_doc.setFixedSize(26, 26)
         self.btn_doc.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_doc.setToolTip("Read Entire Document / Presentation (Ctrl+Alt+D)")
-        self.btn_doc.clicked.connect(self.read_document_requested.emit)
+        self.btn_doc.clicked.connect(lambda: self.read_document_requested.emit(getattr(self.tts, "current_text", "")))
         layout.addWidget(self.btn_doc)
 
         layout.addWidget(self._create_separator())

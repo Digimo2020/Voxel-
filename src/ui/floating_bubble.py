@@ -28,7 +28,7 @@ class FloatingBubble(QWidget):
     Provides instant one-click reading of either the selected text or the full document/presentation.
     """
     clicked = pyqtSignal(str)              # (selected_text)
-    read_document_requested = pyqtSignal()  # Read entire document / presentation
+    read_document_requested = pyqtSignal(str)  # Read entire document / presentation
     open_file_requested = pyqtSignal()      # Open local document file
     settings_requested = pyqtSignal()       # Open settings dialog
     hovered = pyqtSignal(str)               # Pre-fetch notification
@@ -140,13 +140,14 @@ class FloatingBubble(QWidget):
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             pos_x = event.position().x()
+            fallback = self.selected_text
             self.fade_out()
             if pos_x < DIVIDER_X:
                 # Read selected text
-                self.clicked.emit(self.selected_text)
+                self.clicked.emit(fallback)
             else:
-                # Read entire document / presentation
-                self.read_document_requested.emit()
+                # Read entire document / presentation (passing fallback text)
+                self.read_document_requested.emit(fallback)
         elif event.button() == Qt.MouseButton.RightButton:
             self._show_context_menu(event.globalPosition().toPoint())
         super().mousePressEvent(event)
@@ -177,7 +178,7 @@ class FloatingBubble(QWidget):
         act_sel.triggered.connect(lambda: (self.fade_out(), self.clicked.emit(self.selected_text)))
 
         act_doc = menu.addAction("📑 Read Entire Document (Google Docs / PDF / Slides)")
-        act_doc.triggered.connect(lambda: (self.fade_out(), self.read_document_requested.emit()))
+        act_doc.triggered.connect(lambda: (self.fade_out(), self.read_document_requested.emit(self.selected_text)))
 
         menu.addSeparator()
 

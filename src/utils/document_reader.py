@@ -11,20 +11,45 @@ import subprocess
 import pyperclip
 from pynput import keyboard
 
+IS_WIN = sys.platform == "win32"
 IS_MAC = sys.platform == "darwin"
 MODIFIER_KEY = keyboard.Key.cmd if IS_MAC else keyboard.Key.ctrl
 
 _kb_controller = keyboard.Controller()
 
+if IS_WIN:
+    import ctypes
+    _user32 = ctypes.windll.user32
+    VK_CONTROL = 0x11
+    VK_A = 0x41
+    VK_C = 0x43
+    VK_RIGHT = 0x27
+    KEYEVENTF_KEYUP = 0x0002
+else:
+    _user32 = None
 
-def capture_full_document_from_active_window(timeout_ms: int = 450) -> str:
+
+def _send_key_combo_win(vk_key: int):
+    """Sends a Ctrl+Key combination using native Windows keybd_event."""
+    if not _user32:
+        return
+    _user32.keybd_event(VK_CONTROL, 0, 0, 0)
+    time.sleep(0.03)
+    _user32.keybd_event(vk_key, 0, 0, 0)
+    time.sleep(0.04)
+    _user32.keybd_event(vk_key, 0, KEYEVENTF_KEYUP, 0)
+    time.sleep(0.02)
+    _user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+    time.sleep(0.03)
+
+
+def capture_full_document_from_active_window(timeout_ms: int = 800) -> str:
     """
     Simulates select-all (Ctrl+A / Cmd+A) and copy (Ctrl+C / Cmd+C)
-    in the currently active application window (e.g. Google Docs, Word,
-    PDF viewer, Google Slides presentation).
+    in the currently active application window (Google Docs, Word, PDF, Google Slides).
     
-    Captures the full document text, preserves the user's prior clipboard,
-    and returns the extracted text ready for narration.
+    Includes Canvas-aware pauses for browser-based editors and safely
+    restores the prior clipboard contents afterwards.
     """
     old_clip = ""
     try:
@@ -38,50 +63,54 @@ def capture_full_document_from_active_window(timeout_ms: int = 450) -> str:
     except Exception:
         pass
 
-    time.sleep(0.04)
+    # Brief delay for any physical mouse release to settle
+    time.sleep(0.06)
 
-    # 1. Simulate Select All (Ctrl+A / Cmd+A)
-    try:
-        with _kb_controller.pressed(MODIFIER_KEY):
-            time.sleep(0.02)
-            _kb_controller.press("a")
-            time.sleep(0.02)
-            _kb_controller.release("a")
-            time.sleep(0.03)
-
-        # 2. Simulate Copy (Ctrl+C / Cmd+C)
-        with _kb_controller.pressed(MODIFIER_KEY):
-            time.sleep(0.02)
-            _kb_controller.press("c")
-            time.sleep(0.02)
-            _kb_controller.release("c")
-            time.sleep(0.03)
-    except Exception as e:
-        print(f"[DocumentReader] Keystroke simulation error: {e}")
-
-    # Fallback to AppleScript on macOS
-    if IS_MAC:
+    # 1. Send Select All (Ctrl+A on Windows, Cmd+A on Mac)
+    if IS_WIN and _user32:
+        _send_key_combo_win(VK_A)
+        # Google Docs HTML5 Canvas editor needs ~120ms to update internal selection model
+        time.sleep(0.12)
+        _send_key_combo_win(VK_C)
+    else:
+        # Cross-platform / macOS pynput & AppleScript
         try:
-            subprocess.run(
-                [
-                    "osascript", "-e",
-                    'tell application "System Events" to keystroke "a" using {command down}\n'
-                    'delay 0.05\n'
-                    'tell application "System Events" to keystroke "c" using {command down}'
-                ],
-                timeout=0.6,
-                capture_output=True
-            )
-        except Exception:
-            pass
+            with _kb_controller.pressed(MODIFIER_KEY):
+                time.sleep(0.03)
+                _kb_controller.press("a")
+                time.sleep(0.04)
+                _kb_controller.release("a")
+            time.sleep(0.12)
+            with _kb_controller.pressed(MODIFIER_KEY):
+                time.sleep(0.03)
+                _kb_controller.press("c")
+                time.sleep(0.04)
+                _kb_controller.release("c")
+        except Exception as e:
+            print(f"[DocumentReader] Keystroke error: {e}")
 
-    # 3. Poll clipboard for document contents
+        if IS_MAC:
+            try:
+                subprocess.run(
+                    [
+                        "osascript", "-e",
+                        'tell application "System Events" to keystroke "a" using {command down}\n'
+                        'delay 0.12\n'
+                        'tell application "System Events" to keystroke "c" using {command down}'
+                    ],
+                    timeout=0.8,
+                    capture_output=True
+                )
+            except Exception:
+                pass
+
+    # 2. Poll clipboard for new text
     start_time = time.time()
     new_text = ""
     max_wait = timeout_ms / 1000.0
 
     while time.time() - start_time < max_wait:
-        time.sleep(0.025)
+        time.sleep(0.03)
         try:
             curr = pyperclip.paste()
             if curr != sentinel:
@@ -90,15 +119,20 @@ def capture_full_document_from_active_window(timeout_ms: int = 450) -> str:
         except Exception:
             continue
 
-    # 4. Deselect text so the document returns to normal visual state (press right arrow or escape)
-    try:
-        _kb_controller.press(keyboard.Key.right)
+    # 3. Deselect text so the document returns to normal visual state
+    if IS_WIN and _user32:
+        _user32.keybd_event(VK_RIGHT, 0, 0, 0)
         time.sleep(0.01)
-        _kb_controller.release(keyboard.Key.right)
-    except Exception:
-        pass
+        _user32.keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
+    else:
+        try:
+            _kb_controller.press(keyboard.Key.right)
+            time.sleep(0.01)
+            _kb_controller.release(keyboard.Key.right)
+        except Exception:
+            pass
 
-    # 5. Restore user's previous clipboard text
+    # 4. Restore user's previous clipboard text
     try:
         pyperclip.copy(old_clip)
     except Exception:

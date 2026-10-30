@@ -8,7 +8,7 @@ import os
 import traceback
 import pyperclip
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, QTimer
 
 # Install top-level crash guard so unhandled slot exceptions never abort the process
 def _global_exception_handler(exc_type, exc_value, exc_tb):
@@ -48,7 +48,8 @@ class VoxelApp:
         self.player = MiniPlayer(self.tts)
         self.tray = AppTrayIcon(self.tts)
         self.history_dialog = HistoryDialog()
-        self.settings_dialog = SettingsDialog()
+        self._last_selected_text = ""
+        self.settings_dialog = SettingsDialog(tts_engine=self.tts)
 
         # Apply saved settings to TTS & Bubble
         self._apply_initial_settings()
@@ -138,6 +139,7 @@ class VoxelApp:
 
     def _on_text_selected(self, text: str, x: int, y: int):
         """Called when text is selected in any application."""
+        self._last_selected_text = text
         if settings_db.get("selection_popup_enabled", True):
             self.bubble.show_at(text, x, y)
 
@@ -150,21 +152,38 @@ class VoxelApp:
         if settings_db.get("prebuffer_enabled", True):
             self.tts.prefetch(text)
 
-    def _on_read_document_requested(self):
-        """Captures full document text from active Google Docs, Word, PDF, or Presentation window and plays."""
-        try:
-            doc_text = capture_full_document_from_active_window(timeout_ms=500)
-            if doc_text and len(doc_text) >= 2:
-                self.player.play_text(doc_text)
-            else:
-                self.tray.showMessage(
-                    "Voxel Document Reader",
-                    "No document text could be captured. Please make sure Google Docs, Word, PDF, or Slides is active.",
-                    AppTrayIcon.MessageIcon.Information,
-                    3000
-                )
-        except Exception as e:
-            print(f"[Main] Document capture error: {e}", file=sys.stderr)
+    def _on_read_document_requested(self, fallback_text: str = ""):
+        """
+        Captures full document text from active Google Docs, Word, PDF, or Presentation window.
+        Uses asynchronous singleShot to allow mouse release and window focus to return to document.
+        Gracefully falls back to selected text if full document capture is unavailable.
+        """
+        active_fallback = fallback_text or getattr(self, "_last_selected_text", "")
+
+        def _do_capture():
+            try:
+                doc_text = capture_full_document_from_active_window(timeout_ms=750)
+                if doc_text and len(doc_text) >= 10:
+                    self.player.play_text(doc_text)
+                elif active_fallback and len(active_fallback.strip()) >= 2:
+                    # Seamless fallback to highlighted text! No error notification!
+                    self.player.play_text(active_fallback.strip())
+                elif doc_text and len(doc_text) >= 2:
+                    self.player.play_text(doc_text)
+                else:
+                    self.tray.showMessage(
+                        "Voxel Document Reader",
+                        "No document text could be captured. Please click inside your document or select text to read.",
+                        AppTrayIcon.MessageIcon.Information,
+                        3000
+                    )
+            except Exception as e:
+                print(f"[Main] Document capture error: {e}", file=sys.stderr)
+                if active_fallback:
+                    self.player.play_text(active_fallback)
+
+        # 120ms delay lets mouse release and background document window regain focus
+        QTimer.singleShot(120, _do_capture)
 
     def _on_open_file_requested(self):
         """Opens file picker dialog to extract and read PDF, Word, or text files directly."""

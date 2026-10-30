@@ -22,7 +22,7 @@ class AppTrayIcon(QSystemTrayIcon):
     history_requested = pyqtSignal()
     settings_requested = pyqtSignal()
     read_clipboard_requested = pyqtSignal()
-    read_document_requested = pyqtSignal()
+    read_document_requested = pyqtSignal(str)
     open_file_requested = pyqtSignal()
     quit_requested = pyqtSignal()
 
@@ -69,7 +69,7 @@ class AppTrayIcon(QSystemTrayIcon):
         hotkey_str = "Cmd+Alt+D" if IS_MAC else "Ctrl+Alt+D"
         read_doc_action = menu.addAction(f"📑 Read Entire Document ({hotkey_str})")
         read_doc_action.setToolTip("Reads all text from currently active Google Docs, Word, PDF, or Presentation")
-        read_doc_action.triggered.connect(self.read_document_requested.emit)
+        read_doc_action.triggered.connect(lambda: self.read_document_requested.emit(""))
 
         # Open & Read Document File
         open_file_action = menu.addAction("📂 Open & Read File (PDF / Slides / Docs)...")

@@ -9,6 +9,25 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.05] - 2026-10-30
+
+### Fixed & Enhanced
+- **Rock-Solid Document Reader Capture & Seamless Fallback**:
+  - Resolved Google Docs canvas and physical mouse-down contention by introducing decoupled asynchronous execution (120ms pause to release mouse and re-focus target window).
+  - Implemented native Windows `keybd_event` with Canvas-aware delays (120ms between `Ctrl+A` and `Ctrl+C`) for Google Docs HTML5 canvas and web PDF viewers.
+  - Added smart fallback: if an application blocks whole-document select-all, Voxel automatically falls back to your highlighted text with zero error notifications.
+- **Dual Theme Views for Settings Window (Light & Dark)**:
+  - Added full support for **Light Frosted Acrylic** and **Dark Obsidian Glass** views in the Settings dialog.
+  - Quick 1-click toggle switch in the header (`☀️ Light Mode` / `🌙 Dark Mode`) with real-time UI re-theming.
+- **Performance & Voice Live Test Button**:
+  - Added **`▶ Test Voice & Latency Performance`** directly in the Settings Preferences tab.
+  - Lets users instantly audition speech synthesis, latency, speed, and emotion tone before saving.
+- **Creator, Architecture & Design Concept Attribution**:
+  - Formally credited **Fahim** for system architecture, UX/UI design concept, and product vision.
+  - Embedded direct LinkedIn profile link: [https://www.linkedin.com/in/fahimdigital/](https://www.linkedin.com/in/fahimdigital/).
+
+---
+
 ## [v1.1.04] - 2026-10-30
 
 ### Added & Enhanced
