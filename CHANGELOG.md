@@ -10,6 +10,16 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.10] - 2026-10-31
+
+### Branding & Startup Bar Logo Update
+- **Updated Official Startup Bar Logo**:
+  - Replaced system tray and notification area icon with the user's new vibrant purple-to-blue badge and bold white microphone icon (`assets/Fainal/Voxel Logo.png`).
+  - Extracted clean, alpha-antialiased contours with transparent background so the badge renders crisply on both light and dark Windows/macOS taskbars without white halo artifacts.
+  - Centered onto 512x512 master assets (`tray_bar_logo_square.png` and `tray_bar_logo.png`) and regenerated multi-resolution Windows `icon.ico` (16, 24, 32, 48, 64, 128, 256 px).
+
+---
+
 ## [v1.1.09] - 2026-10-31
 
 ### UI/UX Overhaul & Menu Simplification
