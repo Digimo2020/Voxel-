@@ -14,6 +14,43 @@ from src.config import DRAG_THRESHOLD_PIXELS, MIN_SELECTED_LENGTH, HOTKEY_WINDOW
 from src.utils.clipboard import grab_selected_text
 from src.utils.mac_permissions import is_accessibility_trusted
 
+# Known screenshot apps, drawing overlays, and full-screen capture tools to never intercept
+BLOCKED_OVERLAY_PROCESSES = {
+    "flameshot", "lightshot", "snippingtool", "screensketch", "snipaste",
+    "sharex", "greenshot", "screenpresso", "picpick"
+}
+
+if sys.platform == "win32":
+    import ctypes
+    _user32 = ctypes.windll.user32
+    _kernel32 = ctypes.windll.kernel32
+    _PROCESS_QUERY_LIMITED = 0x1000
+
+    def _is_screenshot_app_active() -> bool:
+        """Returns True if the active foreground window belongs to a screenshot tool."""
+        try:
+            hwnd = _user32.GetForegroundWindow()
+            if not hwnd:
+                return False
+            pid = ctypes.c_ulong()
+            _user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if not pid.value:
+                return False
+            hproc = _kernel32.OpenProcess(_PROCESS_QUERY_LIMITED, False, pid.value)
+            if not hproc:
+                return False
+            buf = ctypes.create_unicode_buffer(1024)
+            size = ctypes.c_ulong(1024)
+            _kernel32.QueryFullProcessImageNameW(hproc, 0, buf, ctypes.byref(size))
+            _kernel32.CloseHandle(hproc)
+            proc_path = buf.value.lower()
+            return any(tool in proc_path for tool in BLOCKED_OVERLAY_PROCESSES)
+        except Exception:
+            return False
+else:
+    def _is_screenshot_app_active() -> bool:
+        return False
+
 
 class SelectionListener(QObject):
     """
@@ -125,6 +162,10 @@ class SelectionListener(QObject):
 
     def _handle_possible_selection(self, cursor_x: int, cursor_y: int):
         """Waits briefly for selection to settle in target app, then grabs text."""
+        # Never inject copy keystrokes into screenshot overlay apps (Flameshot, Lightshot, Snipping Tool)
+        if _is_screenshot_app_active():
+            return
+
         time.sleep(0.08)
 
         text = grab_selected_text(timeout_ms=180)

@@ -127,12 +127,13 @@ class MiniPlayer(QWidget):
 
         # Frameless, transparent floating tool window
         self.setWindowFlags(
-            Qt.WindowType.SubWindow |
+            Qt.WindowType.Tool |
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.NoDropShadowWindowHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setFixedHeight(48)
         self.setFixedWidth(346)
 
@@ -615,22 +616,22 @@ class MiniPlayer(QWidget):
             painter.drawRoundedRect(shine_rect, r * 0.8, r * 0.8)
 
         else:
-            # ── Signature Frosted Glass (Ethereal Light Acrylic) ────────
-            # Luminous translucent milky gradient fill with subtle tint
+            # ── Solid Elegant Light Capsule (No see-through white artifacts) ──
+            # Premium clean off-white / porcelain capsule with subtle blue tint
             grad = QLinearGradient(0, 0, 0, h)
-            grad.setColorAt(0.0, QColor(255, 255, 255, 210))  # ~82% opacity
-            grad.setColorAt(0.5, QColor(240, 246, 255, 195))  # ~76% opacity
-            grad.setColorAt(1.0, QColor(230, 238, 255, 205))  # ~80% opacity
+            grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+            grad.setColorAt(0.5, QColor(246, 249, 254, 255))
+            grad.setColorAt(1.0, QColor(238, 243, 252, 255))
 
             painter.setBrush(QBrush(grad))
-            painter.setPen(QPen(QColor(255, 255, 255, 245), 1.3))  # Bright glass outline
+            painter.setPen(QPen(QColor(203, 213, 225, 220), 1.2))  # Clean refined slate border
             painter.drawRoundedRect(capsule_rect, r, r)
 
             # Ethereal top specular reflection sheen
-            shine_rect = QRectF(r / 2.0, 2.0, w - r, h * 0.44)
-            shine = QLinearGradient(0, 2.0, 0, h * 0.44)
-            shine.setColorAt(0.0, QColor(255, 255, 255, 160))
-            shine.setColorAt(1.0, QColor(255, 255, 255, 15))
+            shine_rect = QRectF(r / 2.0, 1.5, w - r, h * 0.38)
+            shine = QLinearGradient(0, 1.5, 0, h * 0.38)
+            shine.setColorAt(0.0, QColor(255, 255, 255, 240))
+            shine.setColorAt(1.0, QColor(255, 255, 255, 0))
             painter.setBrush(QBrush(shine))
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawRoundedRect(shine_rect, r * 0.8, r * 0.8)

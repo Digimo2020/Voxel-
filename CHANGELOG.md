@@ -10,6 +10,20 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.08] - 2026-10-31
+
+### Fixed & Enhanced
+- **Flameshot & Lightshot Screenshot Compatibility**:
+  - Added real-time screenshot app detection guard (`_is_screenshot_app_active`) covering Flameshot, Lightshot, Snipping Tool, Snipaste, ShareX, and Greenshot.
+  - Prevents Voxel's mouse selection listener from injecting simulated `Ctrl+C` copy events and clipboard locks into screenshot drawing overlays, allowing screenshot tools and their annotation menus to work 100% normally.
+- **Solid Porcelain Light Capsule (No White Background Artifacts)**:
+  - Replaced translucent milky gradients with solid high-definition porcelain acrylic fill (`#FFFFFF` to `#EEF3FC`) with crisp slate borders.
+  - Eliminated the white ghost box artifact and white rectangular clipping behind the floating player capsule when closing or hovering.
+- **Window Hierarchy & Focus Fix**:
+  - Changed MiniPlayer window flag from `SubWindow` to `Tool` with `WA_ShowWithoutActivating` so it never captures desktop focus or shows solid window frame boxes.
+
+---
+
 ## [v1.1.07] - 2026-10-31
 
 ### Distribution & Packaging

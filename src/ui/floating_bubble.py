@@ -223,12 +223,12 @@ class FloatingBubble(QWidget):
 
         if is_light:
             if self.is_hovered:
-                grad.setColorAt(0.0, QColor(255, 255, 255, 250))
-                grad.setColorAt(1.0, QColor(230, 240, 255, 245))
+                grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+                grad.setColorAt(1.0, QColor(240, 246, 255, 255))
             else:
-                grad.setColorAt(0.0, QColor(255, 255, 255, 235))
-                grad.setColorAt(1.0, QColor(240, 245, 255, 225))
-            border_col = QColor(0, 132, 255, 180) if self.is_hovered else QColor(148, 163, 184, 120)
+                grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+                grad.setColorAt(1.0, QColor(244, 247, 253, 255))
+            border_col = QColor(0, 132, 255, 220) if self.is_hovered else QColor(148, 163, 184, 180)
         else:
             if self.is_hovered:
                 grad.setColorAt(0.0, QColor(36, 42, 65, 235))
