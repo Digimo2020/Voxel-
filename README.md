@@ -1,4 +1,4 @@
-<!-- README.md (v1.1) - [2026-10-31] -->
+<!-- README.md (v1.2) - [2026-10-31] -->
 # Voxel — Text to Speech, Anywhere
 
 <p align="center">
@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.06-0084FF?style=for-the-badge&logo=apple" alt="Version v1.1.06"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.07-0084FF?style=for-the-badge&logo=apple" alt="Version v1.1.07"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
   <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
@@ -140,7 +140,7 @@ The current release is not signed with an Apple Developer ID certificate or nota
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel Windows Standalone** | **`v1.1.06`** *(Latest)* | Zero-dependency standalone portable executable with document reader fixes, light theme, & single-instance lock | Windows 10 / 11 | [**📥 Download Voxel-v1.1.06.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.exe) *(Recommended)* |
+| **Voxel Windows Standalone** | **`v1.1.07`** *(Latest)* | Zero-dependency standalone portable executable with document reader fixes, light theme, & single-instance lock | Windows 10 / 11 | [**📥 Download Voxel-v1.1.06.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.exe) *(Recommended)* |
 | **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
 #### Run from Source (Windows)
@@ -160,7 +160,7 @@ python main.py
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel macOS Disk Image (.dmg)** | **`v1.1.06`** *(Latest in this repository)* | Drag-and-drop application installer | macOS / Applications | [**📥 Download Voxel-v1.1.06.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.dmg) |
+| **Voxel macOS Disk Image (.dmg)** | **`v1.1.07`** *(Latest)* | Drag-and-drop application installer | macOS / Applications | [**📥 Download Voxel-v1.1.07.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.dmg) |
 | **Voxel DMG (Latest Alias)** | `latest` | Automatically resolves to the newest macOS disk image | macOS / Applications | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
 > [!IMPORTANT]
@@ -194,7 +194,8 @@ All past and current versions are preserved below for historical reference and i
 
 | Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
 | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`v1.1.06`** | 🟢 **Latest** | [**📥 Voxel-v1.1.06.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.exe) | [**📥 Voxel-v1.1.06.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.pkg) | [**📥 Voxel-v1.1.06.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.dmg) | • Fixed full-document reader for Google Docs & PDFs (active window focus restoration & 1400ms canvas timing)<br>• Light & Dark theme modes for floating selection bubble (Light Frosted Glass default)<br>• System tray startup bar icon double-click activation<br>• Reorganized Settings: Added Appearance & Theme tab, audio spectrum Equalizer, and fixed LinkedIn link |
+| **`v1.1.07`** | 🟢 **Latest** | [**📥 Voxel-v1.1.07.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.exe) | — | [**📥 Voxel-v1.1.07.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.dmg) | • macOS DMG-only distribution; removed the quarantine-removal helper; added first-launch Gatekeeper guidance and SHA-256 checksums |
+| **`v1.1.06`** | 📦 Archived | [**📥 Voxel-v1.1.06.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.exe) | [**📥 Voxel-v1.1.06.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.pkg) | [**📥 Voxel-v1.1.06.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.dmg) | • Fixed full-document reader for Google Docs & PDFs (active window focus restoration & 1400ms canvas timing)<br>• Light & Dark theme modes for floating selection bubble (Light Frosted Glass default)<br>• System tray startup bar icon double-click activation<br>• Reorganized Settings: Added Appearance & Theme tab, audio spectrum Equalizer, and fixed LinkedIn link |
 | **`v1.1.05`** | 📦 Archived | [📥 Voxel-v1.1.05.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.exe) | [📥 Voxel-v1.1.05.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.pkg) | [📥 Voxel-v1.1.05.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.dmg) | • Fixed Document Reader: Canvas-aware timing for Google Docs & seamless fallback<br>• Dual Light/Dark Settings views with 1-click theme switcher<br>• Live Voice & Latency Performance Test button in Settings<br>• Creator & Architecture credits (Fahim - [LinkedIn](https://www.linkedin.com/in/fahimdigital/)) |
 | **`v1.1.04`** | 📦 Archived | [📥 Voxel-v1.1.04.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.04/Voxel-v1.1.04.exe) | [📥 Voxel-v1.1.04.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.04/Voxel-v1.1.04.pkg) | [📥 Voxel-v1.1.04.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.04/Voxel-v1.1.04.dmg) | • Smart Document & Presentation Reader (Google Docs, Word, PDFs, Slides)<br>• Expressive Copilot Neural Voices (Ava, Andrew, Emma, Brian) & 4 Emotion Modes<br>• Sub-second instant playback pipeline (<300ms start) & hover pre-buffering<br>• Left-click startup tray icon opens Settings immediately |
 | **`v1.1.03`** | 📦 Archived | [📥 Voxel-v1.1.03.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.03/Voxel-v1.1.03.exe) | [📥 Voxel-v1.1.03.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.03/Voxel-v1.1.03.pkg) | [📥 Voxel-v1.1.03.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.03/Voxel-v1.1.03.dmg) | • Integrated vibrant blue/purple full-frame logo into startup system tray bar<br>• Maximized icon to 100% full-frame squircle with 91% height white microphone for maximum size and prominence<br>• Full preservation of historical version binaries |
