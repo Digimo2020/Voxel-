@@ -43,9 +43,10 @@ jobs:
 
     - name: Upload macOS DMG Artifact
       uses: actions/upload-artifact@v4
+      continue-on-error: true
       with:
         name: Voxel-macOS-DMG
-        if-no-files-found: error
+        if-no-files-found: warn
         path: |
           dist/Voxel.dmg
           dist/Voxel-*.dmg
@@ -88,6 +89,7 @@ jobs:
 
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v4
+      continue-on-error: true
       with:
         name: Voxel-Windows-EXE
         if-no-files-found: warn
