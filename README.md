@@ -1,3 +1,4 @@
+<!-- README.md (v1.1) - [2026-10-31] -->
 # Voxel — Text to Speech, Anywhere
 
 <p align="center">
@@ -26,8 +27,8 @@ Featuring a **voice-reactive microphone logo** with real-time waveform equalizer
 - 🌊 **Voice-Reactive Waveform Animation**: The 3 internal lines of the microphone capsule pulse and dance at 40 FPS like a real-time audio equalizer during playback, accented by a soft breathing radial glow.
 - 🫧 **Non-Intrusive Floating Trigger**: Appears smoothly with fade-in easing near your cursor whenever you highlight text, without stealing window focus (`WA_ShowWithoutActivating`).
 - 💊 **Frosted Glass Capsule Player**: Slides up above your Dock/Taskbar with smooth cubic easing. Includes a glowing electric blue-to-violet play/pause button, delicate stop button, segmented speed regulator (`[-] 1.0x [+]`), and voice switcher.
-- 📦 **System-Wide macOS `.pkg` Installer**: Universal installer package targeting `/Applications/Voxel.app` for **all users** on the system, complete with embedded UX design screenshots in the Apple Installer wizard.
-- 👁️ **Platform-Adaptive "Invisible" Downloads**: Download options automatically adapt to the user's operating system. On macOS, Windows executables are hidden; on Windows, macOS packages are hidden.
+- 💿 **macOS DMG Installer**: A simple drag-and-drop disk image that places `Voxel.app` in the Applications folder.
+- 👁️ **Platform-Adaptive Downloads**: Download options automatically adapt to the user's operating system, showing the relevant macOS or Windows build.
 - 🗣️ **High-Definition Neural Voices**: Microsoft Edge Neural TTS voices (Jenny, Guy, Sonia, Aria) with instant offline fallback to native macOS Speech (`Samantha`, `Alex`) or Windows SAPI5.
 - ⚡ **Zero-Dependency Audio Engine**: Modernized with `PyQt6.QtMultimedia` for hardware-accelerated CoreAudio playback without SDL or external C dependencies.
 - 🛡️ **macOS Accessibility Assistant**: Proactive permissions checker with 1-click shortcut to macOS Privacy & Security settings.
@@ -115,23 +116,21 @@ Ever wondered how Voxel seamlessly detects highlighted text in any app, animates
 | **Settings Storage** | `~/Library/Application Support/Voxel/settings.json` | `%LOCALAPPDATA%\Voxel\settings.json` |
 | **Global Activation Key** | `Cmd + Option + S` | `Ctrl + Alt + S` |
 | **Menu / Tray Item** | macOS Menu Bar (Status Bar) with Quick Read | Windows Notification Area (System Tray) |
-| **Installer Formats** | **`.dmg`** (Drag-and-Drop) & **`.pkg`** (All-User System Package) | **`.exe`** (Single-file Portable) |
+| **Installer Formats** | **`.dmg`** (Drag-and-Drop) | **`.exe`** (Single-file Portable) |
 
 ---
 
-### 4. macOS Installers Explained: `.dmg` vs. `.pkg`
+### 4. macOS Installation
 
-We provide two distinct native installation methods for Mac users:
+Voxel for macOS is distributed as a **`.dmg` disk image**:
 
-* 💿 **`Voxel.dmg` (Apple Disk Image)**:
-  - The traditional macOS drag-and-drop experience.
-  - Double-click `Voxel.dmg` to mount the virtual drive, then drag the **Voxel** app icon into your **Applications** folder shortcut.
-  - Ideal for individual users and portable usage.
+1. Open the downloaded `Voxel.dmg` file.
+2. Drag `Voxel.app` onto the **Applications** shortcut.
+3. Eject the Voxel disk image.
+4. Open Voxel from your Applications folder.
 
-* 📦 **`Voxel.pkg` (Apple Installer Package)**:
-  - Guided macOS Installation Wizard.
-  - Automatically installs `Voxel.app` into `/Applications` with system-wide permissions for **all user accounts** on the Mac.
-  - Embeds the official high-resolution **UX Design Showcase** and feature highlights directly inside the Apple Installer welcome screen.
+The current release is not signed with an Apple Developer ID certificate or notarised by Apple. macOS may therefore ask you to approve Voxel before its first launch. See the macOS download instructions below.
+
 
 ---
 
@@ -161,30 +160,23 @@ python main.py
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Apple System Package (.pkg)** | **`v1.1.05`** *(Latest)* | Guided Apple Installer with embedded UX preview wizard | `/Applications` (All Users) | [**📥 Download Voxel-v1.1.05.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.pkg) *(Recommended)* |
-| **Apple Disk Image (.dmg)** | **`v1.1.05`** *(Latest)* | Standard drag-and-drop disk image | Portable / `/Applications` | [**📥 Download Voxel-v1.1.05.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.dmg) |
-| **Apple Package (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.pkg` | `/Applications` | [📥 Download Voxel.pkg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.pkg) |
-| **Apple DMG (Latest Alias)** | `latest` | Automatically resolves to newest macOS `.dmg` | Portable | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
+| **Voxel macOS Disk Image (.dmg)** | **`v1.1.06`** *(Latest in this repository)* | Drag-and-drop application installer | macOS / Applications | [**📥 Download Voxel-v1.1.06.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.dmg) |
+| **Voxel DMG (Latest Alias)** | `latest` | Automatically resolves to the newest macOS disk image | macOS / Applications | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
-> [!TIP]
-> #### 🛡️ Fixing "Voxel is damaged and can't be opened" on macOS
-> Because Voxel is a free open-source project built without a paid Apple Developer ID signature ($99/yr), macOS Gatekeeper attaches a quarantine flag to files downloaded via Chrome or Safari.
+> [!IMPORTANT]
+> **First launch on macOS**
 >
-> If macOS shows **`"Voxel" is damaged and can't be opened. You should move it to the Trash`**:
-> 
-> **Option 1 (Fastest — 1-Line Terminal Fix)**:
-> ```bash
-> xattr -cr /Applications/Voxel.app
-> ```
-> *Press Enter, then open Voxel normally from your Applications folder or Launchpad!*
-> 
-> **Option 2 (macOS System Settings)**:
-> 1. Open **System Settings** → **Privacy & Security**.
-> 2. Scroll down to the **Security** section.
-> 3. Click **"Open Anyway"** next to the notification for Voxel.
-> 
-> **Option 3 (From Disk Image)**:
-> Inside `Voxel.dmg`, simply double-click **`Fix Gatekeeper (If App Damaged).command`**.
+> This build is not signed with an Apple Developer ID certificate and has not been notarised by Apple. macOS may show **“Apple could not verify ‘Voxel’ is free of malware”**. This warning does not mean Apple detected malware; it means the app has not completed Apple's trusted-developer and notarisation checks.
+>
+> Only continue when the DMG came from the official [Digimo Voxel GitHub Releases](https://github.com/Digimo2020/Voxel-/releases) page and you trust the download.
+>
+> 1. Move `Voxel.app` into **Applications** and try to open it once.
+> 2. Open **System Settings → Privacy & Security**.
+> 3. Find the Voxel message and select **Open Anyway**.
+> 4. Confirm **Open** when macOS asks again.
+>
+> This approval is a per-app exception. Do not disable Gatekeeper globally or run scripts that remove quarantine attributes. If macOS reports that the app is damaged or its contents have changed, stop and download a fresh copy.
+
 
 #### Run from Source (macOS)
 ```bash
@@ -247,14 +239,13 @@ All past and current versions are preserved below for historical reference and i
 
 ## 🛠️ Building Packages from Source
 
-### Building on macOS (`.app`, `.dmg` & `.pkg`)
+### Building on macOS (`.app` & `.dmg`)
 ```bash
 chmod +x build_mac.sh
 ./build_mac.sh
 ```
 Outputs:
 - **`dist/Voxel.app`**: Native standalone application bundle.
-- **`dist/Voxel.pkg`**: System-wide installer for `/Applications` with embedded UX assets.
 - **`dist/Voxel.dmg`**: Drag-and-drop installer disk image.
 
 ### Building on Windows (`.exe`)
@@ -272,7 +263,7 @@ Outputs:
 main.py                      Application entry point & event coordinator
 run.sh                       One-click macOS development launcher
 run.bat                      One-click Windows development launcher
-build_mac.sh                 Compiles Voxel.app, Voxel.dmg and Voxel.pkg
+build_mac.sh                 Compiles Voxel.app and Voxel.dmg
 build_exe.bat                Compiles Voxel.exe for Windows
 assets/
  ├── banner.png              Official repository showcase banner
