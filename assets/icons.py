@@ -580,3 +580,38 @@ def create_document_icon(size: int = 20, color: str = "#94A3B8") -> QIcon:
 
     painter.end()
     return QIcon(pix)
+
+
+def create_record_icon(size: int = 20, color: str = "#EF4444", recording: bool = False) -> QIcon:
+    """Record button icon with circular recording dot or active stop square."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    cx = size / 2.0
+    cy = size / 2.0
+
+    if recording:
+        # Active recording: Red rounded square with outer breathing halo
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(QColor(239, 68, 68, 45)))
+        painter.drawEllipse(QPointF(cx, cy), size * 0.44, size * 0.44)
+
+        sq_s = size * 0.38
+        painter.setBrush(QBrush(QColor("#EF4444")))
+        painter.drawRoundedRect(QRectF(cx - sq_s / 2.0, cy - sq_s / 2.0, sq_s, sq_s), 2.5, 2.5)
+    else:
+        # Idle: Outer circular ring with vibrant center red dot
+        r_outer = size * 0.38
+        painter.setPen(QPen(QColor(color), 1.4))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawEllipse(QPointF(cx, cy), r_outer, r_outer)
+
+        r_inner = size * 0.20
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(QColor(color)))
+        painter.drawEllipse(QPointF(cx, cy), r_inner, r_inner)
+
+    painter.end()
+    return QIcon(pix)

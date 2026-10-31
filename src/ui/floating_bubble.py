@@ -15,6 +15,7 @@ from PyQt6.QtGui import (
 )
 
 from src.config import BUBBLE_TIMEOUT_SECONDS, THEME, FONT_FAMILY
+from src.utils.settings import settings_db
 from assets.icons import get_selection_bubble_pixmap, get_selection_bubble_doc_pixmap
 
 CAPSULE_WIDTH = 78
@@ -97,8 +98,9 @@ class FloatingBubble(QWidget):
         self.fade_anim.stop()
         self.setWindowOpacity(0.0)
         self.show()
+        target_opacity = float(settings_db.get("bubble_transparency", 90)) / 100.0
         self.fade_anim.setStartValue(0.0)
-        self.fade_anim.setEndValue(1.0)
+        self.fade_anim.setEndValue(max(0.2, min(1.0, target_opacity)))
         self.fade_anim.start()
 
         self.hide_timer.start()

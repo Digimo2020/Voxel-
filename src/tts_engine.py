@@ -72,6 +72,7 @@ class TTSEngine(QObject):
         self._chunks: List[str] = []
         self._current_chunk_idx: int = 0
         self._chunk_audio_files: Dict[int, str] = {}
+        self._recorded_chunks: List[str] = []
         self._is_queue_playing: bool = False
 
         self._active_thread: Optional[threading.Thread] = None
@@ -213,6 +214,7 @@ class TTSEngine(QObject):
 
         self._current_chunk_idx = 0
         self._chunk_audio_files.clear()
+        self._recorded_chunks.clear()
         self._is_queue_playing = True
 
         # Launch pipeline orchestrator thread
@@ -268,6 +270,7 @@ class TTSEngine(QObject):
 
             if success:
                 self._chunk_audio_files[idx] = audio_path
+                self._recorded_chunks.append(audio_path)
                 # If this is chunk 0, immediately trigger playback!
                 if idx == 0 and self._is_queue_playing:
                     self._request_play.emit(audio_path)
@@ -305,6 +308,14 @@ class TTSEngine(QObject):
             self.resume()
         else:
             self.pause()
+
+    def get_speech_audio_chunks(self) -> List[str]:
+        """Returns the synthesized audio chunk file paths for the current or most recent speech."""
+        ordered = []
+        for i in range(len(self._chunks)):
+            if i in self._chunk_audio_files:
+                ordered.append(self._chunk_audio_files[i])
+        return ordered or list(getattr(self, "_recorded_chunks", []))
 
     def stop(self):
         """Stops current synthesis and audio playback immediately."""

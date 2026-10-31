@@ -131,6 +131,7 @@ class VoxelApp:
 
         self.player.read_document_requested.connect(self._on_read_document_requested)
         self.player.settings_requested.connect(self._show_settings)
+        self.player.recording_saved.connect(self._on_recording_saved)
 
         self.history_dialog.replay_requested.connect(self._replay_history)
         self.settings_dialog.settings_applied.connect(self._on_settings_applied)
@@ -273,6 +274,16 @@ class VoxelApp:
     def _replay_history(self, text: str):
         """Replays selected history item."""
         self.player.play_text(text)
+
+    def _on_recording_saved(self, file_path: str):
+        """Notifies user when an audio recording has been saved to the Documents folder."""
+        filename = os.path.basename(file_path)
+        self.tray.showMessage(
+            "🎙️ Voxel Recording Saved",
+            f"Saved to Documents/Voxel Recordings/{filename}",
+            AppTrayIcon.MessageIcon.Information,
+            4000
+        )
 
     def _cleanup(self):
         """Clean up threads and temp files on exit."""

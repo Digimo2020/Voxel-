@@ -10,6 +10,33 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.13] - 2026-10-31
+
+### Audio Recording & Automatic Documents Folder
+- **Integrated Player Record Button**:
+  - Added dedicated one-click recording button (`btn_record`) to the floating MiniPlayer with studio-style red indicator icon.
+  - Active recording state shows glowing red indicator and tooltips.
+  - Automatically captures and stitches all synthesized speech chunks for the current narration into a clean MP3 file.
+- **Automatic Voxel Recordings Folder**:
+  - Automatically creates and manages the `Documents\Voxel Recordings` directory.
+  - Saves all recordings as timestamped MP3 files (e.g. `Voxel_Recording_YYYYMMDD_HHMMSS.mp3`).
+  - Added direct **"Open Recordings Folder"** action in Settings and instant system notifications upon save.
+
+### Settings UI Redesign Matching Mockups
+- **Faithful 4-Tab Sidebar Navigation Layout**:
+  - Left sidebar streamlined to `🎙️ Voice & Speech`, `▶ Playback`, `🎨 Appearance`, and `ℹ️ About`.
+  - Added custom organic purple/lavender decorative wave at the bottom-left of the sidebar.
+- **Playback Tab**:
+  - Re-architected matching user mockup with purple playback speed slider, `1.25x` badge, fade & timing controls, 2x2 playback behavior checkboxes, audio output device selector, and volume slider.
+- **Appearance Tab**:
+  - Interactive Light / Dark theme selection cards with visual previews and selected checkmarks.
+  - 4 selectable Floating Bubble appearance cards: `Default`, `Frosted Glass`, `Transparent`, `Minimal`.
+  - Bubble transparency and size sliders.
+- **Action Bar**:
+  - Redesigned with `↺ Reset to Default` and primary purple `✓ Save Changes`.
+
+---
+
 ## [v1.1.12] - 2026-10-31
 
 ### Branding, App Icon & Dual-Action Capsule Assets

@@ -28,8 +28,10 @@ from src.tts_engine import TTSEngine
 from src.utils.settings import settings_db
 from src.ui.voxel_logo_widget import VoxelLogoWidget
 from assets.icons import (
-    create_play_icon, create_pause_icon, create_gear_icon, create_close_icon, create_document_icon
+    create_play_icon, create_pause_icon, create_gear_icon, create_close_icon, create_document_icon,
+    create_record_icon
 )
+from src.utils.audio_recorder import save_recording_from_chunks
 
 
 class GradientGlowPlayButton(QPushButton):
@@ -115,10 +117,12 @@ class MiniPlayer(QWidget):
     closed = pyqtSignal()
     settings_requested = pyqtSignal()
     read_document_requested = pyqtSignal(str)
+    recording_saved = pyqtSignal(str)
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
         super().__init__(parent)
         self.tts = tts_engine
+        self.is_recording = False
         self._drag_pos = QPoint()
         self._is_dragging = False
         self._user_moved = False
@@ -135,7 +139,7 @@ class MiniPlayer(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setFixedHeight(48)
-        self.setFixedWidth(346)
+        self.setFixedWidth(380)
 
         # Soft ethereal drop shadow for frosted glass depth
         self.shadow_effect = QGraphicsDropShadowEffect(self)
@@ -209,7 +213,17 @@ class MiniPlayer(QWidget):
 
         layout.addWidget(self._create_separator())
 
-        # 5. Settings Gear Button
+        # 5. Audio Recording Button (Saves to Documents/Voxel Recordings)
+        self.btn_record = QPushButton(self)
+        self.btn_record.setFixedSize(26, 26)
+        self.btn_record.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_record.setToolTip("Record Speech to MP3 (Saved to Documents/Voxel Recordings)")
+        self.btn_record.clicked.connect(self._toggle_recording)
+        layout.addWidget(self.btn_record)
+
+        layout.addWidget(self._create_separator())
+
+        # 6. Settings Gear Button
         self.btn_settings = QPushButton(self)
         self.btn_settings.setFixedSize(26, 26)
         self.btn_settings.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -218,7 +232,7 @@ class MiniPlayer(QWidget):
         self.btn_settings.clicked.connect(self.settings_requested.emit)
         layout.addWidget(self.btn_settings)
 
-        # 5. Close Button
+        # 7. Close Button
         self.btn_close = QPushButton(self)
         self.btn_close.setFixedSize(26, 26)
         self.btn_close.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -273,6 +287,12 @@ class MiniPlayer(QWidget):
                 QPushButton { background: transparent; border: none; border-radius: 13px; }
                 QPushButton:hover { background-color: rgba(255, 255, 255, 0.14); }
             """)
+            if not self.is_recording:
+                self.btn_record.setIcon(create_record_icon(17, "#F87171", recording=False))
+                self.btn_record.setStyleSheet("""
+                    QPushButton { background: transparent; border: none; border-radius: 13px; }
+                    QPushButton:hover { background-color: rgba(239, 68, 68, 0.16); }
+                """)
             self.btn_settings.setIcon(create_gear_icon(15, "#CBD5E1"))
             self.btn_settings.setStyleSheet("""
                 QPushButton { background: transparent; border: none; border-radius: 13px; }
@@ -322,6 +342,12 @@ class MiniPlayer(QWidget):
                 QPushButton { background: transparent; border: none; border-radius: 13px; }
                 QPushButton:hover { background-color: rgba(0, 0, 0, 0.06); }
             """)
+            if not self.is_recording:
+                self.btn_record.setIcon(create_record_icon(17, "#EF4444", recording=False))
+                self.btn_record.setStyleSheet("""
+                    QPushButton { background: transparent; border: none; border-radius: 13px; }
+                    QPushButton:hover { background-color: rgba(239, 68, 68, 0.12); }
+                """)
             self.btn_settings.setIcon(create_gear_icon(15, "#475569"))
             self.btn_settings.setStyleSheet("""
                 QPushButton { background: transparent; border: none; border-radius: 13px; }
@@ -539,6 +565,33 @@ class MiniPlayer(QWidget):
                 self._start_auto_close_fadeout(delay)
         super().leaveEvent(event)
 
+    def _toggle_recording(self):
+        """Toggles speech recording mode."""
+        self.is_recording = not self.is_recording
+        if self.is_recording:
+            self.btn_record.setIcon(create_record_icon(17, "#EF4444", recording=True))
+            self.btn_record.setToolTip("Recording Speech... Click to finish & save to Documents/Voxel Recordings")
+            self.btn_record.setStyleSheet("background-color: rgba(239, 68, 68, 0.25); border: 1px solid #EF4444; border-radius: 6px;")
+            if not self.tts.is_speaking and getattr(self.tts, "current_text", ""):
+                self.tts.speak(self.tts.current_text)
+        else:
+            self._finish_and_save_recording()
+
+    def _finish_and_save_recording(self):
+        """Saves accumulated audio chunks to the Voxel Recordings folder in Documents."""
+        self.is_recording = False
+        is_dark = (self._theme_mode == "dark_glass")
+        rec_color = "#F87171" if is_dark else "#EF4444"
+        self.btn_record.setIcon(create_record_icon(17, rec_color, recording=False))
+        self.btn_record.setToolTip("Record Speech to MP3 (Saved to Documents/Voxel Recordings)")
+        self.apply_theme(self._theme_mode)
+
+        chunks = self.tts.get_speech_audio_chunks()
+        text_hint = getattr(self.tts, "current_text", "")
+        saved_file = save_recording_from_chunks(chunks, text_hint)
+        if saved_file:
+            self.recording_saved.emit(saved_file)
+
     # Audio Engine Callbacks
     def _on_playback_started(self):
         self.auto_close_anim.stop()
@@ -560,6 +613,8 @@ class MiniPlayer(QWidget):
     def _on_playback_finished(self):
         self.btn_play_pause.set_playing(False)
         self.logo.stop_voice_animation()
+        if self.is_recording:
+            self._finish_and_save_recording()
         if settings_db.get("auto_close_finished", True):
             delay_sec = float(settings_db.get("auto_close_delay", 1.0))
             self._start_auto_close_fadeout(delay_sec)
