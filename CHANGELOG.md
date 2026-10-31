@@ -10,6 +10,15 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.11] - 2026-10-31
+
+### Branding & System Tray Update
+- **Refined System Tray Logo**:
+  - Exclusively updated system tray icon to the user's high-visibility circular purple microphone badge (`assets/Fainal/Voxel Logo.png`), keeping main app icon untouched for upcoming app logo release.
+  - Applied 4x supersampled subpixel antialiasing to circular boundaries with smooth transparent margins for light and dark taskbars.
+
+---
+
 ## [v1.1.10] - 2026-10-31
 
 ### Branding & Startup Bar Logo Update

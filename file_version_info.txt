@@ -4,8 +4,8 @@
 #
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 1, 10, 0),
-    prodvers=(1, 1, 10, 0),
+    filevers=(1, 1, 11, 0),
+    prodvers=(1, 1, 11, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -21,12 +21,12 @@ VSVersionInfo(
           [
             StringStruct('CompanyName', 'Voxel Labs'),
             StringStruct('FileDescription', 'Voxel - Instant AI Voice & Document Reader'),
-            StringStruct('FileVersion', '1.1.10.0'),
+            StringStruct('FileVersion', '1.1.11.0'),
             StringStruct('InternalName', 'Voxel'),
             StringStruct('LegalCopyright', 'Copyright (c) 2026 Voxel Labs. All rights reserved.'),
             StringStruct('OriginalFilename', 'Voxel.exe'),
             StringStruct('ProductName', 'Voxel'),
-            StringStruct('ProductVersion', '1.1.10')
+            StringStruct('ProductVersion', '1.1.11')
           ]
         )
       ]
