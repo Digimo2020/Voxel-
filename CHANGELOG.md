@@ -10,6 +10,24 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.09] - 2026-10-31
+
+### UI/UX Overhaul & Menu Simplification
+- **Streamlined 2-Tab Preferences Dialog**:
+  - Eliminated redundant tabs down to two clear, focused sections: **Preferences** and **About**.
+  - Merged voice settings, audio spectrum equalizer preview, system/startup options, and appearance controls cleanly.
+  - Removed all accidental underscores from UI text labels, headings, and buttons (e.g. `Save Changes` instead of `Save_Apply`).
+- **Refined About Us Section & Verified Social Links**:
+  - Fixed LinkedIn button text truncation and missing 'C' (`🔗 Connect on LinkedIn`).
+  - Added clean, full-width action links for **LinkedIn**, **Digimo**, and **GitHub Repository**.
+  - Prominent version badge `v1.1.09` with clean open-source freedom and disclaimer cards.
+- **Wider, Focused Right-Click System Tray Menu**:
+  - Simplified context menu down to essential actions: Header title with version, **Preferences...**, **About Voxel...**, and **Quit Voxel**.
+  - Expanded menu width (min-width: 220px) with elegant dark acrylic styling, generous padding, and clean hover highlights.
+  - Removed noisy submenus (Voices, History, Download buttons) to keep right-click interaction fast and modern.
+
+---
+
 ## [v1.1.08] - 2026-10-31
 
 ### Fixed & Enhanced

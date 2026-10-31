@@ -1,13 +1,10 @@
 """
-Settings, Preferences, Downloads & About Dialog for Voxel.
-Allows configuring:
-- Dual Theme Views: Light Frosted Glass & Dark Obsidian Glass
-- Voice profiles & 4 Emotional Prosody styles
-- Live Performance & Voice Test button
-- Launch at system startup (Windows Registry & macOS LaunchAgents)
-- Document & Presentation auto-reader options
-- Creator & Architecture credits (Fahim - LinkedIn: https://www.linkedin.com/in/fahimdigital/)
-- Digimo open source freedom and OS-adaptive download options
+Settings, Preferences & About Dialog for Voxel.
+Redesigned with modern, clutter-free UI/UX:
+- Two focused tabs: Preferences and About.
+- Clean typography and card layout without underscores or text clipping.
+- Dual Themes: Light Mode & Dark Mode with instant live preview.
+- Direct links to LinkedIn, Digimo, and GitHub repository.
 """
 import os
 import sys
@@ -17,10 +14,10 @@ from PyQt6.QtWidgets import (
     QComboBox, QCheckBox, QDoubleSpinBox, QPushButton, QGroupBox, QFormLayout
 )
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QTimer
-from PyQt6.QtGui import QCursor, QDesktopServices, QPainter, QColor, QBrush, QPen
+from PyQt6.QtGui import QCursor, QDesktopServices, QPainter, QColor, QBrush
 
 from src.config import (
-    THEME, VOICES, EMOTION_MODES, DEFAULT_EMOTION_MODE, SPEED_STEPS,
+    VOICES, EMOTION_MODES, DEFAULT_EMOTION_MODE, SPEED_STEPS,
     VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC,
     COMPANY_NAME, COMPANY_URL
 )
@@ -37,11 +34,10 @@ class EqualizerPreviewWidget(QWidget):
     """Voice-reactive animated spectrum equalizer visualizer widget."""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(32)
-        self.setMinimumWidth(160)
+        self.setFixedHeight(30)
+        self.setMinimumWidth(150)
         self.is_active = False
         self._levels = [0.15] * 12
-        self._target_levels = [0.15] * 12
 
         self._timer = QTimer(self)
         self._timer.setInterval(40)  # ~25 FPS
@@ -92,8 +88,8 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.tts = tts_engine
         self.current_theme = settings_db.get("settings_theme", "light")
-        self.setWindowTitle(f"{APP_NAME} — Settings & Preferences ({VERSION})")
-        self.setFixedSize(620, 710)
+        self.setWindowTitle(f"{APP_NAME} — Preferences ({VERSION})")
+        self.setFixedSize(580, 680)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
 
         self._labels_to_theme = []
@@ -104,8 +100,8 @@ class SettingsDialog(QDialog):
     def _get_dark_stylesheet(self) -> str:
         return f"""
             QDialog {{
-                background-color: #131625;
-                color: #F8FAFF;
+                background-color: #121523;
+                color: #F8FAFC;
                 font-family: {FONT_FAMILY};
             }}
             QLabel {{
@@ -113,33 +109,33 @@ class SettingsDialog(QDialog):
                 font-size: 13px;
             }}
             QTabWidget::pane {{
-                border: 1px solid #252B44;
-                background-color: #171B2D;
+                border: 1px solid #23293F;
+                background-color: #161A2B;
                 border-radius: 8px;
             }}
             QTabBar::tab {{
-                background-color: #1F243B;
+                background-color: #1E2338;
                 color: #94A3B8;
-                padding: 9px 18px;
+                padding: 10px 24px;
                 border-top-left-radius: 6px;
                 border-top-right-radius: 6px;
                 margin-right: 4px;
                 font-weight: 600;
-                font-size: 12px;
+                font-size: 13px;
             }}
             QTabBar::tab:selected {{
-                background-color: #171B2D;
+                background-color: #161A2B;
                 color: #FFFFFF;
                 border-bottom: 2px solid #0084FF;
             }}
             QGroupBox {{
-                border: 1px solid #252B44;
+                border: 1px solid #23293F;
                 border-radius: 8px;
                 margin-top: 10px;
                 padding: 14px 12px 10px 12px;
                 font-weight: 600;
-                color: #F8FAFF;
-                background-color: transparent;
+                color: #F8FAFC;
+                background-color: #1A1F33;
             }}
             QGroupBox::title {{
                 color: #38BDF8;
@@ -150,15 +146,15 @@ class SettingsDialog(QDialog):
                 font-weight: 700;
             }}
             QComboBox, QDoubleSpinBox {{
-                background-color: #242942;
-                color: #F8FAFF;
+                background-color: #242A42;
+                color: #F8FAFC;
                 border: 1px solid #334155;
                 border-radius: 6px;
-                padding: 5px 8px;
+                padding: 6px 10px;
                 font-size: 13px;
             }}
             QComboBox QAbstractItemView {{
-                background-color: #1E2337;
+                background-color: #1E2438;
                 color: #FFFFFF;
                 selection-background-color: #0084FF;
                 selection-color: #FFFFFF;
@@ -170,23 +166,23 @@ class SettingsDialog(QDialog):
                 spacing: 8px;
             }}
             QPushButton {{
-                background-color: #242942;
+                background-color: #242A42;
                 color: #FFFFFF;
                 border: 1px solid #334155;
                 border-radius: 6px;
-                padding: 6px 14px;
+                padding: 7px 16px;
                 font-weight: 600;
             }}
             QPushButton:hover {{
-                background-color: #313859;
-                border-color: rgba(0, 132, 255, 0.6);
+                background-color: #2F3755;
+                border-color: #0084FF;
             }}
         """
 
     def _get_light_stylesheet(self) -> str:
         return f"""
             QDialog {{
-                background-color: #F1F5F9;
+                background-color: #F8FAFC;
                 color: #0F172A;
                 font-family: {FONT_FAMILY};
             }}
@@ -195,19 +191,19 @@ class SettingsDialog(QDialog):
                 font-size: 13px;
             }}
             QTabWidget::pane {{
-                border: 1px solid #CBD5E1;
+                border: 1px solid #E2E8F0;
                 background-color: #FFFFFF;
                 border-radius: 8px;
             }}
             QTabBar::tab {{
-                background-color: #E2E8F0;
-                color: #475569;
-                padding: 9px 18px;
+                background-color: #EDF2F7;
+                color: #64748B;
+                padding: 10px 24px;
                 border-top-left-radius: 6px;
                 border-top-right-radius: 6px;
                 margin-right: 4px;
                 font-weight: 600;
-                font-size: 12px;
+                font-size: 13px;
             }}
             QTabBar::tab:selected {{
                 background-color: #FFFFFF;
@@ -215,7 +211,7 @@ class SettingsDialog(QDialog):
                 border-bottom: 2px solid #0084FF;
             }}
             QGroupBox {{
-                border: 1px solid #CBD5E1;
+                border: 1px solid #E2E8F0;
                 border-radius: 8px;
                 margin-top: 10px;
                 padding: 14px 12px 10px 12px;
@@ -236,7 +232,7 @@ class SettingsDialog(QDialog):
                 color: #0F172A;
                 border: 1px solid #CBD5E1;
                 border-radius: 6px;
-                padding: 5px 8px;
+                padding: 6px 10px;
                 font-size: 13px;
             }}
             QComboBox QAbstractItemView {{
@@ -256,29 +252,29 @@ class SettingsDialog(QDialog):
                 color: #0F172A;
                 border: 1px solid #CBD5E1;
                 border-radius: 6px;
-                padding: 6px 14px;
+                padding: 7px 16px;
                 font-weight: 600;
             }}
             QPushButton:hover {{
-                background-color: #E2E8F0;
+                background-color: #EDF2F7;
                 border-color: #0084FF;
             }}
         """
 
     def apply_theme(self, theme: str):
-        """Switches between Dark Obsidian Glass and Light Frosted Acrylic."""
+        """Switches between Dark Mode and Light Mode."""
         self.current_theme = theme
         settings_db.set("settings_theme", theme)
 
         if theme == "light":
             self.setStyleSheet(self._get_light_stylesheet())
             self.btn_theme_toggle.setText("🌙 Dark Mode")
-            self.btn_theme_toggle.setStyleSheet("background-color: #1E293B; color: #F8FAFC; font-weight: 600; border-radius: 12px; padding: 4px 12px;")
-            sub_col = "#475569"
+            self.btn_theme_toggle.setStyleSheet("background-color: #1E293B; color: #F8FAFC; font-weight: 600; border-radius: 14px; padding: 5px 14px; border: none;")
+            sub_col = "#64748B"
         else:
             self.setStyleSheet(self._get_dark_stylesheet())
             self.btn_theme_toggle.setText("☀️ Light Mode")
-            self.btn_theme_toggle.setStyleSheet("background-color: rgba(255, 255, 255, 0.12); color: #F8FAFC; font-weight: 600; border-radius: 12px; padding: 4px 12px;")
+            self.btn_theme_toggle.setStyleSheet("background-color: rgba(255, 255, 255, 0.12); color: #F8FAFC; font-weight: 600; border-radius: 14px; padding: 5px 14px; border: 1px solid rgba(255, 255, 255, 0.2);")
             sub_col = "#94A3B8"
 
         for lbl in self._labels_to_theme:
@@ -288,6 +284,18 @@ class SettingsDialog(QDialog):
         new_theme = "light" if self.current_theme == "dark" else "dark"
         self.apply_theme(new_theme)
 
+    def open_preferences(self):
+        self.tabs.setCurrentIndex(0)
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def open_about(self):
+        self.tabs.setCurrentIndex(1)
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
     def _make_field_label(self, text: str) -> QLabel:
         lbl = QLabel(text, self)
         lbl.setStyleSheet("font-size: 13px; font-weight: 600;")
@@ -295,10 +303,10 @@ class SettingsDialog(QDialog):
 
     def _init_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(16, 14, 16, 14)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(18, 16, 18, 16)
+        main_layout.setSpacing(12)
 
-        # Header bar with Brand & Theme Switch
+        # ─── Top Header Bar ──────────────────────────────────────────
         top_bar = QHBoxLayout()
         header_title = QLabel(f"⚙️ {APP_NAME} Preferences", self)
         header_title.setStyleSheet("font-size: 16px; font-weight: 800;")
@@ -315,14 +323,16 @@ class SettingsDialog(QDialog):
 
         self.tabs = QTabWidget(self)
 
-        # ─── Tab 1: Preferences & Performance ─────────────────────────
+        # ═════════════════════════════════════════════════════════════
+        # ─── TAB 1: PREFERENCES ──────────────────────────────────────
+        # ═════════════════════════════════════════════════════════════
         tab_prefs = QWidget()
         layout_prefs = QVBoxLayout(tab_prefs)
-        layout_prefs.setContentsMargins(14, 14, 14, 14)
-        layout_prefs.setSpacing(10)
+        layout_prefs.setContentsMargins(16, 16, 16, 16)
+        layout_prefs.setSpacing(12)
 
         # 1. Voice & Emotion Form
-        box_voice = QGroupBox("🎙 Voice & Emotional Prosody", tab_prefs)
+        box_voice = QGroupBox("Voice & Speech Settings", tab_prefs)
         form_voice = QFormLayout(box_voice)
         form_voice.setSpacing(10)
         form_voice.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -345,7 +355,7 @@ class SettingsDialog(QDialog):
         layout_prefs.addWidget(box_voice)
 
         # 2. Performance & Live Voice Test Box
-        box_test = QGroupBox("⚡ Audio Performance & Live Voice Test", tab_prefs)
+        box_test = QGroupBox("Voice Performance & Audio Test", tab_prefs)
         layout_test = QVBoxLayout(box_test)
         layout_test.setSpacing(8)
 
@@ -354,9 +364,9 @@ class SettingsDialog(QDialog):
         layout_test.addWidget(lbl_test_desc)
 
         test_row = QHBoxLayout()
-        self.btn_test_perf = QPushButton("▶ Test Voice & Latency Performance", box_test)
+        self.btn_test_perf = QPushButton("▶ Test Voice & Latency", box_test)
         self.btn_test_perf.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_test_perf.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 7px 16px; border: none; border-radius: 5px;")
+        self.btn_test_perf.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 7px 16px; border: none; border-radius: 6px;")
         self.btn_test_perf.clicked.connect(self._run_performance_test)
         test_row.addWidget(self.btn_test_perf)
 
@@ -372,20 +382,20 @@ class SettingsDialog(QDialog):
         layout_prefs.addWidget(box_test)
 
         # 3. System & Startup Options
-        box_system = QGroupBox("⚙️ System, Startup & Playback", tab_prefs)
+        box_system = QGroupBox("System & Playback Options", tab_prefs)
         layout_system = QVBoxLayout(box_system)
         layout_system.setSpacing(8)
 
-        self.chk_startup = QCheckBox("🚀 Launch Voxel automatically when Windows starts", box_system)
+        self.chk_startup = QCheckBox("Launch Voxel automatically when Windows starts", box_system)
         layout_system.addWidget(self.chk_startup)
 
-        self.chk_prebuffer = QCheckBox("⚡ Instant Playback: Pre-generate first sentence on hover (0ms delay)", box_system)
+        self.chk_prebuffer = QCheckBox("Instant Playback: Pre-generate first sentence on hover (0ms delay)", box_system)
         layout_system.addWidget(self.chk_prebuffer)
 
-        self.chk_trigger = QCheckBox("✨ Show floating Voxel dual-capsule badge when selecting text", box_system)
+        self.chk_trigger = QCheckBox("Show floating Voxel dual-capsule badge when selecting text", box_system)
         layout_system.addWidget(self.chk_trigger)
 
-        self.chk_autoclose = QCheckBox("⏳ Automatically close player when speech finishes", box_system)
+        self.chk_autoclose = QCheckBox("Automatically close player when speech finishes", box_system)
         layout_system.addWidget(self.chk_autoclose)
 
         delay_row = QHBoxLayout()
@@ -422,226 +432,119 @@ class SettingsDialog(QDialog):
         layout_prefs.addStretch()
         self.tabs.addTab(tab_prefs, "⚙️ Preferences")
 
-        # ─── Tab 2: Document & Presentation Reader ────────────────────
-        tab_doc = QWidget()
-        layout_doc = QVBoxLayout(tab_doc)
-        layout_doc.setContentsMargins(14, 14, 14, 14)
-        layout_doc.setSpacing(12)
-
-        doc_header = QLabel("📑 Smart Document & Presentation Narration", tab_doc)
-        doc_header.setStyleSheet("color: #0284C7; font-size: 14px; font-weight: 700;")
-        layout_doc.addWidget(doc_header)
-
-        lbl_doc_info = QLabel(
-            "Voxel can automatically read entire Google Docs, Microsoft Word documents, "
-            "PowerPoint and Google Slides presentations, and PDF files. "
-            "Even if a document has hundreds of pages, narration begins in under 300ms.",
-            tab_doc
-        )
-        self._labels_to_theme.append(lbl_doc_info)
-        lbl_doc_info.setWordWrap(True)
-        layout_doc.addWidget(lbl_doc_info)
-
-        methods_box = QGroupBox("3 Ways to Read Entire Documents", tab_doc)
-        methods_layout = QVBoxLayout(methods_box)
-        methods_layout.setSpacing(8)
-
-        m1 = QLabel("<b>1. Floating Trigger Capsule:</b> Click the right <b>📑 Document icon</b> on the floating badge near your selection.", methods_box)
-        m1.setWordWrap(True)
-        methods_layout.addWidget(m1)
-
-        hotkey_label = "Cmd+Alt+D" if IS_MAC else "Ctrl+Alt+D"
-        m2 = QLabel(f"<b>2. Global Hotkey:</b> Press <b><code>{hotkey_label}</code></b> anytime while viewing any document or presentation tab.", methods_box)
-        m2.setWordWrap(True)
-        methods_layout.addWidget(m2)
-
-        m3 = QLabel("<b>3. Mini Player & Tray Menu:</b> Click the <b>📑 Document button</b> in the player capsule or choose <i>Open File...</i> to pick any PDF/Docx.", methods_box)
-        m3.setWordWrap(True)
-        methods_layout.addWidget(m3)
-
-        layout_doc.addWidget(methods_box)
-
-        pipe_box = QGroupBox("⚡ Zero-Delay Continuous Pipelining", tab_doc)
-        pipe_layout = QVBoxLayout(pipe_box)
-        lbl_pipe = QLabel(
-            "Even for 50-page documents or long slide decks, Voxel breaks the content into "
-            "smart sentence chunks and starts speaking the first sentence in <b>under 300 milliseconds</b>! "
-            "Subsequent sentences synthesize continuously in the background for seamless narration.",
-            pipe_box
-        )
-        lbl_pipe.setWordWrap(True)
-        self._labels_to_theme.append(lbl_pipe)
-        pipe_layout.addWidget(lbl_pipe)
-        layout_doc.addWidget(pipe_box)
-
-        layout_doc.addStretch()
-        self.tabs.addTab(tab_doc, "📑 Document Reader")
-
-        # ─── Tab 3: Appearance & Themes ──────────────────────────────
-        tab_appearance = QWidget()
-        layout_app = QVBoxLayout(tab_appearance)
-        layout_app.setContentsMargins(14, 14, 14, 14)
-        layout_app.setSpacing(12)
-
-        app_header = QLabel("🎨 Theme Mode & Interface Styling", tab_appearance)
-        app_header.setStyleSheet("font-size: 14px; font-weight: 700;")
-        layout_app.addWidget(app_header)
-
-        theme_box = QGroupBox("Interface Theme", tab_appearance)
-        theme_layout = QVBoxLayout(theme_box)
-        theme_layout.setSpacing(10)
-
-        lbl_theme_desc = QLabel(
-            "Choose your preferred appearance mode for Voxel. "
-            "Light Frosted Glass provides clean, crisp contrast for daylight workflows, "
-            "while Dark Obsidian Glass delivers deep frosted acrylic elegance.",
-            theme_box
-        )
-        lbl_theme_desc.setWordWrap(True)
-        self._labels_to_theme.append(lbl_theme_desc)
-        theme_layout.addWidget(lbl_theme_desc)
-
-        theme_btn_row = QHBoxLayout()
-        self.btn_set_light = QPushButton("☀️ Light Frosted Glass (Default)", theme_box)
-        self.btn_set_light.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_set_light.setStyleSheet("padding: 8px 16px; font-weight: 700; border-radius: 6px;")
-        self.btn_set_light.clicked.connect(lambda: self.apply_theme("light"))
-        theme_btn_row.addWidget(self.btn_set_light)
-
-        self.btn_set_dark = QPushButton("🌙 Dark Obsidian Glass", theme_box)
-        self.btn_set_dark.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_set_dark.setStyleSheet("padding: 8px 16px; font-weight: 700; border-radius: 6px;")
-        self.btn_set_dark.clicked.connect(lambda: self.apply_theme("dark"))
-        theme_btn_row.addWidget(self.btn_set_dark)
-        theme_layout.addLayout(theme_btn_row)
-        layout_app.addWidget(theme_box)
-
-        capsule_box = QGroupBox("🫧 Floating Trigger Bubble Appearance", tab_appearance)
-        cap_layout = QVBoxLayout(capsule_box)
-        lbl_cap_desc = QLabel(
-            "The floating selection bubble adapts automatically to your chosen theme. "
-            "In Light mode, it shines with pure frosted glass, specular highlights, and high-contrast iconography. "
-            "In Dark mode, it renders in deep obsidian acrylic with an electric blue hover aura.",
-            capsule_box
-        )
-        lbl_cap_desc.setWordWrap(True)
-        self._labels_to_theme.append(lbl_cap_desc)
-        cap_layout.addWidget(lbl_cap_desc)
-        layout_app.addWidget(capsule_box)
-
-        layout_app.addStretch()
-        self.tabs.addTab(tab_appearance, "🎨 Appearance & Theme")
-
-        # ─── Tab 4: About, Creator & Open Source ──────────────────────
+        # ═════════════════════════════════════════════════════════════
+        # ─── TAB 2: ABOUT US ─────────────────────────────────────────
+        # ═════════════════════════════════════════════════════════════
         tab_about = QWidget()
         layout_about = QVBoxLayout(tab_about)
         layout_about.setContentsMargins(16, 16, 16, 16)
-        layout_about.setSpacing(10)
+        layout_about.setSpacing(12)
 
+        # Hero Brand Header
         header_row = QHBoxLayout()
-        header_logo = VoxelLogoWidget(size=46, animated=True, parent=tab_about)
+        header_logo = VoxelLogoWidget(size=48, animated=True, parent=tab_about)
         header_row.addWidget(header_logo)
 
         header_text = QVBoxLayout()
-        title_lbl = QLabel(f"{APP_NAME}", self)
-        title_lbl.setStyleSheet("font-size: 20px; font-weight: 800;")
-        header_text.addWidget(title_lbl)
+        title_row = QHBoxLayout()
+        title_lbl = QLabel(APP_NAME, self)
+        title_lbl.setStyleSheet("font-size: 22px; font-weight: 800; letter-spacing: 0.5px;")
+        title_row.addWidget(title_lbl)
+
+        ver_badge = QLabel(f" {VERSION} ", self)
+        ver_badge.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 8px;")
+        title_row.addWidget(ver_badge)
+        title_row.addStretch()
+        header_text.addLayout(title_row)
 
         sub_lbl = QLabel(f"{APP_TAGLINE}  •  A {COMPANY_NAME} Product", self)
-        sub_lbl.setStyleSheet("color: #0084FF; font-size: 11px; font-weight: 700; letter-spacing: 0.8px;")
+        sub_lbl.setStyleSheet("color: #0084FF; font-size: 12px; font-weight: 600;")
         header_text.addWidget(sub_lbl)
         header_row.addLayout(header_text)
         header_row.addStretch()
         layout_about.addLayout(header_row)
 
-        # 1. Creator, Architecture & Design Concept Box (Fahim)
-        creator_box = QGroupBox("💡 Creator, System Architecture & Design Concept", tab_about)
-        creator_layout = QVBoxLayout(creator_box)
-        creator_layout.setSpacing(8)
+        # 1. Product Overview & Connect Card
+        about_box = QGroupBox("About Voxel", tab_about)
+        about_layout = QVBoxLayout(about_box)
+        about_layout.setSpacing(10)
 
-        creator_header = QLabel("<b>Fahim</b> — System Architecture, UX/UI Design & Product Concept", creator_box)
-        creator_header.setStyleSheet("color: #0284C7; font-size: 13px; font-weight: 700;")
-        creator_layout.addWidget(creator_header)
-
-        ver_lbl = QLabel(f"<b>Application Version:</b> <code>{VERSION}</code>", creator_box)
-        self._labels_to_theme.append(ver_lbl)
-        creator_layout.addWidget(ver_lbl)
-
-        creator_desc = QLabel(
-            "Voxel was conceived, structurally architected, and designed by <b>Fahim</b> "
-            f"as an official open-source product from <b>{COMPANY_NAME}</b> (<a href='{COMPANY_URL}' style='color:#0084FF;'>{COMPANY_URL}</a>).<br>"
+        about_desc = QLabel(
+            f"Voxel is an official open-source product from <b>{COMPANY_NAME}</b>.<br>"
             "Crafted to provide free, high-performance, and emotional text-to-speech anywhere on local machines without telemetry or restrictions.",
-            creator_box
+            about_box
         )
-        creator_desc.setWordWrap(True)
-        self._labels_to_theme.append(creator_desc)
-        creator_layout.addWidget(creator_desc)
+        about_desc.setWordWrap(True)
+        self._labels_to_theme.append(about_desc)
+        about_layout.addWidget(about_desc)
 
+        # Prominent Link Buttons with Full, Clear Labels
         links_row = QHBoxLayout()
-        btn_linkedin = QPushButton("🔗 Connect with Fahim on LinkedIn", creator_box)
+        links_row.setSpacing(10)
+
+        btn_linkedin = QPushButton("🔗 Connect on LinkedIn", about_box)
         btn_linkedin.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_linkedin.setStyleSheet("background-color: #0A66C2; color: #FFFFFF; font-weight: 700; padding: 7px 16px; border: none; border-radius: 5px;")
+        btn_linkedin.setStyleSheet("background-color: #0A66C2; color: #FFFFFF; font-weight: 700; padding: 8px 16px; border: none; border-radius: 6px;")
         btn_linkedin.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(LINKEDIN_URL)))
         links_row.addWidget(btn_linkedin)
 
-        btn_website = QPushButton(f"🌐 Visit Digimo ({COMPANY_URL})", creator_box)
+        btn_website = QPushButton("🌐 Visit Digimo", about_box)
         btn_website.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_website.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 7px 16px; border: none; border-radius: 5px;")
+        btn_website.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 8px 16px; border: none; border-radius: 6px;")
         btn_website.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(COMPANY_URL)))
         links_row.addWidget(btn_website)
 
-        btn_gh = QPushButton("🐙 GitHub Repository", creator_box)
+        btn_gh = QPushButton("🐙 GitHub Repository", about_box)
         btn_gh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_gh.setStyleSheet("padding: 7px 14px; border-radius: 5px; font-weight: 600;")
+        btn_gh.setStyleSheet("padding: 8px 16px; border-radius: 6px; font-weight: 600;")
         btn_gh.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
         links_row.addWidget(btn_gh)
-        creator_layout.addLayout(links_row)
 
-        layout_about.addWidget(creator_box)
+        about_layout.addLayout(links_row)
+        layout_about.addWidget(about_box)
 
-        # 2. Open Source Freedom Box
-        digimo_box = QGroupBox("🏢 Digimo Product & Open Source Freedom", tab_about)
-        digimo_layout = QVBoxLayout(digimo_box)
-        digimo_layout.setSpacing(6)
+        # 2. Open Source Freedom Card
+        freedom_box = QGroupBox("Open Source Freedom", tab_about)
+        freedom_layout = QVBoxLayout(freedom_box)
+        freedom_layout.setSpacing(6)
 
-        lbl_digimo_desc = QLabel(
-            "This software is <b>100% free and open source</b> with no copyright restrictions. "
+        lbl_freedom = QLabel(
+            "This software is <b>100% free and open source</b> with no copyright restrictions or telemetry. "
             "Anyone is welcome to experiment, build upon it, make it more modern, and contribute.",
-            self
+            tab_about
         )
-        lbl_digimo_desc.setWordWrap(True)
-        self._labels_to_theme.append(lbl_digimo_desc)
-        digimo_layout.addWidget(lbl_digimo_desc)
-        layout_about.addWidget(digimo_box)
+        lbl_freedom.setWordWrap(True)
+        self._labels_to_theme.append(lbl_freedom)
+        freedom_layout.addWidget(lbl_freedom)
+        layout_about.addWidget(freedom_box)
 
-        # 3. Disclaimer Box
-        disclaimer_box = QGroupBox("⚖️ Disclaimer & Setup Guide", tab_about)
+        # 3. Disclaimer Card
+        disclaimer_box = QGroupBox("Disclaimer", tab_about)
         disclaimer_layout = QVBoxLayout(disclaimer_box)
         disclaimer_layout.setSpacing(6)
 
         lbl_disclaimer = QLabel(
-            "<b>Disclaimer:</b> Provided 'as is' for personal and experimental use. "
-            "Digimo, Fahim, and creators assume no responsibility or liability for any use or outcome. "
-            "Please read the included setup guides before configuring on your machine.",
-            self
+            "Provided 'as is' for personal and productivity use. "
+            "Digimo and creators assume no responsibility or liability for any use or outcome.",
+            tab_about
         )
         lbl_disclaimer.setWordWrap(True)
         self._labels_to_theme.append(lbl_disclaimer)
         disclaimer_layout.addWidget(lbl_disclaimer)
-
         layout_about.addWidget(disclaimer_box)
-        layout_about.addStretch()
 
-        self.tabs.addTab(tab_about, "ℹ️ About & Legal")
+        layout_about.addStretch()
+        self.tabs.addTab(tab_about, "ℹ️ About")
+
         main_layout.addWidget(self.tabs)
 
-        # Bottom buttons: Save & Cancel
+        # ─── Bottom Actions Bar ──────────────────────────────────────
         btn_row = QHBoxLayout()
         btn_row.addStretch()
 
-        btn_save = QPushButton("Save & Apply", self)
+        btn_save = QPushButton("Save Changes", self)
         btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_save.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; border: none; padding: 7px 18px; border-radius: 5px;")
+        btn_save.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; border: none; padding: 8px 22px; border-radius: 6px;")
         btn_save.clicked.connect(self.save_and_apply)
         btn_row.addWidget(btn_save)
 
@@ -660,7 +563,7 @@ class SettingsDialog(QDialog):
 
         if self.tts.is_speaking:
             self.tts.stop()
-            self.btn_test_perf.setText("▶ Test Voice & Latency Performance")
+            self.btn_test_perf.setText("▶ Test Voice & Latency")
             self.lbl_test_status.setText("Test stopped.")
             if hasattr(self, "equalizer_preview"):
                 self.equalizer_preview.set_active(False)
@@ -676,7 +579,7 @@ class SettingsDialog(QDialog):
         self.tts.set_emotion_mode(self.combo_emotion.currentData())
 
         self.btn_test_perf.setText("⏹ Stop Test")
-        self.lbl_test_status.setText("⚡ Synthesizing live test phrase...")
+        self.lbl_test_status.setText("⚡ Synthesizing live audio...")
         if hasattr(self, "equalizer_preview"):
             self.equalizer_preview.set_active(True)
 
@@ -690,7 +593,7 @@ class SettingsDialog(QDialog):
                 self.tts.playback_finished.disconnect(_on_test_done)
             except Exception:
                 pass
-            self.btn_test_perf.setText("▶ Test Voice & Latency Performance")
+            self.btn_test_perf.setText("▶ Test Voice & Latency")
             self.lbl_test_status.setText("✓ Test completed successfully!")
             if hasattr(self, "equalizer_preview"):
                 self.equalizer_preview.set_active(False)
@@ -700,7 +603,7 @@ class SettingsDialog(QDialog):
 
     def load_values(self):
         """Loads saved settings into controls."""
-        voice_id = settings_db.get("default_voice", "en-US-AvaNeural")
+        voice_id = settings_db.get("default_voice", "en-US-JennyNeural")
         idx = self.combo_voice.findData(voice_id)
         if idx >= 0:
             self.combo_voice.setCurrentIndex(idx)

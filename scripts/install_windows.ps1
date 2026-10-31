@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 $AppName = "Voxel"
-$Version = "1.1.08"
+$Version = "1.1.09"
 $Publisher = "Voxel Labs"
 $Description = "Voxel - Instant AI Voice & Document Reader"
 

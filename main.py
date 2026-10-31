@@ -122,6 +122,7 @@ class VoxelApp:
         self.tray.toggle_enabled_requested.connect(self._on_tray_toggle_enabled)
         self.tray.history_requested.connect(self._show_history)
         self.tray.settings_requested.connect(self._show_settings)
+        self.tray.about_requested.connect(self._show_about)
         self.tray.read_clipboard_requested.connect(self._on_read_clipboard_requested)
         self.tray.read_document_requested.connect(self._on_read_document_requested)
         self.tray.open_file_requested.connect(self._on_open_file_requested)
@@ -242,13 +243,19 @@ class VoxelApp:
             print(f"[Voxel] Error showing history dialog: {e}", file=sys.stderr)
 
     def _show_settings(self):
-        """Displays the settings dialog with about & version info."""
+        """Displays the settings dialog on Preferences tab."""
         try:
             self.settings_dialog.load_values()
-            self.settings_dialog.show()
-            self.settings_dialog.activateWindow()
+            self.settings_dialog.open_preferences()
         except Exception as e:
             print(f"[Voxel] Error showing settings dialog: {e}", file=sys.stderr)
+
+    def _show_about(self):
+        """Displays the settings dialog on About tab."""
+        try:
+            self.settings_dialog.open_about()
+        except Exception as e:
+            print(f"[Voxel] Error showing about dialog: {e}", file=sys.stderr)
 
     def _on_settings_applied(self):
         """Applies updated settings across the app."""
