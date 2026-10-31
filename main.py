@@ -113,6 +113,8 @@ class VoxelApp:
         self.bubble.read_document_requested.connect(self._on_read_document_requested)
         self.bubble.open_file_requested.connect(self._on_open_file_requested)
         self.bubble.settings_requested.connect(self._show_settings)
+        self.bubble.about_requested.connect(self._show_about)
+        self.bubble.quit_requested.connect(self.quit)
         self.bubble.hovered.connect(self._on_bubble_hovered)
 
         # 3. User clicked empty outside space -> Fade out bubble

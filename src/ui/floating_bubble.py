@@ -15,7 +15,7 @@ from PyQt6.QtGui import (
 )
 
 from src.config import BUBBLE_TIMEOUT_SECONDS, THEME, FONT_FAMILY
-from assets.icons import get_selection_bubble_pixmap
+from assets.icons import get_selection_bubble_pixmap, get_selection_bubble_doc_pixmap
 
 CAPSULE_WIDTH = 78
 CAPSULE_HEIGHT = 38
@@ -31,6 +31,8 @@ class FloatingBubble(QWidget):
     read_document_requested = pyqtSignal(str)  # Read entire document / presentation
     open_file_requested = pyqtSignal()      # Open local document file
     settings_requested = pyqtSignal()       # Open settings dialog
+    about_requested = pyqtSignal()          # Open about dialog
+    quit_requested = pyqtSignal()           # Quit Voxel
     hovered = pyqtSignal(str)               # Pre-fetch notification
 
     def __init__(self, parent=None):
@@ -51,8 +53,9 @@ class FloatingBubble(QWidget):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setFixedSize(CAPSULE_WIDTH, CAPSULE_HEIGHT)
 
-        # Official selection bubble logo
-        self.bubble_pixmap = get_selection_bubble_pixmap(30)
+        # Official selection bubble logos
+        self.bubble_pixmap = get_selection_bubble_pixmap(28)
+        self.doc_pixmap = get_selection_bubble_doc_pixmap(28)
 
         # Smooth Fade In / Fade Out Animations
         self.fade_anim = QPropertyAnimation(self, b"windowOpacity")
@@ -163,36 +166,43 @@ class FloatingBubble(QWidget):
         menu = QMenu(self)
         menu.setStyleSheet("""
             QMenu {
-                background-color: #131625;
-                color: #FFFFFF;
-                border: 1px solid rgba(255, 255, 255, 0.18);
-                border-radius: 8px;
-                padding: 4px;
-                font-size: 12px;
+                background-color: #171A29;
+                color: #F8FAFC;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 10px;
+                padding: 6px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-size: 13px;
             }
             QMenu::item {
-                padding: 6px 18px;
-                border-radius: 4px;
+                min-width: 200px;
+                padding: 8px 16px;
+                border-radius: 6px;
+                margin: 2px 2px;
+                font-weight: 500;
             }
             QMenu::item:selected {
-                background-color: #0084FF;
+                background-color: #7C3AED;
                 color: #FFFFFF;
+                font-weight: 600;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: rgba(255, 255, 255, 0.10);
+                margin: 4px 8px;
             }
         """)
 
-        act_sel = menu.addAction("▶ Read Selected Text")
-        act_sel.triggered.connect(lambda: (self.fade_out(), self.clicked.emit(self.selected_text)))
+        act_settings = menu.addAction("⚙️  Preferences...")
+        act_settings.triggered.connect(lambda: (self.fade_out(), self.settings_requested.emit()))
 
-        act_doc = menu.addAction("📑 Read Entire Document (Google Docs / PDF / Slides)")
-        act_doc.triggered.connect(lambda: (self.fade_out(), self.read_document_requested.emit(self.selected_text)))
+        act_about = menu.addAction("ℹ️  About Voxel...")
+        act_about.triggered.connect(lambda: (self.fade_out(), self.about_requested.emit()))
 
         menu.addSeparator()
 
-        act_file = menu.addAction("📂 Open Document / Presentation File...")
-        act_file.triggered.connect(lambda: (self.fade_out(), self.open_file_requested.emit()))
-
-        act_settings = menu.addAction("⚙️ Settings & Preferences...")
-        act_settings.triggered.connect(lambda: (self.fade_out(), self.settings_requested.emit()))
+        act_quit = menu.addAction("Quit Voxel")
+        act_quit.triggered.connect(lambda: (self.fade_out(), self.quit_requested.emit()))
 
         menu.exec(global_pos)
         self.hide_timer.start()
@@ -273,29 +283,35 @@ class FloatingBubble(QWidget):
         # 7. Render Voxel Mic Logo on Left
         if hasattr(self, "bubble_pixmap") and not self.bubble_pixmap.isNull():
             logo_size = 26
-            lx = (DIVIDER_X - logo_size) / 2.0 + 1.0
+            lx = (DIVIDER_X - logo_size) / 2.0
             ly = (h - logo_size) / 2.0
             painter.drawPixmap(int(lx), int(ly), logo_size, logo_size, self.bubble_pixmap)
 
         # 8. Render Document Icon on Right
-        rx = DIVIDER_X + (w - DIVIDER_X) / 2.0
-        ry = h / 2.0
-        if is_light:
-            doc_color = QColor("#0284C7") if (self.is_hovered and self.hover_side == "right") else QColor("#334155")
+        if hasattr(self, "doc_pixmap") and not self.doc_pixmap.isNull():
+            doc_size = 26
+            rx = DIVIDER_X + ((w - DIVIDER_X) - doc_size) / 2.0
+            ry = (h - doc_size) / 2.0
+            painter.drawPixmap(int(rx), int(ry), doc_size, doc_size, self.doc_pixmap)
         else:
-            doc_color = QColor("#38BDF8") if (self.is_hovered and self.hover_side == "right") else QColor("#E2E8F0")
+            rx = DIVIDER_X + (w - DIVIDER_X) / 2.0
+            ry = h / 2.0
+            if is_light:
+                doc_color = QColor("#0284C7") if (self.is_hovered and self.hover_side == "right") else QColor("#334155")
+            else:
+                doc_color = QColor("#38BDF8") if (self.is_hovered and self.hover_side == "right") else QColor("#E2E8F0")
 
-        # Document Outline
-        dw, dh = 13.0, 16.0
-        dx = rx - dw / 2.0
-        dy = ry - dh / 2.0
-        painter.setPen(QPen(doc_color, 1.4))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(QRectF(dx, dy, dw, dh), 2.0, 2.0)
+            # Document Outline fallback
+            dw, dh = 13.0, 16.0
+            dx = rx - dw / 2.0
+            dy = ry - dh / 2.0
+            painter.setPen(QPen(doc_color, 1.4))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRoundedRect(QRectF(dx, dy, dw, dh), 2.0, 2.0)
 
-        # Document text lines
-        painter.drawLine(int(dx + 3), int(dy + 5), int(dx + dw - 3), int(dy + 5))
-        painter.drawLine(int(dx + 3), int(dy + 8), int(dx + dw - 3), int(dy + 8))
-        painter.drawLine(int(dx + 3), int(dy + 11), int(dx + dw - 5), int(dy + 11))
+            # Document text lines
+            painter.drawLine(int(dx + 3), int(dy + 5), int(dx + dw - 3), int(dy + 5))
+            painter.drawLine(int(dx + 3), int(dy + 8), int(dx + dw - 3), int(dy + 8))
+            painter.drawLine(int(dx + 3), int(dy + 11), int(dx + dw - 5), int(dy + 11))
 
         painter.end()

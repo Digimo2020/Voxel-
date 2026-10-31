@@ -318,6 +318,20 @@ def get_selection_bubble_pixmap(size: int = 40) -> QPixmap:
     return create_voxel_round_glass_pixmap(size)
 
 
+def get_selection_bubble_doc_pixmap(size: int = 40) -> QPixmap:
+    """Returns the official selection bubble document icon pixmap smoothly scaled to size."""
+    path = _get_asset_path("branding/png/selection_bubble_doc_square.png") or _get_asset_path("branding/png/selection_bubble_doc.png")
+    if path and os.path.exists(path):
+        src_pix = QPixmap(path)
+        if not src_pix.isNull():
+            return src_pix.scaled(
+                size, size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+    return QPixmap()
+
+
 def create_tray_icon(size: int = 32) -> QIcon:
     """
     Menu bar / system tray / startup bar icon rendered with official tray_bar_logo.png.

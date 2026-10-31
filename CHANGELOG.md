@@ -10,6 +10,33 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.12] - 2026-10-31
+
+### Branding, App Icon & Dual-Action Capsule Assets
+- **Official Voxel App Icon**:
+  - Processed and integrated official application logo (`assets/Fainal/Voxel Logo for apps.png`) into `assets/branding/png/app_logo.png`, `app_logo_square.png`, and generated high-resolution Windows `icon.ico` (16, 24, 32, 48, 64, 128, 256 px).
+  - Window icon, taskbar preview, and Windows PE metadata updated with official branding.
+- **Selection Bubble Official Dual Icons**:
+  - Integrated official microphone logo on the left of the floating capsule.
+  - Integrated official document reader icon (`assets/Fainal/Voxel Logo for Doc.png`) on the right of the floating capsule.
+
+### UI/UX Modernization & Interactive Voice Equalizer
+- **Modern Sidebar Navigation Preferences Layout**:
+  - Redesigned Preferences dialog into professional desktop layout with left sidebar (Preferences, Voice & Speech, Playback, General, Appearance, About).
+  - Segmented pill theme toggle (`☀️ Light` | `🌙 Dark`) on top header with live preview.
+  - Clean card architecture with soft borders, rounded corners, and clear typography.
+- **Interactive Voice Equalizer (EQ)**:
+  - Interactive parametric EQ curve widget with frequency bands: HPF, 100Hz, 200Hz, 500Hz, 1kHz, 2kHz, LPF.
+  - Vocal presets: `Podcast Warmth`, `Vocal Clarity`, `Bright & Airy`, `Flat / Natural`.
+  - Draggable control nodes with live dB indicators and double-click reset to 0dB.
+- **Wider, Focused Context Menus**:
+  - Right-click menus on both system tray and floating capsule streamlined to `⚙️ Preferences...`, `ℹ️ About Voxel...`, and `Quit Voxel` with min-width of 200–220px.
+- **About Section Refinements**:
+  - Clean `🔗 Connect on LinkedIn` button (with correct spelling and direct link).
+  - Prominent version badge `v1.1.12`, Digimo, and GitHub repository links.
+
+---
+
 ## [v1.1.11] - 2026-10-31
 
 ### Branding & System Tray Update
