@@ -1,4 +1,6 @@
 """
+Version module (v1.1) - [2026-10-31]
+
 Version definitions and rollover logic according to user specification:
 Format: v<Major>.<Minor>.<Patch:02d>  (e.g., v1.0.01)
 - Every 10th patch cycle, patch rolls to 00 and minor increments by 1.
@@ -6,7 +8,7 @@ Format: v<Major>.<Minor>.<Patch:02d>  (e.g., v1.0.01)
 """
 import re
 
-CURRENT_VERSION = "v1.1.06"
+CURRENT_VERSION = "v1.1.07"
 GITHUB_REPO_URL = "https://github.com/Digimo2020/Voxel-"
 
 

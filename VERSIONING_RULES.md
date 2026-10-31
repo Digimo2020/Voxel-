@@ -1,3 +1,4 @@
+<!-- VERSIONING_RULES.md (v1.1) - [2026-10-31] -->
 # Voxel Global Versioning & Deployment Rules
 
 > **Mandatory Rule**: Every new build and deployment must create a dedicated versioned binary and preserve all historical releases. Never overwrite or delete old versions.
@@ -27,11 +28,13 @@
      - `dist/Voxel-v1.1.03.exe` (kept intact)
      - `dist/Voxel-v1.1.04.exe` (kept intact)
      - `dist/Voxel-v1.1.05.exe` (kept intact)
-     - `dist/Voxel-v1.1.06.exe` (new build)
+     - `dist/Voxel-v1.1.06.exe` (kept intact)
+     - `dist/Voxel-v1.1.07.exe` (new build)
   2. Maintain a `dist/Voxel.exe` alias pointing to the latest version for convenience.
   3. On macOS, maintain the same version preservation:
-     - `dist/Voxel-v1.1.05.pkg`
-     - `dist/Voxel-v1.1.05.dmg`
+     - `dist/Voxel-v1.1.07.dmg`
+  4. Keep `dist/Voxel.dmg` as the latest-build alias.
+  5. Historical `.pkg` files may remain in older GitHub releases, but new macOS releases are DMG-only.
 
 ---
 

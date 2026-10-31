@@ -1,3 +1,4 @@
+<!-- CHANGELOG.md (v1.1) - [2026-10-31] -->
 # Changelog
 
 All notable changes to the **Voxel** project will be documented in this file.
@@ -6,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Versioning structure: `v<Major>.<Minor>.<Patch:02d>` (e.g. `v1.0.01`).
 Every 10th patch increments minor, and every 10th minor increments major.
+
+---
+
+## [v1.1.07] - 2026-10-31
+
+### Distribution & Packaging
+- Switched macOS distribution to a drag-and-drop `.dmg` only; new releases no longer generate or publish `.pkg` installers.
+- Removed the bundled shell helper that recursively cleared macOS quarantine attributes.
+- Added first-launch instructions inside the DMG and in the README, using macOS Privacy & Security approval rather than disabling Gatekeeper.
+- Added SHA-256 checksums for the versioned and latest DMG files.
+- **Signing status:** this build is not signed with an Apple Developer ID certificate and is not notarised. macOS may still show a first-launch security warning; this packaging update does not remove that warning.
 
 ---
 
