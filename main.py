@@ -39,7 +39,7 @@ class VoxelApp:
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
         self.app.setApplicationName(APP_NAME)
-        self.app.setApplicationDisplayName(f"{APP_NAME} — {APP_TAGLINE}")
+        self.app.setApplicationDisplayName("")
         self.app.setWindowIcon(create_app_icon(64))
 
         # Core Components

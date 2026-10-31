@@ -332,6 +332,18 @@ def get_selection_bubble_doc_pixmap(size: int = 40) -> QPixmap:
     return QPixmap()
 
 
+def get_brand_logo_pixmap(is_dark: bool = False, target_width: int = 180) -> QPixmap:
+    """Returns the official horizontal Voxel brand logo for sidebar header (light or dark mode)."""
+    rel = "branding/png/voxel_logo_main_dark.png" if is_dark else "branding/png/voxel_logo_main_light.png"
+    fallback_rel = "Fainal/Voxel Logo Main Dark.png" if is_dark else "Fainal/Voxel Logo Main.png"
+    path = _get_asset_path(rel) or _get_asset_path(fallback_rel)
+    if path and os.path.exists(path):
+        src_pix = QPixmap(path)
+        if not src_pix.isNull():
+            return src_pix.scaledToWidth(target_width, Qt.TransformationMode.SmoothTransformation)
+    return QPixmap()
+
+
 def create_tray_icon(size: int = 32) -> QIcon:
     """
     Menu bar / system tray / startup bar icon rendered with official tray_bar_logo.png.

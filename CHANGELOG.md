@@ -10,6 +10,25 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.14] - 2026-10-31
+
+### Official Brand Logo & Custom CSS/QSS Refinement
+- **Official Brand Header Logo Integration**:
+  - Embedded high-resolution official logo from `assets/Fainal/Voxel Logo Main.png` (light mode) and `assets/Fainal/Voxel Logo Main Dark.png` (dark mode) directly into the Settings sidebar header.
+  - Replaced legacy vector mic placeholder with authentic Voxel brand typography and microphone mark.
+- **Custom CSS / QSS Polish & Modern Toggle Switches**:
+  - Replaced plain checkboxes with styled, smooth sliding `ToggleSwitch` for settings like "Smooth fade-in at start".
+  - Injected crisp custom checkmark indicator asset (`checkbox_check.png`) for `QCheckBox::indicator:checked`, eliminating solid blank purple square rendering.
+  - Styled mini preview cards with active ring states and custom vector art for theme and bubble selection.
+- **Mnemonic Ampersand Bug Fixes**:
+  - Escaped all literal ampersands as `&&` in Qt groupboxes and labels (`Fade && Timing`, `Voice && Speech`, `Audio Output && Recordings`) so Windows doesn't render them as unwanted underscores (`Fade_Timing`).
+- **Clean Window Titlebars**:
+  - Removed redundant application name concatenation on Windows title bars (`setApplicationDisplayName("")`).
+- **Dark & Light Palette Synchronization**:
+  - Sleek dark theme palette matching user design: deep charcoal background (`#0B0F19`), surface card containers (`#161F30`), borders (`#1E293B`), and vibrant accent purple (`#7C3AED`).
+
+---
+
 ## [v1.1.13] - 2026-10-31
 
 ### Audio Recording & Automatic Documents Folder
