@@ -43,6 +43,14 @@ class FloatingBubble(QWidget):
         self.hover_side: str = ""  # 'left' (selection) or 'right' (document)
         self.theme_mode: str = "light_glass"  # Default light glass
 
+        self.capsule_width: int = CAPSULE_WIDTH
+        self.capsule_height: int = CAPSULE_HEIGHT
+        self.divider_x: int = DIVIDER_X
+        self.icon_size: int = 26
+        self.corner_radius_mode: str = "Medium"
+        self.bubble_style: str = "Frosted Glass"
+        self.target_opacity: float = 0.90
+
         self.setWindowFlags(
             Qt.WindowType.ToolTip |
             Qt.WindowType.FramelessWindowHint |
@@ -52,11 +60,6 @@ class FloatingBubble(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.setFixedSize(CAPSULE_WIDTH, CAPSULE_HEIGHT)
-
-        # Official selection bubble logos
-        self.bubble_pixmap = get_selection_bubble_pixmap(28)
-        self.doc_pixmap = get_selection_bubble_doc_pixmap(28)
 
         # Smooth Fade In / Fade Out Animations
         self.fade_anim = QPropertyAnimation(self, b"windowOpacity")
@@ -69,6 +72,37 @@ class FloatingBubble(QWidget):
         self.hide_timer.setInterval(int(BUBBLE_TIMEOUT_SECONDS * 1000))
         self.hide_timer.timeout.connect(self.fade_out)
 
+        self.apply_settings()
+
+    def apply_settings(self):
+        """Loads and applies all appearance, size, corner radius and transparency settings."""
+        size_str = str(settings_db.get("bubble_size", "Medium")).lower()
+        if size_str in ("1", "small"):
+            self.capsule_width = 66
+            self.capsule_height = 32
+            self.divider_x = 33
+            self.icon_size = 22
+        elif size_str in ("3", "large"):
+            self.capsule_width = 92
+            self.capsule_height = 44
+            self.divider_x = 46
+            self.icon_size = 30
+        else:  # Medium / default
+            self.capsule_width = 78
+            self.capsule_height = 38
+            self.divider_x = 39
+            self.icon_size = 26
+
+        self.setFixedSize(self.capsule_width, self.capsule_height)
+        self.bubble_pixmap = get_selection_bubble_pixmap(self.icon_size)
+        self.doc_pixmap = get_selection_bubble_doc_pixmap(self.icon_size)
+
+        self.corner_radius_mode = str(settings_db.get("bubble_corner_radius", "Medium"))
+        self.bubble_style = str(settings_db.get("bubble_appearance", "Frosted Glass"))
+        trans_val = int(settings_db.get("bubble_transparency", 90))
+        self.target_opacity = max(0.2, min(1.0, trans_val / 100.0))
+        self.update()
+
     def set_theme_mode(self, mode: str):
         """Sets light_glass or dark_glass theme for the floating bubble."""
         self.theme_mode = mode
@@ -76,11 +110,12 @@ class FloatingBubble(QWidget):
 
     def show_at(self, text: str, cursor_x: int, cursor_y: int):
         """Positions the floating capsule near cursor and fades in."""
+        self.apply_settings()
         self.selected_text = text
         self.hover_side = ""
 
         offset_x = 10
-        offset_y = -CAPSULE_HEIGHT - 12
+        offset_y = -self.capsule_height - 12
 
         target_x = cursor_x + offset_x
         target_y = cursor_y + offset_y
@@ -90,17 +125,16 @@ class FloatingBubble(QWidget):
             geo = screen.availableGeometry()
             if target_y < geo.top() + 8:
                 target_y = cursor_y + 22
-            target_x = max(geo.left() + 8, min(geo.right() - CAPSULE_WIDTH - 8, target_x))
-            target_y = max(geo.top() + 8, min(geo.bottom() - CAPSULE_HEIGHT - 8, target_y))
+            target_x = max(geo.left() + 8, min(geo.right() - self.capsule_width - 8, target_x))
+            target_y = max(geo.top() + 8, min(geo.bottom() - self.capsule_height - 8, target_y))
 
         self.move(int(target_x), int(target_y))
 
         self.fade_anim.stop()
         self.setWindowOpacity(0.0)
         self.show()
-        target_opacity = float(settings_db.get("bubble_transparency", 90)) / 100.0
         self.fade_anim.setStartValue(0.0)
-        self.fade_anim.setEndValue(max(0.2, min(1.0, target_opacity)))
+        self.fade_anim.setEndValue(self.target_opacity)
         self.fade_anim.start()
 
         self.hide_timer.start()
@@ -138,7 +172,7 @@ class FloatingBubble(QWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos_x = event.position().x()
-        new_side = "left" if pos_x < DIVIDER_X else "right"
+        new_side = "left" if pos_x < self.divider_x else "right"
         if new_side != self.hover_side:
             self.hover_side = new_side
             if new_side == "left":
@@ -153,7 +187,7 @@ class FloatingBubble(QWidget):
             pos_x = event.position().x()
             fallback = self.selected_text
             self.fade_out()
-            if pos_x < DIVIDER_X:
+            if pos_x < self.divider_x:
                 # Read selected text
                 self.clicked.emit(fallback)
             else:
@@ -216,7 +250,15 @@ class FloatingBubble(QWidget):
 
         w = float(self.width())
         h = float(self.height())
-        r = h / 2.0  # Pill corner radius
+
+        # Determine dynamic corner radius based on settings
+        c_mode = getattr(self, "corner_radius_mode", "Medium")
+        if c_mode == "Square":
+            r = 4.0
+        elif c_mode == "Round":
+            r = h / 2.0
+        else:  # Medium
+            r = 10.0
 
         # 1. Outer ambient glow on hover
         if self.is_hovered:
@@ -228,90 +270,102 @@ class FloatingBubble(QWidget):
             painter.setBrush(QBrush(glow))
             painter.drawRoundedRect(QRectF(0, 0, w, h), r, r)
 
-        # 2. Translucent Frosted Glass Capsule Background (Dynamic Light / Dark Glass)
+        # 2. Dynamic Capsule Background & Style
         capsule_rect = QRectF(1.0, 1.0, w - 2.0, h - 2.0)
-        grad = QLinearGradient(0, 0, 0, h)
         is_light = (self.theme_mode == "light_glass")
+        b_style = getattr(self, "bubble_style", "Frosted Glass")
 
-        if is_light:
-            if self.is_hovered:
-                grad.setColorAt(0.0, QColor(255, 255, 255, 255))
-                grad.setColorAt(1.0, QColor(240, 246, 255, 255))
-            else:
-                grad.setColorAt(0.0, QColor(255, 255, 255, 255))
-                grad.setColorAt(1.0, QColor(244, 247, 253, 255))
-            border_col = QColor(0, 132, 255, 220) if self.is_hovered else QColor(148, 163, 184, 180)
+        if b_style == "Transparent":
+            bg_col = QColor(255, 255, 255, 90 if is_light else 60)
+            painter.setBrush(QBrush(bg_col))
+            dash_col = QColor(0, 132, 255, 220) if self.is_hovered else (QColor(148, 163, 184, 180) if is_light else QColor(255, 255, 255, 75))
+            painter.setPen(QPen(dash_col, 1.2, Qt.PenStyle.DashLine))
+            painter.drawRoundedRect(capsule_rect, r, r)
+        elif b_style == "Minimal":
+            bg_col = QColor(248, 250, 252, 240) if is_light else QColor(15, 23, 42, 240)
+            painter.setBrush(QBrush(bg_col))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(capsule_rect, r, r)
+        elif b_style == "Default":
+            bg_col = QColor(255, 255, 255, 250) if is_light else QColor(30, 41, 59, 250)
+            border_col = QColor(0, 132, 255, 220) if self.is_hovered else (QColor(203, 213, 225, 240) if is_light else QColor(71, 85, 105, 240))
+            painter.setBrush(QBrush(bg_col))
+            painter.setPen(QPen(border_col, 1.2))
+            painter.drawRoundedRect(capsule_rect, r, r)
         else:
-            if self.is_hovered:
-                grad.setColorAt(0.0, QColor(36, 42, 65, 235))
-                grad.setColorAt(1.0, QColor(20, 24, 38, 245))
+            # Frosted Glass (Default)
+            grad = QLinearGradient(0, 0, 0, h)
+            if is_light:
+                if self.is_hovered:
+                    grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+                    grad.setColorAt(1.0, QColor(240, 246, 255, 255))
+                else:
+                    grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+                    grad.setColorAt(1.0, QColor(244, 247, 253, 255))
+                border_col = QColor(0, 132, 255, 220) if self.is_hovered else QColor(148, 163, 184, 180)
             else:
-                grad.setColorAt(0.0, QColor(26, 31, 48, 220))
-                grad.setColorAt(1.0, QColor(14, 17, 28, 235))
-            border_col = QColor(0, 132, 255, 170) if self.is_hovered else QColor(255, 255, 255, 55)
+                if self.is_hovered:
+                    grad.setColorAt(0.0, QColor(36, 42, 65, 235))
+                    grad.setColorAt(1.0, QColor(20, 24, 38, 245))
+                else:
+                    grad.setColorAt(0.0, QColor(26, 31, 48, 220))
+                    grad.setColorAt(1.0, QColor(14, 17, 28, 235))
+                border_col = QColor(0, 132, 255, 170) if self.is_hovered else QColor(255, 255, 255, 55)
 
-        painter.setBrush(QBrush(grad))
-        painter.setPen(QPen(border_col, 1.2))
-        painter.drawRoundedRect(capsule_rect, r, r)
+            painter.setBrush(QBrush(grad))
+            painter.setPen(QPen(border_col, 1.2))
+            painter.drawRoundedRect(capsule_rect, r, r)
 
-        # 3. Top Specular Glass Reflection Sheen
-        sheen_rect = QRectF(r / 2.0, 2.0, w - r, h * 0.42)
-        sheen = QLinearGradient(0, 2.0, 0, h * 0.45)
-        sheen.setColorAt(0.0, QColor(255, 255, 255, 90 if is_light else 75))
-        sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(sheen))
-        painter.drawRoundedRect(sheen_rect, 4.0, 4.0)
+            # Top Specular Glass Reflection Sheen
+            sheen_rect = QRectF(r / 2.0, 2.0, w - r, h * 0.42)
+            sheen = QLinearGradient(0, 2.0, 0, h * 0.45)
+            sheen.setColorAt(0.0, QColor(255, 255, 255, 90 if is_light else 75))
+            sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(sheen))
+            painter.drawRoundedRect(sheen_rect, 4.0, 4.0)
 
-        # 4. Subtle Vertical Divider separating Selection vs Document actions
+        # 3. Subtle Vertical Divider separating Selection vs Document actions
         div_col = QColor(148, 163, 184, 80) if is_light else QColor(255, 255, 255, 45)
         painter.setPen(QPen(div_col, 1.0))
-        painter.drawLine(int(DIVIDER_X), 7, int(DIVIDER_X), int(h - 7))
+        painter.drawLine(int(self.divider_x), 6, int(self.divider_x), int(h - 6))
 
-        # 5. Left Highlight on Hover (Read Selection)
+        # 4. Left Highlight on Hover (Read Selection)
         if self.is_hovered and self.hover_side == "left":
-            left_rect = QRectF(2.0, 2.0, DIVIDER_X - 3.0, h - 4.0)
+            left_rect = QRectF(2.0, 2.0, self.divider_x - 3.0, h - 4.0)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(QColor(0, 132, 255, 30 if is_light else 40)))
             painter.drawRoundedRect(left_rect, r, r)
 
-        # 6. Right Highlight on Hover (Read Document)
+        # 5. Right Highlight on Hover (Read Document)
         elif self.is_hovered and self.hover_side == "right":
-            right_rect = QRectF(DIVIDER_X + 1.0, 2.0, w - DIVIDER_X - 3.0, h - 4.0)
+            right_rect = QRectF(self.divider_x + 1.0, 2.0, w - self.divider_x - 3.0, h - 4.0)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(QColor(124, 58, 237, 35 if is_light else 50)))
             painter.drawRoundedRect(right_rect, r, r)
 
-        # 7. Render Voxel Mic Logo on Left
+        # 6. Render Voxel Mic Logo on Left
+        icon_sz = getattr(self, "icon_size", 26)
         if hasattr(self, "bubble_pixmap") and not self.bubble_pixmap.isNull():
-            logo_size = 26
-            lx = (DIVIDER_X - logo_size) / 2.0
-            ly = (h - logo_size) / 2.0
-            painter.drawPixmap(int(lx), int(ly), logo_size, logo_size, self.bubble_pixmap)
+            lx = (self.divider_x - icon_sz) / 2.0
+            ly = (h - icon_sz) / 2.0
+            painter.drawPixmap(int(lx), int(ly), icon_sz, icon_sz, self.bubble_pixmap)
 
-        # 8. Render Document Icon on Right
+        # 7. Render Official Circular Document Icon on Right
         if hasattr(self, "doc_pixmap") and not self.doc_pixmap.isNull():
-            doc_size = 26
-            rx = DIVIDER_X + ((w - DIVIDER_X) - doc_size) / 2.0
-            ry = (h - doc_size) / 2.0
-            painter.drawPixmap(int(rx), int(ry), doc_size, doc_size, self.doc_pixmap)
+            rx = self.divider_x + ((w - self.divider_x) - icon_sz) / 2.0
+            ry = (h - icon_sz) / 2.0
+            painter.drawPixmap(int(rx), int(ry), icon_sz, icon_sz, self.doc_pixmap)
         else:
-            rx = DIVIDER_X + (w - DIVIDER_X) / 2.0
+            rx = self.divider_x + (w - self.divider_x) / 2.0
             ry = h / 2.0
-            if is_light:
-                doc_color = QColor("#0284C7") if (self.is_hovered and self.hover_side == "right") else QColor("#334155")
-            else:
-                doc_color = QColor("#38BDF8") if (self.is_hovered and self.hover_side == "right") else QColor("#E2E8F0")
-
-            # Document Outline fallback
+            doc_color = QColor("#0284C7") if (self.is_hovered and self.hover_side == "right") else (QColor("#334155") if is_light else QColor("#E2E8F0"))
             dw, dh = 13.0, 16.0
             dx = rx - dw / 2.0
             dy = ry - dh / 2.0
             painter.setPen(QPen(doc_color, 1.4))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(QRectF(dx, dy, dw, dh), 2.0, 2.0)
-
-            # Document text lines
             painter.drawLine(int(dx + 3), int(dy + 5), int(dx + dw - 3), int(dy + 5))
             painter.drawLine(int(dx + 3), int(dy + 8), int(dx + dw - 3), int(dy + 8))
             painter.drawLine(int(dx + 3), int(dy + 11), int(dx + dw - 5), int(dy + 11))

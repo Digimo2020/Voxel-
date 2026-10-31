@@ -10,6 +10,26 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.15] - 2026-10-31
+
+### Appearance Tab Redesign, Custom Logo Uploader & Official Document Logo
+- **Official Circular Document Logo Integration**:
+  - Embedded newly provided official circular purple document icon with crisp white folded page (`assets/Fainal/Voxel Logo for Doc.png` and `assets/branding/png/selection_bubble_doc.png`).
+  - Updated the floating selection bubble right-action button to display the official document logo, providing visual balance with the circular mic icon.
+- **Custom Application Logo Uploader**:
+  - Implemented **App Logo & Icons** card in Appearance tab matching user mockup:
+    - Real-time logo preview container.
+    - **Change Logo** button with file picker (`*.png`, `*.jpg`, `*.svg`, `*.ico`) to upload and apply custom logos across the app.
+    - **Restore Default** button to revert to official Voxel brand logo.
+    - Styled **Logo Requirements** info box with format and dimension specifications.
+- **Dynamic Floating Bubble Settings**:
+  - **Bubble Appearance Cards**: 4 selectable cards (`Default`, `Frosted Glass`, `Transparent`, `Minimal`) featuring mini dual-action capsule previews and active checkmark badges (`✓`).
+  - **Corner Radius Selector**: 3 selectable corner styles (`Square`, `Medium`, `Round`) with custom vector graphics and active checkmark badges (`✓`).
+  - **Bubble Size & Transparency Controls**: Sliders for fine-grained bubble dimensions (Small, Medium, Large) and transparency (30% to 100%).
+  - Immediate real-time sync with floating bubble geometry, corner radius, and window opacity.
+
+---
+
 ## [v1.1.14] - 2026-10-31
 
 ### Official Brand Logo & Custom CSS/QSS Refinement

@@ -86,6 +86,8 @@ class VoxelApp:
         self.player.apply_theme(player_theme)
         if hasattr(self.bubble, "set_theme_mode"):
             self.bubble.set_theme_mode(player_theme)
+        if hasattr(self.bubble, "apply_settings"):
+            self.bubble.apply_settings()
 
         # 5. Emotion & Expressiveness
         saved_emotion = settings_db.get("emotion_mode", DEFAULT_EMOTION_MODE)

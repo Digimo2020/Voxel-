@@ -320,7 +320,9 @@ def get_selection_bubble_pixmap(size: int = 40) -> QPixmap:
 
 def get_selection_bubble_doc_pixmap(size: int = 40) -> QPixmap:
     """Returns the official selection bubble document icon pixmap smoothly scaled to size."""
-    path = _get_asset_path("branding/png/selection_bubble_doc_square.png") or _get_asset_path("branding/png/selection_bubble_doc.png")
+    path = _get_asset_path("branding/png/selection_bubble_doc_square.png") or \
+           _get_asset_path("branding/png/selection_bubble_doc.png") or \
+           _get_asset_path("Fainal/Voxel Logo for Doc.png")
     if path and os.path.exists(path):
         src_pix = QPixmap(path)
         if not src_pix.isNull():
@@ -334,6 +336,18 @@ def get_selection_bubble_doc_pixmap(size: int = 40) -> QPixmap:
 
 def get_brand_logo_pixmap(is_dark: bool = False, target_width: int = 180) -> QPixmap:
     """Returns the official horizontal Voxel brand logo for sidebar header (light or dark mode)."""
+    # 1. Custom user logo if set
+    try:
+        from src.utils.settings import settings_db
+        custom_path = settings_db.get("custom_logo_path", "")
+        if custom_path and os.path.exists(custom_path):
+            src_pix = QPixmap(custom_path)
+            if not src_pix.isNull():
+                return src_pix.scaledToWidth(target_width, Qt.TransformationMode.SmoothTransformation)
+    except Exception:
+        pass
+
+    # 2. Default official brand logo
     rel = "branding/png/voxel_logo_main_dark.png" if is_dark else "branding/png/voxel_logo_main_light.png"
     fallback_rel = "Fainal/Voxel Logo Main Dark.png" if is_dark else "Fainal/Voxel Logo Main.png"
     path = _get_asset_path(rel) or _get_asset_path(fallback_rel)

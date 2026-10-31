@@ -16,7 +16,7 @@ from typing import Optional, List, Dict
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QStackedWidget, QScrollArea,
     QWidget, QLabel, QComboBox, QCheckBox, QDoubleSpinBox, QPushButton,
-    QGroupBox, QFormLayout, QFrame, QButtonGroup, QSlider
+    QGroupBox, QFormLayout, QFrame, QButtonGroup, QSlider, QFileDialog
 )
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QTimer, QRectF, QPointF
 from PyQt6.QtGui import (
@@ -140,11 +140,16 @@ class MiniWindowGraphic(QWidget):
 
 
 class BubbleStyleGraphic(QWidget):
-    """Paints mini preview pill for Default, Frosted Glass, Transparent, Minimal."""
+    """Paints mini preview dual-capsule for Default, Frosted Glass, Transparent, Minimal."""
     def __init__(self, style_name: str, parent=None):
         super().__init__(parent)
-        self.setFixedSize(54, 26)
+        self.setFixedSize(62, 26)
         self.style_name = style_name
+        self.is_dark = False
+
+    def set_dark(self, is_dark: bool):
+        self.is_dark = is_dark
+        self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -156,25 +161,77 @@ class BubbleStyleGraphic(QWidget):
 
         if self.style_name == "Default":
             painter.setPen(QPen(QColor("#94A3B8"), 1.2))
-            painter.setBrush(QBrush(QColor(255, 255, 255, 220)))
+            painter.setBrush(QBrush(QColor("#FFFFFF") if not self.is_dark else QColor("#1E293B")))
             painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
         elif self.style_name == "Frosted Glass":
             grad = QLinearGradient(0, 0, w, h)
-            grad.setColorAt(0.0, QColor(255, 255, 255, 240))
-            grad.setColorAt(1.0, QColor(224, 231, 255, 240))
-            painter.setPen(QPen(QColor("#7C3AED"), 1.5))
+            if not self.is_dark:
+                grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+                grad.setColorAt(1.0, QColor(237, 233, 254, 255))
+                painter.setPen(QPen(QColor("#7C3AED"), 1.5))
+            else:
+                grad.setColorAt(0.0, QColor(46, 16, 101, 220))
+                grad.setColorAt(1.0, QColor(30, 27, 75, 240))
+                painter.setPen(QPen(QColor("#A78BFA"), 1.5))
             painter.setBrush(QBrush(grad))
             painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
         elif self.style_name == "Transparent":
             pen = QPen(QColor("#94A3B8"), 1.2, Qt.PenStyle.DashLine)
             painter.setPen(pen)
-            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setBrush(QBrush(QColor(255, 255, 255, 40) if not self.is_dark else QColor(0, 0, 0, 40)))
             painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
         elif self.style_name == "Minimal":
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(QColor("#7C3AED")))
+            painter.setBrush(QBrush(QColor("#EDE9FE") if not self.is_dark else QColor("#312E81")))
             painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
 
+        # Subtle divider in middle
+        painter.setPen(QPen(QColor("#CBD5E1") if not self.is_dark else QColor(255, 255, 255, 40), 1.0))
+        painter.drawLine(int(w / 2.0), 4, int(w / 2.0), int(h - 4))
+
+        # Left mini mic icon
+        mic_col = QColor("#0084FF") if self.style_name == "Frosted Glass" else QColor("#7C3AED")
+        painter.setPen(QPen(mic_col, 1.2))
+        painter.setBrush(QBrush(mic_col))
+        painter.drawRoundedRect(QRectF(w * 0.25 - 3, h * 0.5 - 5, 6, 8), 3, 3)
+        painter.drawLine(int(w * 0.25), int(h * 0.5 + 3), int(w * 0.25), int(h * 0.5 + 6))
+
+        # Right mini doc icon
+        doc_col = QColor("#7C3AED")
+        painter.setPen(QPen(doc_col, 1.2))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(QRectF(w * 0.75 - 4, h * 0.5 - 5, 8, 10), 1.5, 1.5)
+        painter.drawLine(int(w * 0.75 - 2), int(h * 0.5 - 2), int(w * 0.75 + 2), int(h * 0.5 - 2))
+        painter.drawLine(int(w * 0.75 - 2), int(h * 0.5 + 1), int(w * 0.75 + 2), int(h * 0.5 + 1))
+
+        painter.end()
+
+
+class CornerRadiusGraphic(QWidget):
+    """Paints mini preview icon for Square, Medium, Round corner styles."""
+    def __init__(self, corner_name: str, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(24, 24)
+        self.corner_name = corner_name
+        self.is_dark = False
+
+    def set_dark(self, is_dark: bool):
+        self.is_dark = is_dark
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(QColor("#7C3AED"), 2.0)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+
+        if self.corner_name == "Square":
+            painter.drawRect(QRectF(4, 4, 16, 16))
+        elif self.corner_name == "Medium":
+            painter.drawRoundedRect(QRectF(4, 4, 16, 16), 4.5, 4.5)
+        elif self.corner_name == "Round":
+            painter.drawEllipse(QRectF(4, 4, 16, 16))
         painter.end()
 
 
@@ -302,6 +359,11 @@ class SettingsDialog(QDialog):
 
         self.nav_buttons: List[QPushButton] = []
         self.bubble_cards: Dict[str, QFrame] = {}
+        self.bubble_chk: Dict[str, QLabel] = {}
+        self.corner_cards: Dict[str, QFrame] = {}
+        self.corner_chk: Dict[str, QLabel] = {}
+        self.current_bubble_style: str = "Frosted Glass"
+        self.current_corner_radius: str = "Medium"
         self._init_ui()
         self.apply_theme(self.current_theme)
         self.load_values()
@@ -633,76 +695,120 @@ class SettingsDialog(QDialog):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(14)
 
-        # Card 1: Application Theme (Visual Light / Dark cards)
-        card_theme = QGroupBox("Application Theme", content)
-        l_th = QVBoxLayout(card_theme)
-        l_th.setSpacing(8)
-        sub_th = QLabel("Choose the overall look for the application.")
-        sub_th.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_th.addWidget(sub_th)
+        # ─── Card 1: App Logo & Icons ────────────────────────────────
+        card_logo = QGroupBox("App Logo && Icons", content)
+        l_logo = QVBoxLayout(card_logo)
+        l_logo.setSpacing(10)
 
-        theme_cards_row = QHBoxLayout()
-        theme_cards_row.setSpacing(12)
+        sub_logo = QLabel("Update the application logo and related icons.", card_logo)
+        sub_logo.setStyleSheet("font-size: 11px; color: #64748B;")
+        l_logo.addWidget(sub_logo)
 
-        # Light Theme Card
-        self.card_light_theme = QFrame(card_theme)
-        self.card_light_theme.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.card_light_theme.mousePressEvent = lambda e: self.apply_theme("light")
-        l_lt = QHBoxLayout(self.card_light_theme)
-        l_lt.setContentsMargins(14, 12, 14, 12)
-        l_lt.setSpacing(12)
-        l_lt.addWidget(MiniWindowGraphic(is_dark=False, parent=self.card_light_theme))
-        lt_text = QVBoxLayout()
-        lbl_lt_title = QLabel("Light Theme", self.card_light_theme)
-        lbl_lt_title.setStyleSheet("font-weight: 700; font-size: 13px;")
-        lbl_lt_sub = QLabel("Clean, bright and modern", self.card_light_theme)
-        lbl_lt_sub.setStyleSheet("font-size: 11px; color: #64748B;")
-        lt_text.addWidget(lbl_lt_title)
-        lt_text.addWidget(lbl_lt_sub)
-        l_lt.addLayout(lt_text)
-        l_lt.addStretch()
-        self.lbl_lt_chk = QLabel("✓", self.card_light_theme)
-        self.lbl_lt_chk.setStyleSheet("background-color: #7C3AED; color: #FFFFFF; font-weight: 800; border-radius: 10px; min-width: 20px; max-width: 20px; min-height: 20px; max-height: 20px; qproperty-alignment: AlignCenter;")
-        l_lt.addWidget(self.lbl_lt_chk)
-        theme_cards_row.addWidget(self.card_light_theme)
+        logo_row = QHBoxLayout()
+        logo_row.setSpacing(14)
 
-        # Dark Theme Card
-        self.card_dark_theme = QFrame(card_theme)
-        self.card_dark_theme.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.card_dark_theme.mousePressEvent = lambda e: self.apply_theme("dark")
-        l_dt = QHBoxLayout(self.card_dark_theme)
-        l_dt.setContentsMargins(14, 12, 14, 12)
-        l_dt.setSpacing(12)
-        l_dt.addWidget(MiniWindowGraphic(is_dark=True, parent=self.card_dark_theme))
-        dt_text = QVBoxLayout()
-        lbl_dt_title = QLabel("Dark Theme", self.card_dark_theme)
-        lbl_dt_title.setStyleSheet("font-weight: 700; font-size: 13px;")
-        lbl_dt_sub = QLabel("Easy on the eyes, great for low light", self.card_dark_theme)
-        lbl_dt_sub.setStyleSheet("font-size: 11px; color: #64748B;")
-        dt_text.addWidget(lbl_dt_title)
-        dt_text.addWidget(lbl_dt_sub)
-        l_dt.addLayout(dt_text)
-        l_dt.addStretch()
-        self.lbl_dt_chk = QLabel("✓", self.card_dark_theme)
-        self.lbl_dt_chk.setStyleSheet("background-color: #7C3AED; color: #FFFFFF; font-weight: 800; border-radius: 10px; min-width: 20px; max-width: 20px; min-height: 20px; max-height: 20px; qproperty-alignment: AlignCenter;")
-        l_dt.addWidget(self.lbl_dt_chk)
-        theme_cards_row.addWidget(self.card_dark_theme)
+        # Left: Current Logo Preview Card
+        self.frame_logo_preview = QFrame(card_logo)
+        self.frame_logo_preview.setFixedSize(190, 84)
+        self.frame_logo_preview.setStyleSheet(
+            "QFrame { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; }"
+        )
+        l_prev = QVBoxLayout(self.frame_logo_preview)
+        l_prev.setContentsMargins(8, 8, 8, 8)
+        self.lbl_logo_preview = QLabel(self.frame_logo_preview)
+        self.lbl_logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        l_prev.addWidget(self.lbl_logo_preview)
+        logo_row.addWidget(self.frame_logo_preview)
 
-        l_th.addLayout(theme_cards_row)
-        layout.addWidget(card_theme)
+        # Middle: Logo Action Buttons
+        logo_btn_col = QVBoxLayout()
+        logo_btn_col.setSpacing(8)
+        logo_btn_col.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Card 2: Floating Bubble Appearance (4 selectable cards: Default, Frosted Glass, Transparent, Minimal)
-        card_bubble_app = QGroupBox("Floating Bubble Appearance", content)
+        self.btn_change_logo = QPushButton("  ⭡  Change Logo", card_logo)
+        self.btn_change_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_change_logo.setFixedHeight(34)
+        self.btn_change_logo.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 1.5px solid #7C3AED;
+                border-radius: 8px;
+                color: #7C3AED;
+                font-weight: 700;
+                font-size: 12px;
+                padding: 4px 14px;
+            }
+            QPushButton:hover {
+                background-color: #EDE9FE;
+            }
+        """)
+        self.btn_change_logo.clicked.connect(self._on_change_logo)
+        logo_btn_col.addWidget(self.btn_change_logo)
+
+        self.btn_restore_logo = QPushButton("  ↺  Restore Default", card_logo)
+        self.btn_restore_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_restore_logo.setFixedHeight(34)
+        self.btn_restore_logo.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 1px solid #CBD5E1;
+                border-radius: 8px;
+                color: #475569;
+                font-weight: 600;
+                font-size: 12px;
+                padding: 4px 14px;
+            }
+            QPushButton:hover {
+                background-color: #F1F5F9;
+                color: #0F172A;
+            }
+        """)
+        self.btn_restore_logo.clicked.connect(self._on_restore_default_logo)
+        logo_btn_col.addWidget(self.btn_restore_logo)
+        logo_row.addLayout(logo_btn_col)
+
+        logo_row.addSpacing(6)
+
+        # Right: Logo Requirements Info Card
+        self.frame_logo_req = QFrame(card_logo)
+        self.frame_logo_req.setStyleSheet(
+            "QFrame { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }"
+        )
+        l_req = QVBoxLayout(self.frame_logo_req)
+        l_req.setContentsMargins(14, 10, 14, 10)
+        l_req.setSpacing(4)
+
+        lbl_req_title = QLabel("ℹ️  Logo Requirements", self.frame_logo_req)
+        lbl_req_title.setStyleSheet("font-weight: 800; font-size: 12px; color: #1E293B;")
+        l_req.addWidget(lbl_req_title)
+
+        req_text = QLabel(
+            "<b>Format:</b> PNG, JPG or SVG<br>"
+            "<b>Recommended Size:</b> 512 × 512 px<br>"
+            "<b>Minimum Size:</b> 256 × 256 px<br>"
+            "<b>Aspect Ratio:</b> 1:1 (Square)",
+            self.frame_logo_req
+        )
+        req_text.setStyleSheet("font-size: 11px; color: #475569; line-height: 1.4;")
+        l_req.addWidget(req_text)
+        logo_row.addWidget(self.frame_logo_req, stretch=1)
+
+        l_logo.addLayout(logo_row)
+        layout.addWidget(card_logo)
+
+        # ─── Card 2: Floating Bubble Appearance (4 selectable cards) ───
+        card_bubble_app = QGroupBox("Floating Bubble", content)
         l_ba = QVBoxLayout(card_bubble_app)
-        l_ba.setSpacing(8)
-        sub_ba = QLabel("Customize the text selection bubble style and transparency.")
+        l_ba.setSpacing(10)
+
+        sub_ba = QLabel("Customize the text selection bubble (dual-capsule) appearance.", card_bubble_app)
         sub_ba.setStyleSheet("font-size: 11px; color: #64748B;")
         l_ba.addWidget(sub_ba)
 
         bubble_styles_row = QHBoxLayout()
-        bubble_styles_row.setSpacing(10)
+        bubble_styles_row.setSpacing(12)
 
         bubble_presets = ["Default", "Frosted Glass", "Transparent", "Minimal"]
 
@@ -710,55 +816,85 @@ class SettingsDialog(QDialog):
             f = QFrame(card_bubble_app)
             f.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             f_l = QVBoxLayout(f)
-            f_l.setContentsMargins(10, 10, 10, 10)
+            f_l.setContentsMargins(10, 8, 10, 10)
             f_l.setSpacing(6)
             f_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+            # Top checkmark badge container
+            top_bar = QHBoxLayout()
+            top_bar.setContentsMargins(0, 0, 0, 0)
+            top_bar.addStretch()
+            chk = QLabel("✓", f)
+            chk.setStyleSheet(
+                "background-color: #7C3AED; color: #FFFFFF; font-weight: 800; "
+                "border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; "
+                "qproperty-alignment: AlignCenter; font-size: 10px;"
+            )
+            chk.setVisible(False)
+            top_bar.addWidget(chk)
+            f_l.addLayout(top_bar)
+
+            # Mini visual dual-action capsule
             g = BubbleStyleGraphic(name, f)
-            f_l.addWidget(g)
+            f_l.addWidget(g, alignment=Qt.AlignmentFlag.AlignCenter)
 
             lbl_n = QLabel(name, f)
             lbl_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl_n.setStyleSheet("font-weight: 700; font-size: 11px;")
+            lbl_n.setStyleSheet("font-weight: 700; font-size: 12px;")
             f_l.addWidget(lbl_n)
 
             f.mousePressEvent = lambda e, s=name: self._select_bubble_style(s)
             self.bubble_cards[name] = f
+            self.bubble_chk[name] = chk
             bubble_styles_row.addWidget(f)
 
         l_ba.addLayout(bubble_styles_row)
         layout.addWidget(card_bubble_app)
 
-        # Card 3: Bubble Settings
+        # ─── Card 3: Bubble Settings ─────────────────────────────────
         card_b_set = QGroupBox("Bubble Settings", content)
         l_bs = QVBoxLayout(card_b_set)
-        l_bs.setSpacing(8)
-        sub_bs = QLabel("Adjust appearance and position of the floating bubble.")
+        l_bs.setSpacing(12)
+
+        sub_bs = QLabel("Adjust size, transparency, and corner style.", card_b_set)
         sub_bs.setStyleSheet("font-size: 11px; color: #64748B;")
         l_bs.addWidget(sub_bs)
 
+        # Top Row: Transparency & Bubble Size side by side
         bs_row = QHBoxLayout()
-        bs_row.setSpacing(20)
+        bs_row.setSpacing(24)
 
-        # Transparency
+        # Transparency column
         trans_col = QVBoxLayout()
-        trans_col.addWidget(QLabel("Transparency:"))
+        trans_col.setSpacing(6)
+        lbl_trans_title = QLabel("Transparency", card_b_set)
+        lbl_trans_title.setStyleSheet("font-weight: 700; font-size: 12px;")
+        trans_col.addWidget(lbl_trans_title)
+
         trans_h = QHBoxLayout()
+        trans_h.setSpacing(10)
         self.slider_transparency = QSlider(Qt.Orientation.Horizontal, card_b_set)
         self.slider_transparency.setRange(30, 100)
         self.slider_transparency.setValue(90)
         self.slider_transparency.valueChanged.connect(lambda v: self.lbl_trans_val.setText(f"{v}%"))
         trans_h.addWidget(self.slider_transparency)
+
         self.lbl_trans_val = QLabel("90%", card_b_set)
+        self.lbl_trans_val.setFixedWidth(40)
         self.lbl_trans_val.setStyleSheet("font-weight: 700; color: #7C3AED; font-size: 12px;")
         trans_h.addWidget(self.lbl_trans_val)
         trans_col.addLayout(trans_h)
         bs_row.addLayout(trans_col)
 
-        # Bubble Size
+        # Bubble Size column
         size_col = QVBoxLayout()
-        size_col.addWidget(QLabel("Bubble Size:"))
+        size_col.setSpacing(6)
+        lbl_size_title = QLabel("Bubble Size", card_b_set)
+        lbl_size_title.setStyleSheet("font-weight: 700; font-size: 12px;")
+        size_col.addWidget(lbl_size_title)
+
         size_h = QHBoxLayout()
+        size_h.setSpacing(10)
         self.slider_bubble_size = QSlider(Qt.Orientation.Horizontal, card_b_set)
         self.slider_bubble_size.setRange(1, 3)
         self.slider_bubble_size.setValue(2)
@@ -769,6 +905,7 @@ class SettingsDialog(QDialog):
         self.combo_bubble_size.addItem("Medium", 2)
         self.combo_bubble_size.addItem("Large", 3)
         self.combo_bubble_size.setCurrentIndex(1)
+        self.combo_bubble_size.setFixedWidth(105)
         self.combo_bubble_size.currentIndexChanged.connect(lambda idx: self.slider_bubble_size.setValue(idx + 1))
         self.slider_bubble_size.valueChanged.connect(lambda val: self.combo_bubble_size.setCurrentIndex(val - 1))
         size_h.addWidget(self.combo_bubble_size)
@@ -776,20 +913,133 @@ class SettingsDialog(QDialog):
         bs_row.addLayout(size_col)
 
         l_bs.addLayout(bs_row)
+
+        # Bottom Row: Corner Radius
+        lbl_cr_title = QLabel("Corner Radius", card_b_set)
+        lbl_cr_title.setStyleSheet("font-weight: 700; font-size: 12px; margin-top: 4px;")
+        l_bs.addWidget(lbl_cr_title)
+
+        corner_row = QHBoxLayout()
+        corner_row.setSpacing(12)
+
+        for name in ["Square", "Medium", "Round"]:
+            f = QFrame(card_b_set)
+            f.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            f_l = QHBoxLayout(f)
+            f_l.setContentsMargins(14, 10, 14, 10)
+            f_l.setSpacing(10)
+            f_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            g = CornerRadiusGraphic(name, f)
+            f_l.addWidget(g)
+
+            lbl_c = QLabel(name, f)
+            lbl_c.setStyleSheet("font-weight: 700; font-size: 12px;")
+            f_l.addWidget(lbl_c)
+
+            f_l.addStretch()
+
+            chk = QLabel("✓", f)
+            chk.setStyleSheet(
+                "background-color: #7C3AED; color: #FFFFFF; font-weight: 800; "
+                "border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; "
+                "qproperty-alignment: AlignCenter; font-size: 10px;"
+            )
+            chk.setVisible(False)
+            f_l.addWidget(chk)
+
+            f.mousePressEvent = lambda e, s=name: self._select_corner_radius(s)
+            self.corner_cards[name] = f
+            self.corner_chk[name] = chk
+            corner_row.addWidget(f)
+
+        l_bs.addLayout(corner_row)
         layout.addWidget(card_b_set)
         layout.addStretch()
+
+        self._update_all_logos()
 
         scroll.setWidget(content)
         return scroll
 
     def _select_bubble_style(self, style_name: str):
+        self.current_bubble_style = style_name
         settings_db.set("bubble_appearance", style_name)
         is_dark = (self.current_theme == "dark")
         for name, card in self.bubble_cards.items():
+            chk = self.bubble_chk.get(name)
             if name == style_name:
-                card.setStyleSheet("QFrame { background-color: #EDE9FE; border: 2px solid #7C3AED; border-radius: 8px; color: #7C3AED; }" if not is_dark else "QFrame { background-color: #2E1065; border: 2px solid #A78BFA; border-radius: 8px; color: #FFFFFF; }")
+                card.setStyleSheet(
+                    "QFrame { background-color: #EDE9FE; border: 2px solid #7C3AED; border-radius: 8px; color: #7C3AED; }"
+                    if not is_dark else
+                    "QFrame { background-color: #2E1065; border: 2px solid #A78BFA; border-radius: 8px; color: #FFFFFF; }"
+                )
+                if chk:
+                    chk.setVisible(True)
             else:
-                card.setStyleSheet("QFrame { background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; color: #0F172A; }" if not is_dark else "QFrame { background-color: #1A1F33; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #94A3B8; }")
+                card.setStyleSheet(
+                    "QFrame { background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; color: #0F172A; }"
+                    if not is_dark else
+                    "QFrame { background-color: #1A1F33; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #94A3B8; }"
+                )
+                if chk:
+                    chk.setVisible(False)
+
+    def _select_corner_radius(self, corner_name: str):
+        self.current_corner_radius = corner_name
+        settings_db.set("bubble_corner_radius", corner_name)
+        is_dark = (self.current_theme == "dark")
+        for name, card in self.corner_cards.items():
+            chk = self.corner_chk.get(name)
+            if name == corner_name:
+                card.setStyleSheet(
+                    "QFrame { background-color: #EDE9FE; border: 2px solid #7C3AED; border-radius: 8px; color: #7C3AED; }"
+                    if not is_dark else
+                    "QFrame { background-color: #2E1065; border: 2px solid #A78BFA; border-radius: 8px; color: #FFFFFF; }"
+                )
+                if chk:
+                    chk.setVisible(True)
+            else:
+                card.setStyleSheet(
+                    "QFrame { background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; color: #0F172A; }"
+                    if not is_dark else
+                    "QFrame { background-color: #1A1F33; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #94A3B8; }"
+                )
+                if chk:
+                    chk.setVisible(False)
+
+    def _on_change_logo(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select Application Logo", "",
+            "Image Files (*.png *.jpg *.jpeg *.svg *.ico);;All Files (*)"
+        )
+        if file_path and os.path.exists(file_path):
+            settings_db.set("custom_logo_path", file_path)
+            self._update_all_logos()
+
+    def _on_restore_default_logo(self):
+        if "custom_logo_path" in settings_db:
+            settings_db.remove("custom_logo_path")
+        self._update_all_logos()
+
+    def _update_all_logos(self):
+        self._update_sidebar_logo()
+        is_dark = (self.current_theme == "dark")
+        pix = get_brand_logo_pixmap(is_dark=is_dark, target_width=140)
+        if hasattr(self, "lbl_logo_preview") and not pix.isNull():
+            self.lbl_logo_preview.setPixmap(pix)
+        if hasattr(self, "frame_logo_preview"):
+            self.frame_logo_preview.setStyleSheet(
+                "QFrame { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; }"
+                if not is_dark else
+                "QFrame { background-color: #161F30; border: 1px solid #1E293B; border-radius: 10px; }"
+            )
+        if hasattr(self, "frame_logo_req"):
+            self.frame_logo_req.setStyleSheet(
+                "QFrame { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }"
+                if not is_dark else
+                "QFrame { background-color: #161F30; border: 1px solid #1E293B; border-radius: 10px; }"
+            )
 
     # ═════════════════════════════════════════════════════════════
     # PAGE 0: VOICE && SPEECH
@@ -1240,10 +1490,6 @@ class SettingsDialog(QDialog):
                     font-weight: 700;
                 }
             """
-            self.card_light_theme.setStyleSheet("QFrame { background-color: #111827; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; }")
-            self.card_dark_theme.setStyleSheet("QFrame { background-color: #1E1B4B; border: 2px solid #7C3AED; border-radius: 8px; }")
-            self.lbl_lt_chk.setVisible(False)
-            self.lbl_dt_chk.setVisible(True)
         else:
             self.setStyleSheet(self._get_light_stylesheet())
             self.btn_theme_light.setChecked(True)
@@ -1272,10 +1518,6 @@ class SettingsDialog(QDialog):
                     font-weight: 700;
                 }
             """
-            self.card_light_theme.setStyleSheet("QFrame { background-color: #EDE9FE; border: 2px solid #7C3AED; border-radius: 8px; }")
-            self.card_dark_theme.setStyleSheet("QFrame { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; }")
-            self.lbl_lt_chk.setVisible(True)
-            self.lbl_dt_chk.setVisible(False)
 
         for btn in self.nav_buttons:
             btn.setStyleSheet(nav_btn_style)
@@ -1283,8 +1525,11 @@ class SettingsDialog(QDialog):
         if hasattr(self, "equalizer_widget"):
             self.equalizer_widget.set_theme_mode(theme)
 
-        curr_b_style = settings_db.get("bubble_appearance", "Frosted Glass")
+        self._update_all_logos()
+        curr_b_style = getattr(self, "current_bubble_style", settings_db.get("bubble_appearance", "Frosted Glass"))
         self._select_bubble_style(curr_b_style)
+        curr_corner = getattr(self, "current_corner_radius", settings_db.get("bubble_corner_radius", "Medium"))
+        self._select_corner_radius(curr_corner)
 
     def _on_nav_clicked(self, page_idx: int, icon_badge: str, header_title: str, header_sub: str):
         self.stacked_pages.setCurrentIndex(page_idx)
@@ -1370,12 +1615,15 @@ class SettingsDialog(QDialog):
         self.slider_volume.setValue(80)
         self.slider_transparency.setValue(90)
         self.slider_bubble_size.setValue(2)
+        self.combo_bubble_size.setCurrentIndex(1)
 
         if hasattr(self, "equalizer_widget"):
             self.equalizer_widget.apply_preset("Podcast Warmth")
 
         self.apply_theme("light")
         self._select_bubble_style("Frosted Glass")
+        self._select_corner_radius("Medium")
+        self._on_restore_default_logo()
 
     def load_values(self):
         """Loads saved settings into controls."""
@@ -1411,12 +1659,24 @@ class SettingsDialog(QDialog):
 
         trans_val = int(settings_db.get("bubble_transparency", 90))
         self.slider_transparency.setValue(trans_val)
+        self.lbl_trans_val.setText(f"{trans_val}%")
+
+        b_size = str(settings_db.get("bubble_size", "Medium")).capitalize()
+        idx_size = self.combo_bubble_size.findText(b_size)
+        if idx_size >= 0:
+            self.combo_bubble_size.setCurrentIndex(idx_size)
+            self.slider_bubble_size.setValue(idx_size + 1)
+
+        curr_corner = settings_db.get("bubble_corner_radius", "Medium")
+        self._select_corner_radius(curr_corner)
 
         fade_in_val = settings_db.get("smooth_fade_in", True)
         self.switch_fade_in.setChecked(fade_in_val)
 
         curr_b_style = settings_db.get("bubble_appearance", "Frosted Glass")
         self._select_bubble_style(curr_b_style)
+
+        self._update_all_logos()
 
     def save_and_apply(self):
         """Saves values and emits update signal."""
@@ -1430,6 +1690,9 @@ class SettingsDialog(QDialog):
         settings_db.set("auto_close_delay", self.spin_fade_duration.value())
         settings_db.set("volume", self.slider_volume.value())
         settings_db.set("bubble_transparency", self.slider_transparency.value())
+        settings_db.set("bubble_size", self.combo_bubble_size.currentText())
+        settings_db.set("bubble_corner_radius", getattr(self, "current_corner_radius", "Medium"))
+        settings_db.set("bubble_appearance", getattr(self, "current_bubble_style", "Frosted Glass"))
         settings_db.set("smooth_fade_in", self.switch_fade_in.isChecked())
         settings_db.set("settings_theme", self.current_theme)
 
