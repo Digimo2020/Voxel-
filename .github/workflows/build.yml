@@ -84,7 +84,7 @@ jobs:
 
     - name: Compile Standalone Windows Executable
       run: |
-        pyinstaller --noconfirm --onefile --windowed --name "Voxel" --icon "assets/icon.ico" --add-data "assets;assets" --collect-all edge_tts --collect-all certifi --collect-all pypdf --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module PyQt6.QtMultimedia --exclude-module PyQt6.QtMultimediaWidgets --exclude-module PyQt6.QtQml --exclude-module PyQt6.QtQuick --exclude-module PyQt6.QtSql --exclude-module PyQt6.QtTest --exclude-module PyQt6.QtXml main.py
+        pyinstaller --noconfirm --onefile --windowed --name "Voxel" --icon "assets/icon.ico" --version-file "file_version_info.txt" --add-data "assets;assets" --collect-all edge_tts --collect-all certifi --collect-all pypdf --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module PyQt6.QtMultimedia --exclude-module PyQt6.QtMultimediaWidgets --exclude-module PyQt6.QtQml --exclude-module PyQt6.QtQuick --exclude-module PyQt6.QtSql --exclude-module PyQt6.QtTest --exclude-module PyQt6.QtXml main.py
         python -c "from src.utils.version import CURRENT_VERSION; import shutil; shutil.copy('dist/Voxel.exe', f'dist/Voxel-{CURRENT_VERSION}.exe'); print(f'Created dist/Voxel-{CURRENT_VERSION}.exe')"
 
     - name: Upload Windows Artifact

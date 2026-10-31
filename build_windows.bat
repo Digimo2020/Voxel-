@@ -24,6 +24,7 @@ taskkill /F /IM Voxel-%VERSION%.exe 2>nul
 :: 3. Run PyInstaller
 python -m PyInstaller --noconfirm --onefile --windowed --name "Voxel" ^
     --icon "assets/icon.ico" ^
+    --version-file "file_version_info.txt" ^
     --add-data "assets;assets" ^
     --collect-all edge_tts ^
     --collect-all certifi ^

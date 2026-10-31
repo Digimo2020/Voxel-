@@ -143,6 +143,21 @@ The current release is not signed with an Apple Developer ID certificate or nota
 | **Voxel Windows Standalone** | **`v1.1.08`** *(Latest)* | Zero-dependency standalone portable executable with Flameshot/Lightshot compatibility & solid porcelain light capsule | Windows 10 / 11 | [**📥 Download Voxel-v1.1.08.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.08/Voxel-v1.1.08.exe) *(Recommended)* |
 | **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
+> [!IMPORTANT]
+> **First launch on Windows (Microsoft Defender SmartScreen / Smart App Control)**
+>
+> Because Voxel is a freshly released open-source project without an enterprise EV code-signing certificate ($300+/year), Microsoft Defender SmartScreen may display: **“Windows protected your PC: Microsoft Defender SmartScreen prevented an unrecognized app from starting”**.
+>
+> This is standard security behavior on Windows for new downloads and does not indicate malware.
+>
+> **How to open in 2 clicks:**
+> 1. On the blue SmartScreen popup, click **More info**.
+> 2. Click **Run anyway**.
+>
+> *Alternatively (Unblock via File Properties):* Right-click `Voxel-v1.1.08.exe` → select **Properties** → at the bottom of the General tab, check **☑ Unblock** → click **Apply** / **OK**.
+>
+> *Or 1-Click Automated Setup:* Run [`install.bat`](file:///c:/Users/ksfah/Downloads/git/voxel/install.bat) which unblocks the binary, installs Voxel to `%LOCALAPPDATA%\Programs\Voxel`, and creates Start Menu and Desktop shortcuts.
+
 #### Run from Source (Windows)
 ```powershell
 git clone https://github.com/Digimo2020/Voxel-.git
