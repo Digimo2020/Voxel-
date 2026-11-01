@@ -175,7 +175,7 @@ python main.py
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel macOS Disk Image (.dmg)** | **`v1.1.07`** *(Latest)* | Drag-and-drop application installer | macOS / Applications | [**📥 Download Voxel-v1.1.07.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.dmg) |
+| **Voxel macOS Disk Image (.dmg)** | **`v1.1.15`** *(Latest)* | Drag-and-drop installer with official document logo, custom logo uploader, dynamic bubble customization & audio recording | macOS / Applications | [**📥 Download Voxel-v1.1.15.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.dmg) *(Recommended)* |
 | **Voxel DMG (Latest Alias)** | `latest` | Automatically resolves to the newest macOS disk image | macOS / Applications | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
 > [!IMPORTANT]

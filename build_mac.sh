@@ -3,7 +3,7 @@
 # Build the Voxel macOS application and drag-and-drop DMG only.
 set -euo pipefail
 
-DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
 echo "=============================================="
@@ -20,7 +20,7 @@ fi
 
 VERSION="$(python3 -c 'from src.utils.version import CURRENT_VERSION; print(CURRENT_VERSION)')"
 DMG_PATH="dist/Voxel.dmg"
-VERSIONED_DMG="dist/Voxel-\${VERSION}.dmg"
+VERSIONED_DMG="dist/Voxel-${VERSION}.dmg"
 DMG_DIR="dist/dmg_staging"
 
 mkdir -p dist
@@ -112,7 +112,7 @@ rm -rf "$DMG_DIR"
 cp "$DMG_PATH" "$VERSIONED_DMG"
 (
     cd dist
-    shasum -a 256 "Voxel.dmg" "Voxel-\${VERSION}.dmg" > "SHA256SUMS.txt"
+    shasum -a 256 "Voxel.dmg" "Voxel-${VERSION}.dmg" > "SHA256SUMS.txt"
 )
 
 echo "=============================================="
