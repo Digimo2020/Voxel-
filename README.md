@@ -333,7 +333,7 @@ chmod +x build_mac.sh
 Outputs:
 - **`dist/Voxel.app`**: Native standalone application bundle.
 - **`dist/Voxel.dmg`**: Drag-and-drop installer disk image.
-- **`dist/Voxel-v1.1.16.dmg`**: Versioned release disk image.
+- **`dist/Voxel-v1.1.17.dmg`**: Versioned release disk image.
 - **`dist/SHA256SUMS.txt`**: Verification checksums.
 
 ### Building on Windows (`.exe`)
@@ -342,7 +342,35 @@ Outputs:
 ```
 Outputs:
 - **`dist/Voxel.exe`**: Zero-dependency standalone executable.
-- **`dist/Voxel-v1.1.16.exe`**: Versioned release executable.
+- **`dist/Voxel-v1.1.17.exe`**: Versioned release executable.
+
+---
+
+## 🛡️ macOS Security & Gatekeeper: Resolving "Voxel Not Opened"
+
+When installing Voxel on macOS (Sequoia / Sonoma), Apple Gatekeeper may show:
+> **"Voxel" Not Opened — Apple could not verify "Voxel" is free of malware that may harm your Mac or compromise your privacy.**
+
+Because Voxel is a 100% free and open-source application distributed outside Apple's paid App Store ecosystem, it is self-signed (ad-hoc).
+
+### How to Open It (Choose Either Method):
+
+#### Method 1: System Settings (Recommended GUI Method — 5 seconds)
+1. When you see the warning, click **Done**.
+2. Open **System Settings** on your Mac.
+3. Navigate to **Privacy & Security** and scroll down to the **Security** section.
+4. You will see: **`"Voxel" was blocked to protect your Mac.`**
+5. Click **"Open Anyway"** and enter your password or Touch ID.
+6. Click **Open**. Voxel will now run permanently without ever prompting again!
+
+*(Alternatively in Finder: Right-click `Voxel.app` in `/Applications` → hold Option / select **Open** → click **Open**).*
+
+#### Method 2: Terminal Command (Instant 1-Liner)
+Run this command in Terminal to permanently remove the macOS quarantine flag:
+```bash
+xattr -cr /Applications/Voxel.app
+open /Applications/Voxel.app
+```
 
 ---
 
