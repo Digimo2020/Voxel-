@@ -1,4 +1,4 @@
-<!-- README.md (v1.2) - [2026-10-31] -->
+<!-- README.md (v1.3) - [2026-11-01] -->
 # Voxel — Text to Speech, Anywhere
 
 <p align="center">
@@ -6,10 +6,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.15-0084FF?style=for-the-badge&logo=apple" alt="Version v1.1.15"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.16-7441F9?style=for-the-badge&logo=apple" alt="Version v1.1.16"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00C6FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
-  <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7C3AED&label=Downloads" alt="GitHub Downloads"></a>
+  <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00F0FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7441F9&label=Downloads" alt="GitHub Downloads"></a>
 </p>
 
 ---
@@ -18,7 +18,7 @@
 
 **Voxel** is an open-source, frosted glass desktop text-to-speech utility created as an official **Digimo Product** ([digimo.pt](https://www.digimo.pt/)) for reading highlighted text aloud anywhere on **macOS** and **Windows**. 
 
-Featuring a **voice-reactive microphone logo** with real-time waveform equalizer animations, a subtle floating selection trigger, and an animated bottom-right capsule player, Voxel blends seamlessly into your workflow across any document, web browser, PDF, or text editor.
+Featuring the official **Voxel purple & cyan brand emblem**, dynamic voice-reactive waveform equalizer animations, a subtle floating selection trigger, and an animated bottom-right capsule player, Voxel blends seamlessly into your workflow across any document, web browser, PDF, or text editor.
 
 ---
 
@@ -27,11 +27,78 @@ Featuring a **voice-reactive microphone logo** with real-time waveform equalizer
 - 🌊 **Voice-Reactive Waveform Animation**: The 3 internal lines of the microphone capsule pulse and dance at 40 FPS like a real-time audio equalizer during playback, accented by a soft breathing radial glow.
 - 🫧 **Non-Intrusive Floating Trigger**: Appears smoothly with fade-in easing near your cursor whenever you highlight text, without stealing window focus (`WA_ShowWithoutActivating`).
 - 💊 **Frosted Glass Capsule Player**: Slides up above your Dock/Taskbar with smooth cubic easing. Includes a glowing electric blue-to-violet play/pause button, delicate stop button, segmented speed regulator (`[-] 1.0x [+]`), and voice switcher.
-- 💿 **macOS DMG Installer**: A simple drag-and-drop disk image that places `Voxel.app` in the Applications folder.
+- 💿 **macOS DMG Installer**: A simple drag-and-drop disk image that places `Voxel.app` in the Applications folder with official native `.icns` branding.
 - 👁️ **Platform-Adaptive Downloads**: Download options automatically adapt to the user's operating system, showing the relevant macOS or Windows build.
 - 🗣️ **High-Definition Neural Voices**: Microsoft Edge Neural TTS voices (Jenny, Guy, Sonia, Aria) with instant offline fallback to native macOS Speech (`Samantha`, `Alex`) or Windows SAPI5.
 - ⚡ **Zero-Dependency Audio Engine**: Modernized with `PyQt6.QtMultimedia` for hardware-accelerated CoreAudio playback without SDL or external C dependencies.
 - 🛡️ **macOS Accessibility Assistant**: Proactive permissions checker with 1-click shortcut to macOS Privacy & Security settings.
+
+---
+
+## 🎨 Official Branding & Logo Architecture
+
+Voxel features an authentic, custom-designed visual identity built with rich purple, vibrant cyan, and pure white accents. All source brand assets are organized in `assets/Fainal/` and automatically compiled into production-grade transparent PNG, macOS `.icns`, and Windows `.ico` formats.
+
+### 1. Brand Color Palette
+
+| Role | Color Name | Hex Code | Visual Sample | Usage |
+| :--- | :--- | :---: | :---: | :--- |
+| **Primary Brand** | **Voxel Purple** | `#7441F9` / `#7A4AF9` | ![#7441F9](https://placehold.co/15x15/7441F9/7441F9.png) | Main circular emblem, app icons, accent borders, mini player active states |
+| **Electric Accent** | **Cyan Ring / Glow** | `#00F0FF` / `#22D3EE` | ![#00F0FF](https://placehold.co/15x15/00F0FF/00F0FF.png) | Outer ring of the app emblem, voice reactive radial glow, hover states |
+| **Foreground / Marks** | **Crisp White** | `#FFFFFF` | ![#FFFFFF](https://placehold.co/15x15/FFFFFF/FFFFFF.png) | Microphone vector mark, document glyph, voice equalizer lines |
+| **Dark Theme Bg** | **Deep Glass Obsidian**| `#0F172A` / `#1E1B4B` | ![#0F172A](https://placehold.co/15x15/0F172A/0F172A.png) | Frosted glass dark mini player and dark settings theme |
+
+---
+
+### 2. Logo Files & Asset Directory Map
+
+```text
+assets/
+ ├── Fainal/                               Official high-resolution source artwork from design team
+ │    ├── Voxel Logo (1)/
+ │    │    ├── apps icon (2).png           Official Voxel App Icon (Purple circle, cyan ring, white mic)
+ │    │    ├── dock icon.png               Official Document Reader Icon (Purple circle, white folded document)
+ │    │    ├── windows system trey.png     Monochrome / Neutral system tray icon (Light grey circle, dark mic)
+ │    │    ├── windows system trey color.png Purple squircle variant
+ │    │    ├── apps icon.png               Standalone microphone vector with speech-bubble tail
+ │    │    ├── Main logo Light.png         Horizontal Voxel brand header for Light theme
+ │    │    └── Main logo drack.png         Horizontal Voxel brand header for Dark theme
+ │    ├── Voxel Logo for apps.png          Master app logo (transparent ARGB32)
+ │    ├── Voxel Logo for Doc.png           Master document reader logo
+ │    ├── Voxel Logo Main Dark.png         Master dark-theme horizontal logo
+ │    └── Voxel Logo Main.png              Master light-theme horizontal logo
+ │
+ ├── branding/png/                         Production-ready, alpha-transparent assets
+ │    ├── app_logo.png                     512x512 transparent app icon (used for windows & tasks)
+ │    ├── app_logo_square.png              512x512 transparent square canvas
+ │    ├── tray_bar_logo.png                512x512 transparent icon for macOS Menu Bar & Win System Tray
+ │    ├── selection_bubble_logo.png        512x512 transparent microphone trigger for floating text selection
+ │    ├── selection_bubble_doc.png         512x512 transparent document reader trigger for floating bubble
+ │    ├── voxel_logo_main_light.png        Horizontal wordmark for Light Settings & README
+ │    └── voxel_logo_main_dark.png         Horizontal wordmark for Dark Settings
+ │
+ ├── icon.icns                             Native Apple Icon Bundle (16, 32, 64, 128, 256, 512, 1024 px Retina)
+ ├── icon.ico                              Windows Multi-Resolution Icon (16, 24, 32, 48, 64, 128, 256 px)
+ ├── icon_1024.png                         1024x1024 master icon canvas
+ └── icon.iconset/                         Native macOS iconset directory used by /usr/bin/iconutil
+```
+
+---
+
+### 3. Automated Asset Regeneration
+
+All transparent PNGs, macOS `.icns`, and Windows `.ico` assets are generated programmatically with anti-aliasing via:
+
+```bash
+# In the project root with the virtual environment activated:
+python scripts/generate_official_brand_assets.py
+```
+
+This script:
+1. Performs anti-aliased edge alpha masking on the circular brand emblem.
+2. Generates standard 512x512 and 1024x1024 transparent PNGs into `assets/branding/png/`.
+3. Populates `assets/icon.iconset/` and executes macOS `/usr/bin/iconutil` to produce `assets/icon.icns`.
+4. Writes multi-resolution PNG streams into Windows `assets/icon.ico`.
 
 ---
 
@@ -56,8 +123,6 @@ Featuring a **voice-reactive microphone logo** with real-time waveform equalizer
 ---
 
 ## 🧠 How It Works & Technologies Used (Explained Simply)
-
-Ever wondered how Voxel seamlessly detects highlighted text in any app, animates like an equalizer, and reads it aloud with zero lag? Here is the complete breakdown in simple, clear terms:
 
 ### 1. The 4-Step Experience (How the Program Operates)
 
@@ -120,78 +185,66 @@ Ever wondered how Voxel seamlessly detects highlighted text in any app, animates
 
 ---
 
-### 4. macOS Installation
+## 🛡️ macOS Security, Gatekeeper & Troubleshooting Guide
 
-Voxel for macOS is distributed as a **`.dmg` disk image**:
+When installing Voxel on macOS (especially macOS Sequoia 15+ and Sonoma 14+), you may encounter standard macOS Gatekeeper prompts. Below is the complete explanation and the simple 1-line solution.
 
-1. Open the downloaded `Voxel.dmg` file.
-2. Drag `Voxel.app` onto the **Applications** shortcut.
-3. Eject the Voxel disk image.
-4. Open Voxel from your Applications folder.
+### 1. Gatekeeper Prompts Explained
 
-The current release is not signed with an Apple Developer ID certificate or notarised by Apple. macOS may therefore ask you to approve Voxel before its first launch. See the macOS download instructions below.
+Because Voxel is a 100% free and open-source application distributed directly via GitHub (and not through the Apple Mac App Store with a paid \$99/year Apple Developer ID notarization certificate), macOS automatically attaches the `com.apple.quarantine` extended attribute to files downloaded via web browsers (Chrome, Safari).
 
+Depending on your macOS version, you may see one of the following dialogs:
+
+1. **“'Voxel' is damaged and can't be opened. You should move it to the Trash.”**
+2. **“Apple could not verify 'Voxel' is free of malware that may harm your Mac or compromise your privacy.”**
+3. **“'Voxel' Not Opened”**
+
+> [!NOTE]
+> **This does NOT mean the file is damaged or contains malware.** It is macOS's generic notification for any open-source binary that does not possess an Apple Notarization ticket.
+
+---
+
+### 2. How to Open Voxel on macOS
+
+#### Option A: Quick 1-Command Fix in Terminal *(Recommended)*
+After dragging `Voxel.app` to your `/Applications` folder, open your Terminal and run:
+
+```bash
+xattr -cr /Applications/Voxel.app
+```
+
+*What this does:* It clears the browser-applied `com.apple.quarantine` attribute, allowing macOS to launch Voxel immediately without any warning dialogs.
+
+#### Option B: Open via macOS System Settings (GUI)
+1. In Finder, open `/Applications`.
+2. **Right-click (or Control-click)** on `Voxel.app` and choose **Open**.
+3. If macOS shows a warning, click **Cancel** or **Done**.
+4. Open **System Settings** → **Privacy & Security**.
+5. Scroll down to the **Security** section.
+6. You will see: *“Voxel was blocked from use because it is not from an identified developer.”*
+7. Click **Open Anyway**, then enter your Mac password or use Touch ID.
+8. Click **Open** on the confirmation prompt.
+
+---
+
+### 3. Past Crash Resolution: "Voxel quit unexpectedly"
+
+In early development builds, some users experienced a crash dialog:
+`EXC_BAD_ACCESS (SIGSEGV) at QPaintDevice::devicePixelRatio()` inside `QWidgetRepaintManager::paintAndFlush()`.
+
+- **Root Cause**: On macOS Cocoa, if a transparent frameless widget was triggered before the underlying backing store completed window synchronization, Qt's painter attempted to access a null pointer in the backing store.
+- **Resolution**: Fully resolved in version `v1.1.15+` by ensuring proper window flags (`Qt.WindowType.ToolTip`, `WA_ShowWithoutActivating`), disciplined repaint synchronization, and preventing premature render flushes during startup.
 
 ---
 
 ## 🚀 Quick Download & Installation
 
-### ⊞ For Windows Users
-
-| Package Format | Version | Description | Target | Direct Download |
-| :--- | :---: | :--- | :---: | :---: |
-| **Voxel Windows Standalone** | **`v1.1.15`** *(Latest)* | Zero-dependency standalone portable executable with official document logo, custom logo uploader & appearance bubble customization | Windows 10 / 11 | [**📥 Download Voxel-v1.1.15.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.exe) *(Recommended)* |
-| **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
-
-> [!IMPORTANT]
-> **First launch on Windows (Microsoft Defender SmartScreen / Smart App Control)**
->
-> Because Voxel is a freshly released open-source project without an enterprise EV code-signing certificate ($300+/year), Microsoft Defender SmartScreen may display: **“Windows protected your PC: Microsoft Defender SmartScreen prevented an unrecognized app from starting”**.
->
-> This is standard security behavior on Windows for new downloads and does not indicate malware.
->
-> **How to open in 2 clicks:**
-> 1. On the blue SmartScreen popup, click **More info**.
-> 2. Click **Run anyway**.
->
-> *Alternatively (Unblock via File Properties):* Right-click `Voxel-v1.1.08.exe` → select **Properties** → at the bottom of the General tab, check **☑ Unblock** → click **Apply** / **OK**.
->
-> *Or 1-Click Automated Setup:* Run [`install.bat`](file:///c:/Users/ksfah/Downloads/git/voxel/install.bat) which unblocks the binary, installs Voxel to `%LOCALAPPDATA%\Programs\Voxel`, and creates Start Menu and Desktop shortcuts.
-
-#### Run from Source (Windows)
-```powershell
-git clone https://github.com/Digimo2020/Voxel-.git
-cd Voxel-
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python main.py
-```
-*(Or double-click `run.bat`).*
-
----
-
 ###  For macOS Users
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel macOS Disk Image (.dmg)** | **`v1.1.15`** *(Latest)* | Drag-and-drop installer with official document logo, custom logo uploader, dynamic bubble customization & audio recording | macOS / Applications | [**📥 Download Voxel-v1.1.15.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.dmg) *(Recommended)* |
+| **Voxel macOS Disk Image (.dmg)** | **`v1.1.16`** *(Latest)* | Drag-and-drop installer with official purple & cyan brand icon, document reader, and voice equalizer | macOS (Apple Silicon / Intel) | [**📥 Download Voxel-v1.1.16.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.dmg) *(Recommended)* |
 | **Voxel DMG (Latest Alias)** | `latest` | Automatically resolves to the newest macOS disk image | macOS / Applications | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
-
-> [!IMPORTANT]
-> **First launch on macOS**
->
-> This build is not signed with an Apple Developer ID certificate and has not been notarised by Apple. macOS may show **“Apple could not verify ‘Voxel’ is free of malware”**. This warning does not mean Apple detected malware; it means the app has not completed Apple's trusted-developer and notarisation checks.
->
-> Only continue when the DMG came from the official [Digimo Voxel GitHub Releases](https://github.com/Digimo2020/Voxel-/releases) page and you trust the download.
->
-> 1. Move `Voxel.app` into **Applications** and try to open it once.
-> 2. Open **System Settings → Privacy & Security**.
-> 3. Find the Voxel message and select **Open Anyway**.
-> 4. Confirm **Open** when macOS asks again.
->
-> This approval is a per-app exception. Do not disable Gatekeeper globally or run scripts that remove quarantine attributes. If macOS reports that the app is damaged or its contents have changed, stop and download a fresh copy.
-
 
 #### Run from Source (macOS)
 ```bash
@@ -203,59 +256,49 @@ chmod +x run.sh
 
 ---
 
-## 📦 Releases & Version Archive (Historical Builds)
+### ⊞ For Windows Users
 
-All past and current versions are preserved below for historical reference and instant download:
+| Package Format | Version | Description | Target | Direct Download |
+| :--- | :---: | :--- | :---: | :---: |
+| **Voxel Windows Standalone** | **`v1.1.16`** *(Latest)* | Zero-dependency standalone portable executable with official brand logo, multi-resolution `.ico`, and document reader | Windows 10 / 11 | [**📥 Download Voxel-v1.1.16.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.exe) *(Recommended)* |
+| **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
-| Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
-| :---: | :---: | :---: | :---: | :---: | :--- |
-| **`v1.1.15`** | 🟢 **Latest** | [**📥 Voxel-v1.1.15.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.exe) | — | [**📥 Voxel-v1.1.15.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.dmg) | • Appearance Tab Redesign: App logo uploader, Logo Requirements card, and live preview<br>• Official Document Logo: Replaced document icon with circular purple badge matching brand<br>• Dynamic Bubble Settings: Transparency, corner radius (Square/Medium/Round), and bubble size |
-| **`v1.1.14`** | 📦 Archived | [📥 Voxel-v1.1.14.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.exe) | — | [📥 Voxel-v1.1.14.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.dmg) | • Official Brand Logo: Embedded high-resolution official logo in Settings sidebar header<br>• Custom CSS/QSS styling: Styled toggle switches, indicator checkmarks, and dark/light card previews<br>• Fixed ampersand mnemonic bug and duplicate window titlebar |
-| **`v1.1.13`** | 📦 Archived | [📥 Voxel-v1.1.13.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.13/Voxel-v1.1.13.exe) | — | [📥 Voxel-v1.1.13.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.13/Voxel-v1.1.13.dmg) | • Dedicated Circular System Tray Logo: Exclusively updated tray/startup bar icon to official purple badge with 4x supersampled antialiasing<br>• Kept main app icon untouched for upcoming dedicated app logo |
-| **`v1.1.10`** | 📦 Archived | [📥 Voxel-v1.1.10.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.10/Voxel-v1.1.10.exe) | — | [📥 Voxel-v1.1.10.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.10/Voxel-v1.1.10.dmg) | • Startup Bar & System Tray Logo Update: Integrated official purple-to-blue badge and bold white microphone (`assets/Fainal/Voxel Logo.png`)<br>• Alpha-antialiased contours with transparent background for dark and light taskbars<br>• Regenerated Windows `icon.ico` and HiDPI PNGs |
-| **`v1.1.09`** | 📦 Archived | [📥 Voxel-v1.1.09.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.09/Voxel-v1.1.09.exe) | — | [📥 Voxel-v1.1.09.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.09/Voxel-v1.1.09.dmg) | • UI/UX Overhaul: Reduced tabs to 2 clean sections (Preferences & About)<br>• Fixed LinkedIn connection button and full link visibility<br>• Widened, simplified right-click tray context menu (Preferences, About, Quit)<br>• Eliminated underscores and organized typography |
-| **`v1.1.08`** | 📦 Archived | [📥 Voxel-v1.1.08.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.08/Voxel-v1.1.08.exe) | — | [📥 Voxel-v1.1.08.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.08/Voxel-v1.1.08.dmg) | • Flameshot & Lightshot compatibility: Added screenshot overlay process detection to prevent drag-to-copy interference<br>• Solid porcelain light capsule styling: Eliminated white square clipping artifacts behind player on close<br>• Window hierarchy: Replaced SubWindow with Tool + WA_ShowWithoutActivating |
-| **`v1.1.07`** | 📦 Archived | [📥 Voxel-v1.1.07.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.exe) | — | [📥 Voxel-v1.1.07.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.07/Voxel-v1.1.07.dmg) | • macOS DMG-only distribution; removed the quarantine-removal helper; added first-launch Gatekeeper guidance and SHA-256 checksums |
-| **`v1.1.06`** | 📦 Archived | [**📥 Voxel-v1.1.06.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.exe) | [**📥 Voxel-v1.1.06.pkg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.pkg) | [**📥 Voxel-v1.1.06.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.06/Voxel-v1.1.06.dmg) | • Fixed full-document reader for Google Docs & PDFs (active window focus restoration & 1400ms canvas timing)<br>• Light & Dark theme modes for floating selection bubble (Light Frosted Glass default)<br>• System tray startup bar icon double-click activation<br>• Reorganized Settings: Added Appearance & Theme tab, audio spectrum Equalizer, and fixed LinkedIn link |
-| **`v1.1.05`** | 📦 Archived | [📥 Voxel-v1.1.05.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.exe) | [📥 Voxel-v1.1.05.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.pkg) | [📥 Voxel-v1.1.05.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.05/Voxel-v1.1.05.dmg) | • Fixed Document Reader: Canvas-aware timing for Google Docs & seamless fallback<br>• Dual Light/Dark Settings views with 1-click theme switcher<br>• Live Voice & Latency Performance Test button in Settings<br>• Creator & Architecture credits (Fahim - [LinkedIn](https://www.linkedin.com/in/fahimdigital/)) |
-| **`v1.1.04`** | 📦 Archived | [📥 Voxel-v1.1.04.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.04/Voxel-v1.1.04.exe) | [📥 Voxel-v1.1.04.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.04/Voxel-v1.1.04.pkg) | [📥 Voxel-v1.1.04.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.04/Voxel-v1.1.04.dmg) | • Smart Document & Presentation Reader (Google Docs, Word, PDFs, Slides)<br>• Expressive Copilot Neural Voices (Ava, Andrew, Emma, Brian) & 4 Emotion Modes<br>• Sub-second instant playback pipeline (<300ms start) & hover pre-buffering<br>• Left-click startup tray icon opens Settings immediately |
-| **`v1.1.03`** | 📦 Archived | [📥 Voxel-v1.1.03.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.03/Voxel-v1.1.03.exe) | [📥 Voxel-v1.1.03.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.03/Voxel-v1.1.03.pkg) | [📥 Voxel-v1.1.03.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.03/Voxel-v1.1.03.dmg) | • Integrated vibrant blue/purple full-frame logo into startup system tray bar<br>• Maximized icon to 100% full-frame squircle with 91% height white microphone for maximum size and prominence<br>• Full preservation of historical version binaries |
-| **`v1.1.02`** | 📦 Archived | [📥 Voxel-v1.1.02.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.02/Voxel-v1.1.02.exe) | [📥 Voxel-v1.1.02.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.02/Voxel-v1.1.02.pkg) | [📥 Voxel-v1.1.02.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.02/Voxel-v1.1.02.dmg) | • Maximized Standalone System Tray Microphone Icon to fill 93% vertical height and 79% width<br>• Removed low-contrast outer padding and grey container to match visual weight of PowerToys and Windows Voice mic<br>• Preserved historical version binaries |
-| **`v1.1.01`** | 📦 Archived | [📥 Voxel-v1.1.01.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.01/Voxel-v1.1.01.exe) | [📥 Voxel-v1.1.01.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.01/Voxel-v1.1.01.pkg) | [📥 Voxel-v1.1.01.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.01/Voxel-v1.1.01.dmg) | • Replaced SVG rendering with crisp high-definition transparent PNGs across all 3 visual surfaces<br>• Dedicated Startup Bar & System Tray icon (`tray_bar_logo_square.png`)<br>• Main app icon & regenerated multi-res `assets/icon.ico` (`app_logo_square.png`)<br>• Dedicated floating selection bubble trigger logo with hover aura (`selection_bubble_logo_square.png`)<br>• Full preservation of historical version binaries |
-| **`v1.1.00`** | 📦 Archived | [📥 Voxel-v1.1.00.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.00/Voxel-v1.1.00.exe) | [📥 Voxel-v1.1.00.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.00/Voxel-v1.1.00.pkg) | [📥 Voxel-v1.1.00.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.00/Voxel-v1.1.00.dmg) | • Integrated official vector SVG logo from `assets/branding/svg/fiNAL/` directly into the system tray and taskbar startup bar<br>• Regenerated multi-resolution `icon.ico` (16–256px) for Windows taskbar and file icon<br>• Bundled assets into PyInstaller standalone executable<br>• Preserved historical version archive policy (`VERSIONING_RULES.md`) |
-| **`v1.0.09`** | 📦 Archived | [📥 Voxel-v1.0.09.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.exe) | [📥 Voxel-v1.0.09.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.pkg) | [📥 Voxel-v1.0.09.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.09/Voxel-v1.0.09.dmg) | • Excluded unused `QtMultimedia`, `windowsmediaplugin.dll`, and `ffmpegmediaplugin.dll` from Windows executable<br>• Fully resolves Windows 11 Smart App Control (SAC) *"Part of this app has been blocked"* alert<br>• Zero-dependency native Windows MCI (`winmm.dll`) audio playback |
-| **`v1.0.08`** | 📦 Archived | [📥 Voxel-v1.0.08.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.exe) | [📥 Voxel-v1.0.08.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.pkg) | [📥 Voxel-v1.0.08.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.08/Voxel-v1.0.08.dmg) | • Automatic Windows native MCI audio engine fallback<br>• Thread-safe queued audio playback dispatch<br>• Universal Python 3.14+ launcher and PyInstaller builder |
-| **`v1.0.07`** | 📦 Archived | [📥 Voxel-v1.0.07.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.07/Voxel-v1.0.07.exe) | [📥 Voxel-v1.0.07.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.07/Voxel-v1.0.07.pkg) | [📥 Voxel-v1.0.07.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.07/Voxel-v1.0.07.dmg) | • Fixed macOS `QPaintDevice::devicePixelRatio` crash in `QBackingStore::flush`<br>• Fixed missing `QLinearGradient` and exception safety in floating trigger `paintEvent`<br>• Switched MiniPlayer window flags from invalid `SubWindow` to `Tool`<br>• Thread-safe collision geometry caching (eliminates cross-thread QWidget access)<br>• Automated ad-hoc codesigning verification and gatekeeper bypass helper |
-| **`v1.0.06`** | 📦 Archived | [📥 Voxel-v1.0.06.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.06/Voxel-v1.0.06.exe) | [📥 Voxel-v1.0.06.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.06/Voxel-v1.0.06.pkg) | [📥 Voxel-v1.0.06.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.06/Voxel-v1.0.06.dmg) | • Light frosted glass round tray icon (larger & high contrast for light taskbars)<br>• Single-instance process lock (prevents duplicate tray icons)<br>• Embedded Windows .ico application icon<br>• Preserved historical release archive |
-| **`v1.0.05`** | 📦 Archived | [📥 Voxel-v1.0.05.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.05/Voxel-v1.0.05.exe) | [📥 Voxel-v1.0.05.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.05/Voxel-v1.0.05.pkg) | [📥 Voxel-v1.0.05.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.05/Voxel-v1.0.05.dmg) | • Large round glass tray icon maximized for taskbar legibility<br>• Multi-resolution HiDPI icons (16–256px) for Windows & macOS<br>• Embedded Windows .ico application icon |
-| **`v1.0.04`** | 📦 Archived | [📥 Voxel-v1.0.04.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.04/Voxel-v1.0.04.exe) | [📥 Voxel-v1.0.04.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.04/Voxel-v1.0.04.pkg) | [📥 Voxel-v1.0.04.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.04/Voxel-v1.0.04.dmg) | • Bluish frosted glass floating selection trigger with glossy top sheen<br>• Luminous glass specular dome reflection on Voxel mic logo<br>• Digimo product attribution ([digimo.pt](https://www.digimo.pt/))<br>• 100% Free & Open Source statement & disclaimer |
-| **`v1.0.03`** | 📦 Archived | [📥 Voxel-v1.0.03.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.exe) | [📥 Voxel-v1.0.03.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.pkg) | [📥 Voxel-v1.0.03.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.03/Voxel-v1.0.03.dmg) | • Redesigned ultra-compact frosted acrylic glass player (310×48 capsule)<br>• Combined Play/Pause toggle (`▶` / `⏸`) with cyan glowing aura<br>• Clickable speed dropdown pill (`1.0x ▾`)<br>• Smooth 280ms fade-in and 1.0s auto-close fade-out |
-| **`v1.0.02`** | 📦 Archived | [📥 Voxel-v1.0.02.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.02/Voxel-v1.0.02.exe) | [📥 Voxel-v1.0.02.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.02/Voxel.pkg) | *(Bundled in .pkg)* | • Rebranded application from Text 2 Voice to **Voxel**<br>• Introduced Dark Obsidian Glass theme with high-contrast text<br>• Added macOS `.pkg` wizard with embedded UX previews<br>• Fixed VOXEL vector logo geometry width |
-| **`v1.0.01`** | 📦 Archived | [📥 Text2Voice-v1.0.01.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.01/Text2Voice-v1.0.01.exe) | [📥 Text2Voice-v1.0.01.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.01/Text2Voice.pkg) | *(Bundled in .pkg)* | • Initial release of Text 2 Voice desktop application<br>• Microsoft Edge-TTS neural voice streaming with offline fallback<br>• Floating trigger badge and animated mic equalizer |
+> [!IMPORTANT]
+> **First launch on Windows (Microsoft Defender SmartScreen)**
+>
+> On Windows, Microsoft Defender SmartScreen may display: **“Windows protected your PC: Microsoft Defender SmartScreen prevented an unrecognized app from starting”**.
+>
+> **How to open in 2 clicks:**
+> 1. Click **More info**.
+> 2. Click **Run anyway**.
 
-> 🔗 *To download release source code or view automated CI builds, visit the [GitHub Releases Directory](https://github.com/Digimo2020/Voxel-/releases).*
+#### Run from Source (Windows)
+```powershell
+git clone https://github.com/Digimo2020/Voxel-.git
+cd Voxel-
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python main.py
+```
 
 ---
 
-## ⌨️ Workflow & Keyboard Shortcuts
+## 📦 Releases & Version Archive (Historical Builds)
 
-```text
-  1. Highlight text in any app (Browser, Word, Slack, PDF, Terminal)
-                         │
-                         ▼
-  2. Floating Voxel Logo fades in smoothly near your cursor
-                         │
-                         ▼
-  3. Click the Logo  — OR —  press Global Hotkey:
-       • macOS:   Cmd + Option + S
-       • Windows: Ctrl + Alt + S
-                         │
-                         ▼
-  4. Frosted Glass Capsule Player slides up in the bottom-right corner
-                         │
-                         ▼
-  5. 3 Voice Lines inside the mic animate in sync with real-time speech!
-```
+All past and current versions are preserved below according to [`VERSIONING_RULES.md`](VERSIONING_RULES.md):
+
+| Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
+| :---: | :---: | :---: | :---: | :---: | :--- |
+| **`v1.1.16`** | 🟢 **Latest** | [**📥 Voxel-v1.1.16.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.exe) | — | [**📥 Voxel-v1.1.16.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.dmg) | • **Official Brand Logo Integration**: Regenerated native Apple `icon.icns` and Windows `icon.ico` with authentic purple (`#7441F9`) and cyan ring (`#00F0FF`) emblem<br>• **Voice-Reactive MiniPlayer**: Updated `VoxelLogoWidget` to render authentic emblem when idle and dynamic equalizer lines when speaking<br>• **Gatekeeper & Troubleshooting Guide**: Exhaustive documentation of macOS quarantine bypass (`xattr -cr`) and crash resolution<br>• **Automated Brand Script**: Added `scripts/generate_official_brand_assets.py` for reproducible icon generation |
+| **`v1.1.15`** | 📦 Archived | [📥 Voxel-v1.1.15.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.exe) | — | [📥 Voxel-v1.1.15.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.dmg) | • Appearance Tab Redesign: App logo uploader, Logo Requirements card, and live preview<br>• Official Document Logo: Replaced document icon with circular purple badge matching brand<br>• Dynamic Bubble Settings: Transparency, corner radius, and bubble size |
+| **`v1.1.14`** | 📦 Archived | [📥 Voxel-v1.1.14.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.exe) | — | [📥 Voxel-v1.1.14.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.dmg) | • Official Brand Logo: Embedded high-resolution official logo in Settings sidebar header<br>• Custom CSS/QSS styling: Styled toggle switches, indicator checkmarks, and dark/light card previews |
+| **`v1.1.13`** | 📦 Archived | [📥 Voxel-v1.1.13.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.13/Voxel-v1.1.13.exe) | — | [📥 Voxel-v1.1.13.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.13/Voxel-v1.1.13.dmg) | • Dedicated Circular System Tray Logo: Exclusively updated tray/startup bar icon to official purple badge with 4x supersampled antialiasing |
+| **`v1.1.10`** | 📦 Archived | [📥 Voxel-v1.1.10.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.10/Voxel-v1.1.10.exe) | — | [📥 Voxel-v1.1.10.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.10/Voxel-v1.1.10.dmg) | • Startup Bar & System Tray Logo Update: Integrated official purple-to-blue badge and bold white microphone<br>• Alpha-antialiased contours with transparent background |
+| **`v1.1.09`** | 📦 Archived | [📥 Voxel-v1.1.09.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.09/Voxel-v1.1.09.exe) | — | [📥 Voxel-v1.1.09.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.09/Voxel-v1.1.09.dmg) | • UI/UX Overhaul: Reduced tabs to 2 clean sections (Preferences & About)<br>• Widened, simplified right-click tray context menu |
+| **`v1.1.08`** | 📦 Archived | [📥 Voxel-v1.1.08.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.08/Voxel-v1.1.08.exe) | — | [📥 Voxel-v1.1.08.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.08/Voxel-v1.1.08.dmg) | • Flameshot & Lightshot compatibility: Added screenshot overlay process detection to prevent drag-to-copy interference |
+| **`v1.1.00`** | 📦 Archived | [📥 Voxel-v1.1.00.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.00/Voxel-v1.1.00.exe) | [📥 Voxel-v1.1.00.pkg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.00/Voxel-v1.1.00.pkg) | [📥 Voxel-v1.1.00.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.00/Voxel-v1.1.00.dmg) | • Base-10 minor rollover release<br>• Bundled assets into PyInstaller standalone executable |
+| **`v1.0.01`** | 📦 Archived | [📥 Voxel-v1.0.01.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.0.01/Voxel-v1.0.01.exe) | — | — | • Initial open-source release with Microsoft Edge-TTS neural voice streaming |
 
 ---
 
@@ -269,6 +312,8 @@ chmod +x build_mac.sh
 Outputs:
 - **`dist/Voxel.app`**: Native standalone application bundle.
 - **`dist/Voxel.dmg`**: Drag-and-drop installer disk image.
+- **`dist/Voxel-v1.1.16.dmg`**: Versioned release disk image.
+- **`dist/SHA256SUMS.txt`**: Verification checksums.
 
 ### Building on Windows (`.exe`)
 ```powershell
@@ -276,44 +321,24 @@ Outputs:
 ```
 Outputs:
 - **`dist/Voxel.exe`**: Zero-dependency standalone executable.
+- **`dist/Voxel-v1.1.16.exe`**: Versioned release executable.
 
 ---
 
-## 🗺️ Repository Architecture
+## 🤖 Instructions for AI Assistants & Developers on Other Computers
 
-```text
-main.py                      Application entry point & event coordinator
-run.sh                       One-click macOS development launcher
-run.bat                      One-click Windows development launcher
-build_mac.sh                 Compiles Voxel.app and Voxel.dmg
-build_exe.bat                Compiles Voxel.exe for Windows
-assets/
- ├── banner.png              Official repository showcase banner
- ├── icon.icns               High-DPI Retina macOS application icon
- ├── icon_1024.png           1024x1024 master icon artwork
- ├── voxel_mac_preview.png   High-resolution micro-UI layout snapshot
- ├── icons.py                QPainter vector graphics generator
- └── branding/               Official design system guidelines & themes
-src/
- ├── config.py               Theme tokens, voice profiles, and platform flags
- ├── selection_listener.py   Global mouse drag & hotkey interception (macOS/Win)
- ├── tts_engine.py           PyQt6.QtMultimedia player & neural Edge-TTS with fallback
- ├── ui/
- │    ├── voxel_logo_widget.py Voice-reactive animated mic logo (40 FPS)
- │    ├── floating_bubble.py   Smooth fade-in selection trigger badge
- │    ├── mini_player.py       Frosted glass capsule player with glowing controls
- │    ├── tray_icon.py         macOS Menu Bar / Windows System Tray controller
- │    ├── settings_dialog.py   Preferences & OS-adaptive download center
- │    └── history_dialog.py    Persistent JSON speech history & replay
- └── utils/
-      ├── mac_permissions.py  macOS Accessibility permission helper
-      ├── clipboard.py        Safe clipboard extraction & restoration
-      ├── settings.py         Cross-platform settings (~/Library/Application Support/Voxel)
-      ├── history.py          Speech history persistence
-      └── version.py          Base-10 rollover version tracking
-.github/workflows/
- └── build.yml               Automated multi-platform CI/CD (macOS & Windows releases)
-```
+When working with this repository on any computer or operating system, follow these principles:
+
+1. **Brand Assets Location**:
+   - Never guess or generate placeholder icons. Always use `assets/Fainal/` as the single source of truth for branding.
+   - Run `python scripts/generate_official_brand_assets.py` to regenerate all derived icons (`icon.icns`, `icon.ico`, `branding/png/*.png`).
+2. **Version Incrementation**:
+   - Follow [`VERSIONING_RULES.md`](VERSIONING_RULES.md) strictly.
+   - Never overwrite old binaries. Increment the version in `src/utils/version.py`, update `CHANGELOG.md` and `README.md`.
+3. **macOS Gatekeeper Verification**:
+   - Always run `xattr -cr /Applications/Voxel.app` after installing to clear the quarantine flag.
+4. **PyQt6 Windowing Rule**:
+   - Floating bubbles and micro-UIs must always use `Qt.WindowType.ToolTip` and `Qt.WidgetAttribute.WA_ShowWithoutActivating` to avoid stealing focus from active user apps.
 
 ---
 
@@ -324,14 +349,6 @@ src/
 - 🌐 **Official Website**: [https://www.digimo.pt/](https://www.digimo.pt/)
 - 🔓 **100% Free & Open Source**: Voxel is released completely free with no copyright restrictions. Anyone is welcome to experiment, modernize, fork, or build upon it.
 - 💻 **100% Local Machine Processing**: Operates entirely on your local machine. No telemetry, no background analytics, and your clipboard text is never stored or transmitted to external servers.
-
----
-
-## ⚖️ Disclaimer & Setup Guide
-
-> **Disclaimer**: This software is provided "as is" for personal and experimental use. The creators and Digimo assume no responsibility or liability for any use, loss, or consequences arising from running this program.
->
-> Please read the documentation and [Setup Guides](#-quick-download--installation) carefully before setting up and running Voxel on your system.
 
 ---
 

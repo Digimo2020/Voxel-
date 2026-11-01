@@ -1,4 +1,4 @@
-<!-- CHANGELOG.md (v1.1) - [2026-10-31] -->
+<!-- CHANGELOG.md (v1.2) - [2026-11-01] -->
 # Changelog
 
 All notable changes to the **Voxel** project will be documented in this file.
@@ -7,6 +7,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Versioning structure: `v<Major>.<Minor>.<Patch:02d>` (e.g. `v1.0.01`).
 Every 10th patch increments minor, and every 10th minor increments major.
+
+---
+
+## [v1.1.16] - 2026-11-01
+
+### Official Brand Logo Overhaul, macOS Gatekeeper Quarantine Bypass & Icon Regeneration
+- **Official Brand Logo Integration**:
+  - Replaced legacy navy-blue icon (`#171b2d` / `#6abfff`) with the authentic official Voxel purple (`#7441F9`) and electric cyan (`#00F0FF`) emblem across all platforms.
+  - Sourced directly from `assets/Fainal/Voxel Logo (1)/apps icon (2).png` and user brand package.
+  - Regenerated native Apple `assets/icon.icns` using `/usr/bin/iconutil` with high-DPI Retina resolutions (16px to 1024px).
+  - Regenerated Windows `assets/icon.ico` packing 7 multi-resolution PNG streams (16, 24, 32, 48, 64, 128, 256 px) with anti-aliased alpha transparency.
+- **Voice-Reactive MiniPlayer Logo**:
+  - Upgraded `VoxelLogoWidget` (`src/ui/voxel_logo_widget.py`) to render the authentic brand emblem with crisp high-DPI scaling when idle.
+  - Dynamically pulses the electric cyan/purple radial glow and modulates the 3 white equalizer lines during speech playback.
+- **macOS Gatekeeper Quarantine Bypass & Error Fix Documentation**:
+  - Documented root cause and 1-line solution for `"Voxel is damaged and can't be opened. You should move it to the Trash"` and `"Apple could not verify Voxel is free of malware"`:
+    - Added instant terminal fix: `xattr -cr /Applications/Voxel.app`.
+    - Added GUI bypass steps for macOS System Settings > Privacy & Security > Open Anyway.
+    - Updated DMG installer `READ ME - First Launch.txt` bundled inside `Voxel.dmg`.
+  - Documented resolution for early `QPaintDevice::devicePixelRatio()` backingstore crash (`SIGSEGV`).
+- **Automated Brand Pipeline**:
+  - Created `scripts/generate_official_brand_assets.py` to automate edge anti-aliasing, transparent PNG export, and icon generation on any workstation.
+- **Repository Single Source of Truth**:
+  - Completely updated `README.md` with detailed branding specifications, file locations, build commands, and instructions for future AI assistants.
 
 ---
 

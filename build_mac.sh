@@ -77,32 +77,38 @@ mkdir -p "$DMG_DIR"
 cp -R "$APP_PATH" "$DMG_DIR/"
 ln -s /Applications "$DMG_DIR/Applications"
 
-cat > "$DMG_DIR/READ ME - First Launch.txt" <<'EOF'
-VOXEL FOR macOS
+cat > "$DMG_DIR/READ ME - First Launch.txt" <<EOF
+VOXEL FOR macOS (${VERSION})
+========================
 
-INSTALL
-1. Drag Voxel.app into the Applications shortcut.
-2. Eject the Voxel disk image.
-3. Open Applications and try to launch Voxel.
+INSTALLATION:
+1. Drag Voxel.app into the Applications shortcut icon in this folder.
+2. Eject the Voxel DMG installer.
+3. Open Launchpad or /Applications and launch Voxel.
 
-FIRST-LAUNCH SECURITY NOTICE
-This build is not signed with an Apple Developer ID certificate and has not
-been notarised by Apple. macOS may therefore show a warning that Apple cannot
-verify the app for malicious software. This warning is about the app's
-distribution status; it is not a malware scan result.
+FIRST-LAUNCH GATEKEEPER APPROVAL:
+Because this application is distributed directly via GitHub without an Apple
+Developer ID subscription (\$99/year notarization), macOS Gatekeeper may display:
+- "'Voxel' is damaged and can't be opened. You should move it to the Trash." OR
+- "Apple could not verify 'Voxel' is free of malware."
 
-Only continue if you downloaded this DMG from the official Digimo Voxel
-GitHub Releases page and trust the source.
+This is standard macOS Gatekeeper quarantine applied to all internet downloads.
 
-To approve the first launch:
-1. Try opening Voxel once.
-2. Open System Settings > Privacy & Security.
-3. Find the Voxel security message and choose Open Anyway.
-4. Confirm Open in the next prompt.
+QUICK FIX (1 Command in Terminal):
+Open Terminal and run:
+    xattr -cr /Applications/Voxel.app
 
-Do not disable Gatekeeper globally or run scripts that remove quarantine
-attributes. If macOS reports that the app is damaged or its contents changed,
-stop and download a fresh copy from the official release page.
+ALTERNATIVE (System Settings GUI):
+1. Right-click (or Control-click) Voxel.app in Applications and select "Open".
+2. If prompted, click "Cancel" or "Done".
+3. Open macOS System Settings > Privacy & Security.
+4. Scroll down to Security and click "Open Anyway" next to Voxel.
+5. Confirm "Open" in the final confirmation prompt.
+
+ACCESSIBILITY PERMISSIONS:
+To enable global text selection detection (floating mic & document reader),
+grant Accessibility permission when prompted in:
+System Settings > Privacy & Security > Accessibility > Enable Voxel.
 EOF
 
 hdiutil create -volname "Voxel" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG_PATH"

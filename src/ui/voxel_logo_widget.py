@@ -11,10 +11,11 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
 from PyQt6.QtGui import (
     QPainter, QColor, QBrush, QPen, QPainterPath,
-    QLinearGradient, QRadialGradient
+    QLinearGradient, QRadialGradient, QPixmap
 )
 
 from src.config import THEME
+from assets.icons import get_selection_bubble_pixmap
 
 
 class VoxelLogoWidget(QWidget):
@@ -85,13 +86,24 @@ class VoxelLogoWidget(QWidget):
         cx = w / 2.0
         cy = h * 0.48
 
-        # 1. Radial Glow behind mic when animating or hovered
+        # 1. Idle display: render official authentic brand emblem
+        if not self.is_animating:
+            pixmap = get_selection_bubble_pixmap(int(size))
+            if pixmap and not pixmap.isNull():
+                target_x = int((w - pixmap.width()) / 2)
+                target_y = int((h - pixmap.height()) / 2)
+                painter.drawPixmap(target_x, target_y, pixmap)
+                painter.end()
+                return
+
+        # 2. Voice-Reactive Animated State
+        # Radial Glow behind mic when animating
         if self._glow_intensity > 0.05:
             glow_rad = size * 0.50
             glow = QRadialGradient(cx, cy, glow_rad)
             alpha = int(180 * self._glow_intensity)
-            glow.setColorAt(0.0, QColor(0, 132, 255, alpha))
-            glow.setColorAt(0.55, QColor(124, 58, 237, int(alpha * 0.5)))
+            glow.setColorAt(0.0, QColor(0, 240, 255, alpha))      # Electric Cyan
+            glow.setColorAt(0.55, QColor(116, 65, 249, int(alpha * 0.6)))  # Brand Purple
             glow.setColorAt(1.0, QColor(0, 0, 0, 0))
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(glow))
@@ -101,11 +113,11 @@ class VoxelLogoWidget(QWidget):
         scale = size / 100.0
         cradle_stroke = max(2.0, 8.2 * scale)
 
-        # 2. Outer Cradle & Speech Bubble Tail (Gradient: Purple to Blue)
+        # Outer Cradle & Speech Bubble Tail (Official Brand Purple #7441F9 to Indigo)
         grad_cradle = QLinearGradient(cx - 35 * scale, cy + 35 * scale, cx + 35 * scale, cy - 35 * scale)
-        grad_cradle.setColorAt(0.0, QColor("#7C3AED"))  # Violet
-        grad_cradle.setColorAt(0.4, QColor("#6366F1"))  # Indigo
-        grad_cradle.setColorAt(1.0, QColor("#0084FF"))  # Electric Blue
+        grad_cradle.setColorAt(0.0, QColor("#7441F9"))  # Brand Purple
+        grad_cradle.setColorAt(0.5, QColor("#8B5CF6"))  # Accent Purple
+        grad_cradle.setColorAt(1.0, QColor("#00E5FF"))  # Electric Cyan Accent
 
         pen_cradle = QPen(
             QBrush(grad_cradle),
@@ -118,18 +130,14 @@ class VoxelLogoWidget(QWidget):
         painter.setBrush(Qt.BrushStyle.NoBrush)
 
         cradle_path = QPainterPath()
-        # Top left cradle tip
         cradle_path.moveTo(cx - 26 * scale, cy - 10 * scale)
-        # Curve down towards speech bubble pointer
         cradle_path.cubicTo(
             cx - 26 * scale, cy + 18 * scale,
             cx - 18 * scale, cy + 28 * scale,
             cx - 10 * scale, cy + 32 * scale
         )
-        # Pointer downward-left
         cradle_path.lineTo(cx - 15 * scale, cy + 44 * scale)
         cradle_path.lineTo(cx - 2 * scale, cy + 33 * scale)
-        # Bottom curve and up to right cradle tip
         cradle_path.cubicTo(
             cx + 16 * scale, cy + 33 * scale,
             cx + 26 * scale, cy + 20 * scale,
@@ -137,7 +145,7 @@ class VoxelLogoWidget(QWidget):
         )
         painter.drawPath(cradle_path)
 
-        # 3. Inner Microphone Capsule (Electric Blue / Cyan Gradient)
+        # Inner Microphone Capsule (Rich Brand Gradient)
         mic_w = 34 * scale
         mic_h = 45 * scale
         mic_x = cx - mic_w / 2.0
@@ -145,32 +153,31 @@ class VoxelLogoWidget(QWidget):
         mic_r = mic_w / 2.0
 
         grad_mic = QLinearGradient(mic_x, mic_y + mic_h, mic_x + mic_w, mic_y)
-        grad_mic.setColorAt(0.0, QColor("#0072FF"))
-        grad_mic.setColorAt(1.0, QColor("#00C6FF"))
+        grad_mic.setColorAt(0.0, QColor("#5B21B6"))
+        grad_mic.setColorAt(1.0, QColor("#7C3AED"))
 
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(grad_mic))
         painter.drawRoundedRect(QRectF(mic_x, mic_y, mic_w, mic_h), mic_r, mic_r)
 
-        # 3b. Glass Specular Dome on Mic Capsule (Glossy Glass Effect)
+        # Glass Specular Dome on Mic Capsule
         spec_w = mic_w * 0.70
         spec_h = mic_h * 0.36
         spec_x = cx - spec_w / 2.0
         spec_y = mic_y + 2.0 * scale
         spec_grad = QLinearGradient(spec_x, spec_y, spec_x, spec_y + spec_h)
-        spec_grad.setColorAt(0.0, QColor(255, 255, 255, 140))
-        spec_grad.setColorAt(0.65, QColor(255, 255, 255, 30))
+        spec_grad.setColorAt(0.0, QColor(255, 255, 255, 160))
+        spec_grad.setColorAt(0.65, QColor(255, 255, 255, 40))
         spec_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
         painter.setBrush(QBrush(spec_grad))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(QRectF(spec_x, spec_y, spec_w, spec_h), spec_w / 2.0, spec_w / 2.0)
 
-        # 4. Three Voice Lines Inside the Microphone (Animated)
+        # Three Voice Lines Inside the Microphone (Voice-Reactive Equalizer)
         line_thickness = max(1.8, 3.8 * scale)
         line_pen = QPen(QColor("#FFFFFF"), line_thickness, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
         painter.setPen(line_pen)
 
-        # Standard base half-widths
         hw_top = 7.0 * scale * self._line_scales[0]
         hw_mid = 10.0 * scale * self._line_scales[1]
         hw_bot = 8.0 * scale * self._line_scales[2]
