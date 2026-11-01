@@ -127,6 +127,7 @@ class VoxelApp:
         self.tray.history_requested.connect(self._show_history)
         self.tray.settings_requested.connect(self._show_settings)
         self.tray.about_requested.connect(self._show_about)
+        self.tray.permissions_requested.connect(self._on_permission_needed)
         self.tray.read_clipboard_requested.connect(self._on_read_clipboard_requested)
         self.tray.read_document_requested.connect(self._on_read_document_requested)
         self.tray.open_file_requested.connect(self._on_open_file_requested)
@@ -137,6 +138,7 @@ class VoxelApp:
 
         self.history_dialog.replay_requested.connect(self._replay_history)
         self.settings_dialog.settings_applied.connect(self._on_settings_applied)
+        self.settings_dialog.test_bubble_requested.connect(self._test_floating_bubble)
         self.tray.quit_requested.connect(self.quit)
 
         # 5. Global Hotkeys: Document reader & Permission guidance
@@ -236,6 +238,7 @@ class VoxelApp:
                 if not hasattr(self, "_perm_dialog") or self._perm_dialog is None:
                     self._perm_dialog = MacPermissionDialog()
                     self._perm_dialog.permission_granted.connect(self._on_permission_granted)
+                    self._perm_dialog.test_bubble_requested.connect(self._test_floating_bubble)
                 self._perm_dialog.show()
                 self._perm_dialog.raise_()
                 self._perm_dialog.activateWindow()
@@ -247,6 +250,12 @@ class VoxelApp:
                     AppTrayIcon.MessageIcon.Warning,
                     6000
                 )
+
+    def _test_floating_bubble(self):
+        """Pops up the floating bubble near mouse cursor for instant user verification."""
+        from PyQt6.QtGui import QCursor
+        cursor = QCursor.pos()
+        self.bubble.show_at("Voxel Text-to-Speech active! You can read this text or click Doc.", cursor.x(), cursor.y())
 
     def _on_permission_granted(self):
         """Called dynamically as soon as user enables Accessibility in System Settings."""
@@ -341,6 +350,7 @@ def acquire_single_instance_lock():
     """
     Guarantees only a single instance of Voxel runs at any time,
     preventing duplicate tray icons and background hook conflicts.
+    Uses kernel-level locks that are automatically released on process exit.
     """
     global _single_instance_handle
     if sys.platform == "win32":
@@ -356,12 +366,19 @@ def acquire_single_instance_lock():
             print(f"[Voxel] Mutex warning: {e}", file=sys.stderr)
             return True
     else:
-        from PyQt6.QtCore import QSharedMemory
-        shared_mem = QSharedMemory("Voxel_SingleInstance_Digimo")
-        if not shared_mem.create(1):
+        try:
+            import fcntl
+            import tempfile
+            lock_file = os.path.join(tempfile.gettempdir(), "voxel_app.lock")
+            f = open(lock_file, "a+")
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _single_instance_handle = f
+            return True
+        except (IOError, BlockingIOError):
             return False
-        _single_instance_handle = shared_mem
-        return True
+        except Exception as e:
+            print(f"[Voxel] Lock warning: {e}", file=sys.stderr)
+            return True
 
 
 if __name__ == "__main__":

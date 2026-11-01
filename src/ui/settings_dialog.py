@@ -347,6 +347,7 @@ class EqualizerPreviewWidget(QWidget):
 
 class SettingsDialog(QDialog):
     settings_applied = pyqtSignal()
+    test_bubble_requested = pyqtSignal()
 
     def __init__(self, tts_engine: Optional[TTSEngine] = None, parent=None):
         super().__init__(parent)
@@ -390,13 +391,17 @@ class SettingsDialog(QDialog):
 
         sidebar_layout.addSpacing(18)
 
-        # 4 Navigation Items matching user mockups (literal '&&' avoids underscore mnemonic)
+        # Navigation Items matching user mockups (literal '&&' avoids underscore mnemonic)
         self.nav_items = [
             ("🎙️  Voice && Speech", 0, "🎙️", "Voice && Speech", "Fine-tune neural voices, cadence, and parametric equalizer"),
             ("▶  Playback", 1, "▶", "Playback", "Control how Voxel plays text-to-speech audio"),
             ("🎨  Appearance", 2, "🎨", "Appearance", "Personalize the look and feel of Voxel"),
             ("ℹ️  About", 3, "ℹ️", "About Voxel", "Product information, licenses, and social links"),
         ]
+        if IS_MAC:
+            self.nav_items.append(
+                ("🛡️  Permissions", 4, "🛡️", "macOS Permissions", "System accessibility and text selection status")
+            )
 
         self.btn_group_nav = QButtonGroup(self)
         for text, page_idx, icon_badge, header_title, header_sub in self.nav_items:
@@ -478,6 +483,10 @@ class SettingsDialog(QDialog):
         self.stacked_pages.addWidget(self.page_playback)     # Index 1
         self.stacked_pages.addWidget(self.page_appearance)   # Index 2
         self.stacked_pages.addWidget(self.page_about)        # Index 3
+
+        if IS_MAC:
+            self.page_permissions = self._create_permissions_page()
+            self.stacked_pages.addWidget(self.page_permissions)  # Index 4
 
         main_col.addWidget(self.stacked_pages)
 
@@ -712,6 +721,109 @@ class SettingsDialog(QDialog):
         self.lbl_speed_val.setText(f"{speed:.2f}x")
         if self.tts:
             self.tts.set_speed(speed)
+
+    def _create_permissions_page(self) -> QWidget:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(14)
+
+        # Card 1: Live Status & Quick Actions
+        card_status = QGroupBox("macOS System Permissions Status", content)
+        l_status = QVBoxLayout(card_status)
+        l_status.setSpacing(12)
+
+        self.lbl_perm_page_status = QLabel(card_status)
+        self._refresh_perm_page_status()
+        l_status.addWidget(self.lbl_perm_page_status)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+
+        btn_open = QPushButton("⚙️  Open Accessibility Settings", card_status)
+        btn_open.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_open.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 8px 16px;")
+        btn_open.clicked.connect(open_accessibility_settings)
+        btn_row.addWidget(btn_open)
+
+        btn_refresh = QPushButton("🔄  Refresh Status", card_status)
+        btn_refresh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_refresh.setStyleSheet("background-color: rgba(255,255,255,0.08); color: #38BDF8; font-weight: 600; border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 8px 16px;")
+        btn_refresh.clicked.connect(self._refresh_perm_page_status)
+        btn_row.addWidget(btn_refresh)
+
+        btn_test = QPushButton("🎯  Test Floating Bubble Now", card_status)
+        btn_test.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_test.setStyleSheet("background-color: rgba(16,185,129,0.15); color: #10B981; font-weight: 700; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; padding: 8px 16px;")
+        btn_test.clicked.connect(lambda: self.test_bubble_requested.emit())
+        btn_row.addWidget(btn_test)
+
+        btn_row.addStretch()
+        l_status.addLayout(btn_row)
+        layout.addWidget(card_status)
+
+        # Card 2: 3-Step Setup Guide
+        card_guide = QGroupBox("How to Enable Text Selection on macOS", content)
+        l_guide = QVBoxLayout(card_guide)
+        l_guide.setSpacing(10)
+
+        steps = [
+            ("1", "Click <b>Open Accessibility Settings</b> above to open System Settings directly to Privacy & Security → Accessibility."),
+            ("2", "Find <b>Voxel</b> in the list and flip the toggle switch to <b>ON</b> (enter your Mac password/Touch ID)."),
+            ("3", "If macOS asks to quit and reopen, click <b>Restart Voxel App</b> below to apply permissions.")
+        ]
+        for num, desc in steps:
+            s_row = QHBoxLayout()
+            s_row.setSpacing(10)
+            badge = QLabel(num, card_guide)
+            badge.setFixedSize(22, 22)
+            badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            badge.setStyleSheet("background-color: #7C3AED; color: #FFFFFF; font-weight: 800; font-size: 11px; border-radius: 11px;")
+            s_row.addWidget(badge)
+
+            lbl_d = QLabel(desc, card_guide)
+            lbl_d.setStyleSheet("font-size: 12px; line-height: 1.4;")
+            lbl_d.setTextFormat(Qt.TextFormat.RichText)
+            s_row.addWidget(lbl_d)
+            s_row.addStretch()
+            l_guide.addLayout(s_row)
+
+        layout.addWidget(card_guide)
+
+        # Card 3: Restart Voxel Button
+        card_restart = QGroupBox("Apply System Permissions", content)
+        l_restart = QVBoxLayout(card_restart)
+        l_restart.setSpacing(8)
+
+        lbl_r_info = QLabel("macOS requires applications to restart once granted Accessibility permissions for background event taps to activate.", card_restart)
+        lbl_r_info.setStyleSheet("font-size: 11px; color: #64748B;")
+        l_restart.addWidget(lbl_r_info)
+
+        from src.utils.mac_permissions import restart_voxel_app
+        btn_restart_app = QPushButton("🚀  Restart Voxel App", card_restart)
+        btn_restart_app.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_restart_app.setStyleSheet("background-color: #334155; color: #FFFFFF; font-weight: 700; border-radius: 6px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.15);")
+        btn_restart_app.clicked.connect(restart_voxel_app)
+        l_restart.addWidget(btn_restart_app)
+
+        layout.addWidget(card_restart)
+        layout.addStretch()
+
+        scroll.setWidget(content)
+        return scroll
+
+    def _refresh_perm_page_status(self):
+        if not hasattr(self, "lbl_perm_page_status") or self.lbl_perm_page_status is None:
+            return
+        trusted = is_accessibility_trusted(prompt=False)
+        if trusted:
+            status_html = "<span style='color: #10B981; font-weight: bold; font-size: 13px;'>● Text Selection Active (macOS Accessibility Granted)</span><br><span style='font-size: 11px; color: #64748B;'>Voxel is monitoring text selections and ready to display the floating bubble.</span>"
+        else:
+            status_html = "<span style='color: #F59E0B; font-weight: bold; font-size: 13px;'>⚠️ Action Required: Accessibility Not Granted</span><br><span style='font-size: 11px; color: #64748B;'>macOS is currently blocking global mouse drag detection. Please enable Voxel in System Settings below.</span>"
+        self.lbl_perm_page_status.setText(status_html)
 
     # ═════════════════════════════════════════════════════════════
     # PAGE 2: APPEARANCE (Matching User Mockup Image 2)

@@ -24,7 +24,7 @@ VERSIONED_DMG="dist/Voxel-${VERSION}.dmg"
 DMG_DIR="dist/dmg_staging"
 
 mkdir -p dist
-rm -rf "dist/Voxel.app" "$DMG_PATH" "$VERSIONED_DMG" "$DMG_DIR"
+rm -rf "dist/Voxel" "dist/Voxel.app" "$DMG_PATH" "$VERSIONED_DMG" "$DMG_DIR"
 
 echo "1. Building Voxel.app with PyInstaller..."
 pyinstaller --noconfirm --windowed \

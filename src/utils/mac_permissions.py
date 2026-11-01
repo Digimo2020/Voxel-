@@ -26,6 +26,14 @@ def is_accessibility_trusted(prompt: bool = False) -> bool:
         )
         hiservices.AXIsProcessTrusted.restype = ctypes.c_bool
         trusted = bool(hiservices.AXIsProcessTrusted())
+        if not trusted:
+            try:
+                hiservices.AXIsProcessTrustedWithOptions.restype = ctypes.c_bool
+                hiservices.AXIsProcessTrustedWithOptions.argtypes = [ctypes.c_void_p]
+                trusted = bool(hiservices.AXIsProcessTrustedWithOptions(None))
+            except Exception:
+                pass
+
         if not trusted and prompt:
             open_accessibility_settings()
         return trusted
@@ -46,3 +54,23 @@ def open_accessibility_settings():
         )
     except Exception as e:
         print(f"[MacPermissions] Failed to open settings: {e}")
+
+
+def restart_voxel_app():
+    """Restarts Voxel so new macOS system permissions take effect immediately."""
+    if not IS_MAC:
+        return
+    try:
+        import sys
+        from PyQt6.QtWidgets import QApplication
+        if "/Applications/Voxel.app" in sys.executable or hasattr(sys, "_MEIPASS"):
+            subprocess.Popen(["open", "-n", "/Applications/Voxel.app"])
+        else:
+            subprocess.Popen([sys.executable, "main.py"])
+        app = QApplication.instance()
+        if app:
+            app.quit()
+        else:
+            sys.exit(0)
+    except Exception as e:
+        print(f"[MacPermissions] Restart error: {e}")

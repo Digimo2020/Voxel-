@@ -6,6 +6,7 @@ and notifies the UI on the main thread via Qt signals.
 import sys
 import time
 import math
+import threading
 from typing import Callable, Optional
 from pynput import mouse, keyboard
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -155,7 +156,12 @@ class SelectionListener(QObject):
             self._last_click_pos = (x, y)
 
             if is_drag or is_double_click:
-                self._handle_possible_selection(int(x), int(y))
+                # Dispatch immediately to background worker thread so Quartz event tap never times out
+                threading.Thread(
+                    target=self._handle_possible_selection,
+                    args=(int(x), int(y)),
+                    daemon=True
+                ).start()
             else:
                 # User clicked empty space or single-clicked without dragging
                 self.clicked_outside.emit()
@@ -178,11 +184,14 @@ class SelectionListener(QObject):
         if not self.is_enabled:
             return
 
-        text = grab_selected_text(timeout_ms=180)
-        if text and len(text) >= MIN_SELECTED_LENGTH:
-            ctrl = mouse.Controller()
-            cx, cy = ctrl.position
-            self.text_selected.emit(text, int(cx), int(cy))
+        def _worker():
+            text = grab_selected_text(timeout_ms=250)
+            if text and len(text) >= MIN_SELECTED_LENGTH:
+                ctrl = mouse.Controller()
+                cx, cy = ctrl.position
+                self.text_selected.emit(text, int(cx), int(cy))
+
+        threading.Thread(target=_worker, daemon=True).start()
 
     def _on_doc_hotkey_triggered(self):
         """Triggered when pressing Cmd+Alt+D (or Ctrl+Alt+D) to read entire document."""

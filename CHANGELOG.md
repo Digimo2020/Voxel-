@@ -10,6 +10,27 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.18] - 2026-11-01
+
+### Asynchronous Selection Tap, High-Contrast Permission Dialog & Dedicated Permissions Tab
+- **Non-Blocking Quartz Event Tap Architecture**:
+  - Moved mouse drag detection and clipboard polling (`time.sleep` / `grab_selected_text`) into an asynchronous background worker thread.
+  - The Quartz mouse callback returns in `< 1ms`, completely preventing macOS from disabling the event tap due to timeout (`kCGEventTapDisabledByTimeout`).
+- **High-Contrast, Ultra-Readable Permission Dialog**:
+  - Completely redesigned `MacPermissionDialog` with high-contrast `#FFFFFF` typography, colored step badges (`1`, `2`, `3`), and rich HTML tags.
+  - Added dedicated **"Restart Voxel Now"** button to immediately apply new macOS permissions.
+  - Added **"Test Floating Bubble"** button so users can instantly verify the floating trigger badge on their screen.
+- **Dedicated Permissions Page in Settings & System Tray**:
+  - Added a prominent **"🛡️ Permissions"** sidebar tab in the Settings Dialog on macOS with live real-time status, 1-click System Settings opener, refresh button, and bubble testing.
+  - Added **"🛡️ macOS Permissions..."** to the System Tray right-click menu.
+- **Kernel-Level Single Instance Lock (`fcntl.flock`)**:
+  - Replaced fragile `QSharedMemory` on macOS/Linux with kernel-level `fcntl.flock` file locking.
+  - Prevents stale lock bugs and ensures Voxel always launches cleanly even after force-quits or crashes.
+- **Session Event Tap Routing**:
+  - Enhanced `CGEventPost` to target `kCGSessionEventTap` for active focused application windows with automatic fallback to `kCGHIDEventTap`.
+
+---
+
 ## [v1.1.17] - 2026-11-01
 
 ### Hardware-Level Quartz Event Tap, Full Document Reader & Interactive Mac Permission Helper

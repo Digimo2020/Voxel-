@@ -5,11 +5,12 @@ Provides:
 - Double-click to open Preferences.
 - Clean, wider, focused right-click context menu with Preferences, About, and Quit.
 """
+import sys
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import pyqtSignal
 
-from src.config import VERSION, APP_NAME, APP_TAGLINE
+from src.config import VERSION, APP_NAME, APP_TAGLINE, IS_MAC
 from src.tts_engine import TTSEngine
 from assets.icons import create_tray_icon
 
@@ -20,6 +21,7 @@ class AppTrayIcon(QSystemTrayIcon):
     """
     settings_requested = pyqtSignal()
     about_requested = pyqtSignal()
+    permissions_requested = pyqtSignal()
     quit_requested = pyqtSignal()
 
     # Retained for signal compatibility
@@ -89,6 +91,11 @@ class AppTrayIcon(QSystemTrayIcon):
         # Preferences
         settings_action = menu.addAction("⚙️  Preferences...")
         settings_action.triggered.connect(self.settings_requested.emit)
+
+        # macOS Accessibility Permissions
+        if IS_MAC:
+            perm_action = menu.addAction("🛡️  macOS Permissions...")
+            perm_action.triggered.connect(self.permissions_requested.emit)
 
         # About Voxel
         about_action = menu.addAction("ℹ️  About Voxel...")

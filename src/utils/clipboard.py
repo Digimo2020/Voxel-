@@ -18,19 +18,24 @@ _kb_controller = keyboard.Controller()
 
 
 def _simulate_copy_mac() -> bool:
-    """Hardware-level Cmd+C via macOS Quartz CoreGraphics HID Event Tap."""
+    """Hardware-level Cmd+C via macOS Quartz CoreGraphics Event Tap."""
     try:
         from Quartz.CoreGraphics import (
             CGEventCreateKeyboardEvent, CGEventSetFlags, CGEventPost,
-            kCGHIDEventTap, kCGEventFlagMaskCommand
+            kCGSessionEventTap, kCGHIDEventTap, kCGEventFlagMaskCommand
         )
         down = CGEventCreateKeyboardEvent(None, 8, True)   # Keycode 8 = 'c'
         up = CGEventCreateKeyboardEvent(None, 8, False)
         CGEventSetFlags(down, kCGEventFlagMaskCommand)
         CGEventSetFlags(up, kCGEventFlagMaskCommand)
-        CGEventPost(kCGHIDEventTap, down)
-        time.sleep(0.025)
-        CGEventPost(kCGHIDEventTap, up)
+        try:
+            CGEventPost(kCGSessionEventTap, down)
+            time.sleep(0.025)
+            CGEventPost(kCGSessionEventTap, up)
+        except Exception:
+            CGEventPost(kCGHIDEventTap, down)
+            time.sleep(0.025)
+            CGEventPost(kCGHIDEventTap, up)
         return True
     except Exception as e:
         print(f"[Clipboard] Mac Quartz copy error: {e}")

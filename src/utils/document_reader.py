@@ -30,19 +30,24 @@ else:
 
 
 def _send_key_combo_mac(keycode: int):
-    """Sends a Cmd+Key combination using native macOS Quartz CoreGraphics HID Event Tap."""
+    """Sends a Cmd+Key combination using native macOS Quartz CoreGraphics Event Tap."""
     try:
         from Quartz.CoreGraphics import (
             CGEventCreateKeyboardEvent, CGEventSetFlags, CGEventPost,
-            kCGHIDEventTap, kCGEventFlagMaskCommand
+            kCGSessionEventTap, kCGHIDEventTap, kCGEventFlagMaskCommand
         )
         down = CGEventCreateKeyboardEvent(None, keycode, True)
         up = CGEventCreateKeyboardEvent(None, keycode, False)
         CGEventSetFlags(down, kCGEventFlagMaskCommand)
         CGEventSetFlags(up, kCGEventFlagMaskCommand)
-        CGEventPost(kCGHIDEventTap, down)
-        time.sleep(0.025)
-        CGEventPost(kCGHIDEventTap, up)
+        try:
+            CGEventPost(kCGSessionEventTap, down)
+            time.sleep(0.025)
+            CGEventPost(kCGSessionEventTap, up)
+        except Exception:
+            CGEventPost(kCGHIDEventTap, down)
+            time.sleep(0.025)
+            CGEventPost(kCGHIDEventTap, up)
         return True
     except Exception as e:
         print(f"[DocumentReader] Mac Quartz key error: {e}")
@@ -53,13 +58,18 @@ def _send_key_mac_plain(keycode: int):
     """Sends a plain keystroke (like Right Arrow) using native macOS Quartz."""
     try:
         from Quartz.CoreGraphics import (
-            CGEventCreateKeyboardEvent, CGEventPost, kCGHIDEventTap
+            CGEventCreateKeyboardEvent, CGEventPost, kCGSessionEventTap, kCGHIDEventTap
         )
         down = CGEventCreateKeyboardEvent(None, keycode, True)
         up = CGEventCreateKeyboardEvent(None, keycode, False)
-        CGEventPost(kCGHIDEventTap, down)
-        time.sleep(0.02)
-        CGEventPost(kCGHIDEventTap, up)
+        try:
+            CGEventPost(kCGSessionEventTap, down)
+            time.sleep(0.02)
+            CGEventPost(kCGSessionEventTap, up)
+        except Exception:
+            CGEventPost(kCGHIDEventTap, down)
+            time.sleep(0.02)
+            CGEventPost(kCGHIDEventTap, up)
         return True
     except Exception:
         return False

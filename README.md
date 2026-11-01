@@ -310,7 +310,8 @@ All past and current versions are preserved below according to [`VERSIONING_RULE
 
 | Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
 | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`v1.1.17`** | 🟢 **Latest** | [**📥 Voxel-v1.1.17.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.exe) | — | [**📥 Voxel-v1.1.17.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.dmg) | • **Hardware-Level Quartz Tap**: Native macOS CoreGraphics event posting for instant text selection and Cmd+C<br>• **Full Document Narration**: Click right document icon to Select All (`Cmd+A` / `Ctrl+A`) and read entire document<br>• **Interactive Permission Assistant**: Real-time macOS Accessibility guidance dialog and Settings status card<br>• **320ms Polling Resilience**: Enhanced clipboard polling for heavy apps and web pages |
+| **`v1.1.18`** | 🟢 **Latest** | [**📥 Voxel-v1.1.18.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.18/Voxel-v1.1.18.exe) | — | [**📥 Voxel-v1.1.18.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.18/Voxel-v1.1.18.dmg) | • **Asynchronous Event Tap**: Offloads mouse selection to background worker, preventing macOS tap timeouts<br>• **High-Contrast Permission Dialog**: Crystal-clear readable typography, restart button, and bubble tester<br>• **Dedicated Permissions Tab**: Integrated macOS Accessibility status card in Settings sidebar and Tray menu<br>• **Kernel-Level Single Instance**: Robust `fcntl.flock` file locking preventing stale memory lockouts |
+| **`v1.1.17`** | 📦 Archived | [📥 Voxel-v1.1.17.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.exe) | — | [📥 Voxel-v1.1.17.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.dmg) | • **Hardware-Level Quartz Tap**: Native macOS CoreGraphics event posting for instant text selection and Cmd+C<br>• **Full Document Narration**: Click right document icon to Select All (`Cmd+A` / `Ctrl+A`) and read entire document<br>• **Interactive Permission Assistant**: Real-time macOS Accessibility guidance dialog and Settings status card<br>• **320ms Polling Resilience**: Enhanced clipboard polling for heavy apps and web pages |
 | **`v1.1.16`** | 📦 Archived | [📥 Voxel-v1.1.16.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.exe) | — | [📥 Voxel-v1.1.16.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.dmg) | • Official Brand Logo: Regenerated native Apple `icon.icns` and Windows `icon.ico` with authentic purple (`#7441F9`) and cyan ring (`#00F0FF`) emblem<br>• Voice-Reactive MiniPlayer: Renders authentic emblem when idle, dynamic equalizer lines when speaking |
 | **`v1.1.15`** | 📦 Archived | [📥 Voxel-v1.1.15.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.exe) | — | [📥 Voxel-v1.1.15.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.dmg) | • Appearance Tab Redesign: App logo uploader, Logo Requirements card, and live preview<br>• Official Document Logo: Replaced document icon with circular purple badge matching brand<br>• Dynamic Bubble Settings: Transparency, corner radius, and bubble size |
 | **`v1.1.14`** | 📦 Archived | [📥 Voxel-v1.1.14.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.exe) | — | [📥 Voxel-v1.1.14.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.dmg) | • Official Brand Logo: Embedded high-resolution official logo in Settings sidebar header<br>• Custom CSS/QSS styling: Styled toggle switches, indicator checkmarks, and dark/light card previews |
@@ -333,7 +334,7 @@ chmod +x build_mac.sh
 Outputs:
 - **`dist/Voxel.app`**: Native standalone application bundle.
 - **`dist/Voxel.dmg`**: Drag-and-drop installer disk image.
-- **`dist/Voxel-v1.1.17.dmg`**: Versioned release disk image.
+- **`dist/Voxel-v1.1.18.dmg`**: Versioned release disk image.
 - **`dist/SHA256SUMS.txt`**: Verification checksums.
 
 ### Building on Windows (`.exe`)
@@ -342,7 +343,7 @@ Outputs:
 ```
 Outputs:
 - **`dist/Voxel.exe`**: Zero-dependency standalone executable.
-- **`dist/Voxel-v1.1.17.exe`**: Versioned release executable.
+- **`dist/Voxel-v1.1.18.exe`**: Versioned release executable.
 
 ---
 
