@@ -10,6 +10,28 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.19] - 2026-11-01
+
+### Interactive Checkmark Indicators, Single-Row Playback Controls & Zero Horizontal Scroll
+- **Crisp Vector Checkmark Indicators**:
+  - Replaced solid purple blocks with anti-aliased white vector checkmark indicators (`assets/branding/png/checkbox_check.png`) rendered when checkboxes are checked.
+  - When unchecked, checkboxes are completely blank (clean white rectangle with subtle gray border).
+  - Checkbox labels and indicator hitboxes now feature pointer cursors (`Qt.PointingHandCursor`).
+- **Dedicated Single-Row Playback Layout**:
+  - **Row 1 - Playback Speed**: Full-width card with horizontal speed slider, scale marks (`0.5x`, `1.0x`, `2.0x`), and live `1.00x` badge.
+  - **Row 2 - Fade-In Timing**: Full-width card with smooth iOS-style toggle switch.
+  - **Row 3 - Fade-Out Timing**: Full-width card with horizontal duration slider (replacing spinbox), live `1.00s` badge, and scale marks (`0.2s` to `3.0s`).
+  - **Row 4 - Playback Behavior**: 4 distinct full-width option rows with macOS-native startup label ("Launch Voxel automatically at system startup").
+  - **Row 5 - Audio Output & Recordings**: Structured into 2 distinct rows (Row 1: Output device selector; Row 2: Volume slider & Recordings folder with wrapped path).
+  - **Row 6 - macOS Permissions**: Compact status pill, 1-click settings button, word-wrapped descriptions, zero horizontal overflow.
+- **Zero Horizontal Scrolling Across All 5 Settings Tabs**:
+  - Enforced `ScrollBarAlwaysOff` for horizontal scrolling across Voice & Speech, Playback, Appearance, About, and Permissions.
+  - Resolved wide elements in Appearance (`frame_logo_req`), About (word-wrapped open source freedom & disclaimer cards), and Permissions (`card_status` 2-row button layout).
+- **macOS Gatekeeper First-Launch Documentation & Guide**:
+  - Comprehensive guide and scripts for bypassing macOS Gatekeeper quarantine (`com.apple.quarantine`) on unsigned community builds: Right-click -> Open, System Settings -> "Open Anyway", or `xattr -cr /Applications/Voxel.app`.
+
+---
+
 ## [v1.1.18] - 2026-11-01
 
 ### Asynchronous Selection Tap, High-Contrast Permission Dialog & Dedicated Permissions Tab

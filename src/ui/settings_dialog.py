@@ -35,7 +35,7 @@ from src.utils.startup import is_startup_enabled, set_startup_enabled
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from src.utils.audio_recorder import get_recordings_dir, open_recordings_folder
 from src.ui.equalizer_widget import VoiceEqualizerWidget, EQ_PRESETS
-from assets.icons import create_app_icon, get_brand_logo_pixmap
+from assets.icons import create_app_icon, get_brand_logo_pixmap, _get_asset_path
 
 LINKEDIN_URL = "https://www.linkedin.com/in/fahimdigital/"
 
@@ -530,24 +530,24 @@ class SettingsDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(12)
+        layout.setContentsMargins(0, 0, 8, 12)
+        layout.setSpacing(14)
 
-        # Top Row: Playback Speed (Left) & Fade && Timing (Right)
-        top_row = QHBoxLayout()
-        top_row.setSpacing(12)
-
-        # Card 1: Playback Speed
+        # ─── ROW 1: Playback Speed (Own Row, Full Width) ───────────────
         card_speed = QGroupBox("Playback Speed", content)
         l_speed = QVBoxLayout(card_speed)
         l_speed.setSpacing(6)
-        sub_s = QLabel("Set the speaking speed for playback.")
+        sub_s = QLabel("Set the speaking speed for playback.", card_speed)
         sub_s.setStyleSheet("font-size: 11px; color: #64748B;")
         l_speed.addWidget(sub_s)
 
         slider_row = QHBoxLayout()
+        slider_row.setSpacing(10)
         self.slider_speed = QSlider(Qt.Orientation.Horizontal, card_speed)
         self.slider_speed.setRange(50, 200)
         self.slider_speed.setValue(100)
@@ -556,7 +556,8 @@ class SettingsDialog(QDialog):
         slider_row.addWidget(self.slider_speed)
 
         self.lbl_speed_val = QLabel("1.00x", card_speed)
-        self.lbl_speed_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 3px 8px;")
+        self.lbl_speed_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 3px 8px; min-width: 44px;")
+        self.lbl_speed_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
         slider_row.addWidget(self.lbl_speed_val)
         l_speed.addLayout(slider_row)
 
@@ -571,87 +572,126 @@ class SettingsDialog(QDialog):
             if w:
                 w.setStyleSheet("color: #94A3B8; font-size: 10px;")
         l_speed.addLayout(scale_row)
-        top_row.addWidget(card_speed)
+        layout.addWidget(card_speed)
 
-        # Card 2: Fade && Timing (Literal '&&' avoids underscore)
-        card_timing = QGroupBox("Fade && Timing", content)
-        l_timing = QVBoxLayout(card_timing)
-        l_timing.setSpacing(8)
-        sub_t = QLabel("Control start and end transitions.")
-        sub_t.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_timing.addWidget(sub_t)
+        # ─── ROW 2: Fade-In Timing (Own Row, Full Width) ───────────────
+        card_fade_in = QGroupBox("Fade-In Timing", content)
+        l_fade_in = QVBoxLayout(card_fade_in)
+        l_fade_in.setSpacing(8)
+        sub_fi = QLabel("Gradually ramp up audio volume at start of speech.", card_fade_in)
+        sub_fi.setStyleSheet("font-size: 11px; color: #64748B;")
+        l_fade_in.addWidget(sub_fi)
 
-        dur_row = QHBoxLayout()
-        dur_row.addWidget(QLabel("Fade-out duration"))
-        self.spin_fade_duration = QDoubleSpinBox(card_timing)
-        self.spin_fade_duration.setRange(0.2, 5.0)
-        self.spin_fade_duration.setSingleStep(0.25)
-        self.spin_fade_duration.setValue(1.00)
-        self.spin_fade_duration.setSuffix(" sec")
-        self.spin_fade_duration.setFixedWidth(100)
-        dur_row.addWidget(self.spin_fade_duration)
-        l_timing.addLayout(dur_row)
+        fi_row = QHBoxLayout()
+        lbl_fi_title = QLabel("Smooth fade-in at start", card_fade_in)
+        lbl_fi_title.setStyleSheet("font-size: 13px; font-weight: 500;")
+        fi_row.addWidget(lbl_fi_title)
+        fi_row.addStretch()
+        self.switch_fade_in = ToggleSwitch(checked=True, parent=card_fade_in)
+        fi_row.addWidget(self.switch_fade_in)
+        l_fade_in.addLayout(fi_row)
+        layout.addWidget(card_fade_in)
 
-        fade_in_row = QHBoxLayout()
-        fade_in_row.addWidget(QLabel("Smooth fade-in at start"))
-        fade_in_row.addStretch()
-        self.switch_fade_in = ToggleSwitch(checked=True, parent=card_timing)
-        fade_in_row.addWidget(self.switch_fade_in)
-        l_timing.addLayout(fade_in_row)
-        top_row.addWidget(card_timing)
+        # ─── ROW 3: Fade-Out Timing (Own Row, Slider instead of clickable element) ───
+        card_fade_out = QGroupBox("Fade-Out Timing", content)
+        l_fade_out = QVBoxLayout(card_fade_out)
+        l_fade_out.setSpacing(6)
+        sub_fo = QLabel("Adjust duration for smooth audio decay when stopping or finishing speech.", card_fade_out)
+        sub_fo.setStyleSheet("font-size: 11px; color: #64748B;")
+        l_fade_out.addWidget(sub_fo)
 
-        layout.addLayout(top_row)
+        fo_row = QHBoxLayout()
+        fo_row.setSpacing(10)
+        self.slider_fade_out = QSlider(Qt.Orientation.Horizontal, card_fade_out)
+        self.slider_fade_out.setRange(20, 300)  # 0.20s to 3.00s
+        self.slider_fade_out.setValue(100)      # 1.00s default
+        self.slider_fade_out.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.slider_fade_out.valueChanged.connect(self._on_fade_out_slider_changed)
+        fo_row.addWidget(self.slider_fade_out)
 
-        # Card 3: Playback Behavior (Clean purple checkboxes with SVG checkmarks)
+        self.lbl_fade_out_val = QLabel("1.00s", card_fade_out)
+        self.lbl_fade_out_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 3px 8px; min-width: 44px;")
+        self.lbl_fade_out_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fo_row.addWidget(self.lbl_fade_out_val)
+        l_fade_out.addLayout(fo_row)
+
+        fo_scale_row = QHBoxLayout()
+        fo_scale_row.addWidget(QLabel("0.2s"))
+        fo_scale_row.addStretch()
+        fo_scale_row.addWidget(QLabel("1.0s (Default)"))
+        fo_scale_row.addStretch()
+        fo_scale_row.addWidget(QLabel("2.0s"))
+        fo_scale_row.addStretch()
+        fo_scale_row.addWidget(QLabel("3.0s"))
+        for i in range(fo_scale_row.count()):
+            w = fo_scale_row.itemAt(i).widget()
+            if w:
+                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
+        l_fade_out.addLayout(fo_scale_row)
+        layout.addWidget(card_fade_out)
+
+        # ─── ROW 4: Playback Behavior (Clean checkboxes, clickable, blank when unchecked) ───
         card_behavior = QGroupBox("Playback Behavior", content)
         l_beh = QVBoxLayout(card_behavior)
-        l_beh.setSpacing(8)
-        sub_b = QLabel("Choose when and how Voxel plays audio.")
+        l_beh.setSpacing(10)
+        sub_b = QLabel("Choose when and how Voxel plays audio.", card_behavior)
         sub_b.setStyleSheet("font-size: 11px; color: #64748B;")
         l_beh.addWidget(sub_b)
 
-        grid_beh = QHBoxLayout()
-        col1 = QVBoxLayout()
-        col1.setSpacing(10)
-        self.chk_startup = QCheckBox("Launch Voxel automatically when Windows starts", card_behavior)
-        col1.addWidget(self.chk_startup)
-        self.chk_prebuffer = QCheckBox("Instant playback: Pre-generate first sentence on hover", card_behavior)
-        col1.addWidget(self.chk_prebuffer)
-        grid_beh.addLayout(col1)
+        beh_items_layout = QVBoxLayout()
+        beh_items_layout.setSpacing(12)
 
-        col2 = QVBoxLayout()
-        col2.setSpacing(10)
+        startup_label = "Launch Voxel automatically at system startup" if IS_MAC else "Launch Voxel automatically when Windows starts"
+        self.chk_startup = QCheckBox(startup_label, card_behavior)
+        self.chk_startup.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        beh_items_layout.addWidget(self.chk_startup)
+
+        self.chk_prebuffer = QCheckBox("Instant playback: Pre-generate first sentence on hover", card_behavior)
+        self.chk_prebuffer.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        beh_items_layout.addWidget(self.chk_prebuffer)
+
         self.chk_trigger = QCheckBox("Show floating Voxel badge when selecting text", card_behavior)
-        col2.addWidget(self.chk_trigger)
+        self.chk_trigger.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        beh_items_layout.addWidget(self.chk_trigger)
+
         self.chk_autoclose = QCheckBox("Automatically close player when speech finishes", card_behavior)
-        col2.addWidget(self.chk_autoclose)
-        grid_beh.addLayout(col2)
-        l_beh.addLayout(grid_beh)
+        self.chk_autoclose.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        beh_items_layout.addWidget(self.chk_autoclose)
+
+        l_beh.addLayout(beh_items_layout)
         layout.addWidget(card_behavior)
 
-        # Card 4: Audio Output && Recordings
+        # ─── ROW 5: Audio Output && Recordings (2 Rows: Output Device + Volume & Folder) ───
         card_out = QGroupBox("Audio Output && Recordings", content)
         l_out = QVBoxLayout(card_out)
-        l_out.setSpacing(10)
-        sub_o = QLabel("Choose where to play audio and automatically save speech recordings.")
+        l_out.setSpacing(12)
+        sub_o = QLabel("Choose where to play audio and automatically save speech recordings.", card_out)
         sub_o.setStyleSheet("font-size: 11px; color: #64748B;")
         l_out.addWidget(sub_o)
 
-        out_row = QHBoxLayout()
-        out_row.setSpacing(16)
-
-        # Output Device
-        dev_col = QVBoxLayout()
-        dev_col.addWidget(QLabel("Output Device:"))
+        # Row 1: Output Device (Full Width)
+        dev_layout = QVBoxLayout()
+        dev_layout.setSpacing(4)
+        lbl_dev = QLabel("Output Device:", card_out)
+        lbl_dev.setStyleSheet("font-weight: 600; font-size: 12px;")
+        dev_layout.addWidget(lbl_dev)
         self.combo_device = QComboBox(card_out)
         self.combo_device.addItem("🔊 Default Output Device (Speakers / Headphones)", "default")
-        dev_col.addWidget(self.combo_device)
-        out_row.addLayout(dev_col, 3)
+        dev_layout.addWidget(self.combo_device)
+        l_out.addLayout(dev_layout)
 
-        # Volume Slider
-        vol_col = QVBoxLayout()
-        vol_col.addWidget(QLabel("Volume:"))
+        # Row 2: Volume Slider and Recordings Folder
+        row2_out = QHBoxLayout()
+        row2_out.setSpacing(16)
+
+        vol_box = QVBoxLayout()
+        vol_box.setSpacing(4)
+        lbl_vol = QLabel("Volume:", card_out)
+        lbl_vol.setStyleSheet("font-weight: 600; font-size: 12px;")
+        vol_box.addWidget(lbl_vol)
+
         vol_h = QHBoxLayout()
+        vol_h.setSpacing(8)
         vol_h.addWidget(QLabel("🔊"))
         self.slider_volume = QSlider(Qt.Orientation.Horizontal, card_out)
         self.slider_volume.setRange(0, 100)
@@ -660,45 +700,47 @@ class SettingsDialog(QDialog):
         self.slider_volume.valueChanged.connect(lambda v: self.lbl_vol_val.setText(f"{v}%"))
         vol_h.addWidget(self.slider_volume)
         self.lbl_vol_val = QLabel("80%", card_out)
-        self.lbl_vol_val.setStyleSheet("font-weight: 600; font-size: 12px; color: #7C3AED;")
+        self.lbl_vol_val.setStyleSheet("font-weight: 700; font-size: 12px; color: #7C3AED; min-width: 36px;")
         vol_h.addWidget(self.lbl_vol_val)
-        vol_col.addLayout(vol_h)
-        out_row.addLayout(vol_col, 2)
-        l_out.addLayout(out_row)
+        vol_box.addLayout(vol_h)
+        row2_out.addLayout(vol_box, 1)
+        l_out.addLayout(row2_out)
 
-        # Automatic Recordings Folder row
-        rec_row = QHBoxLayout()
-        rec_row.setSpacing(8)
-        lbl_rec_path = QLabel(f"📁 Automatic Recordings Folder:  <b>{get_recordings_dir()}</b>", card_out)
-        lbl_rec_path.setStyleSheet("font-size: 12px; color: #475569;")
-        rec_row.addWidget(lbl_rec_path)
-        rec_row.addStretch()
+        # Recordings Folder row with Word Wrapping (Guaranteed no horizontal overflow)
+        rec_layout = QHBoxLayout()
+        rec_layout.setSpacing(10)
+        lbl_rec_path = QLabel(f"📁 Recordings: <b>{get_recordings_dir()}</b>", card_out)
+        lbl_rec_path.setWordWrap(True)
+        lbl_rec_path.setStyleSheet("font-size: 11px; color: #475569;")
+        rec_layout.addWidget(lbl_rec_path, 1)
 
-        btn_open_rec = QPushButton("📂 Open Recordings Folder", card_out)
+        btn_open_rec = QPushButton("📂 Open Folder", card_out)
         btn_open_rec.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_open_rec.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 6px 14px;")
         btn_open_rec.clicked.connect(open_recordings_folder)
-        rec_row.addWidget(btn_open_rec)
-        l_out.addLayout(rec_row)
+        rec_layout.addWidget(btn_open_rec)
+        l_out.addLayout(rec_layout)
 
         layout.addWidget(card_out)
 
+        # ─── ROW 6: macOS Permissions (Word-Wrapped, Clean & Compact) ───
         if IS_MAC:
             card_perm = QGroupBox("macOS Permissions & Text Selection", content)
             l_perm = QVBoxLayout(card_perm)
-            l_perm.setSpacing(8)
+            l_perm.setSpacing(10)
 
             perm_row = QHBoxLayout()
+            perm_row.setSpacing(10)
             trusted = is_accessibility_trusted(prompt=False)
             status_text = "● Accessibility Granted (Active)" if trusted else "● Accessibility Not Granted"
             status_color = "#10B981" if trusted else "#F59E0B"
 
             lbl_perm_status = QLabel(f"<b>Status:</b> <span style='color: {status_color};'>{status_text}</span>", card_perm)
             lbl_perm_status.setStyleSheet("font-size: 12px;")
-            perm_row.addWidget(lbl_perm_status)
-            perm_row.addStretch()
+            lbl_perm_status.setWordWrap(True)
+            perm_row.addWidget(lbl_perm_status, 1)
 
-            btn_open_perm = QPushButton("⚙️ Open Accessibility Settings", card_perm)
+            btn_open_perm = QPushButton("⚙️ Open Settings", card_perm)
             btn_open_perm.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             btn_open_perm.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 6px 14px;")
             btn_open_perm.clicked.connect(open_accessibility_settings)
@@ -706,6 +748,7 @@ class SettingsDialog(QDialog):
             l_perm.addLayout(perm_row)
 
             lbl_perm_desc = QLabel("Required for Voxel to display the floating bubble when highlighting text and to read full documents.", card_perm)
+            lbl_perm_desc.setWordWrap(True)
             lbl_perm_desc.setStyleSheet("font-size: 11px; color: #64748B;")
             l_perm.addWidget(lbl_perm_desc)
 
@@ -722,10 +765,16 @@ class SettingsDialog(QDialog):
         if self.tts:
             self.tts.set_speed(speed)
 
+    def _on_fade_out_slider_changed(self, val: int):
+        duration = round(val / 100.0, 2)
+        self.lbl_fade_out_val.setText(f"{duration:.2f}s")
+
     def _create_permissions_page(self) -> QWidget:
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 6, 0)
@@ -737,32 +786,33 @@ class SettingsDialog(QDialog):
         l_status.setSpacing(12)
 
         self.lbl_perm_page_status = QLabel(card_status)
+        self.lbl_perm_page_status.setWordWrap(True)
         self._refresh_perm_page_status()
         l_status.addWidget(self.lbl_perm_page_status)
 
-        btn_row = QHBoxLayout()
-        btn_row.setSpacing(10)
-
+        # Action Buttons in 2 compact rows to prevent any horizontal overflow
         btn_open = QPushButton("⚙️  Open Accessibility Settings", card_status)
         btn_open.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_open.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 8px 16px;")
         btn_open.clicked.connect(open_accessibility_settings)
-        btn_row.addWidget(btn_open)
+        l_status.addWidget(btn_open)
+
+        btn_row2 = QHBoxLayout()
+        btn_row2.setSpacing(10)
 
         btn_refresh = QPushButton("🔄  Refresh Status", card_status)
         btn_refresh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_refresh.setStyleSheet("background-color: rgba(255,255,255,0.08); color: #38BDF8; font-weight: 600; border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 8px 16px;")
+        btn_refresh.setStyleSheet("background-color: rgba(255,255,255,0.08); color: #38BDF8; font-weight: 600; border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 8px 14px;")
         btn_refresh.clicked.connect(self._refresh_perm_page_status)
-        btn_row.addWidget(btn_refresh)
+        btn_row2.addWidget(btn_refresh)
 
         btn_test = QPushButton("🎯  Test Floating Bubble Now", card_status)
         btn_test.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_test.setStyleSheet("background-color: rgba(16,185,129,0.15); color: #10B981; font-weight: 700; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; padding: 8px 16px;")
+        btn_test.setStyleSheet("background-color: rgba(16,185,129,0.15); color: #10B981; font-weight: 700; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; padding: 8px 14px;")
         btn_test.clicked.connect(lambda: self.test_bubble_requested.emit())
-        btn_row.addWidget(btn_test)
+        btn_row2.addWidget(btn_test)
 
-        btn_row.addStretch()
-        l_status.addLayout(btn_row)
+        l_status.addLayout(btn_row2)
         layout.addWidget(card_status)
 
         # Card 2: 3-Step Setup Guide
@@ -787,8 +837,8 @@ class SettingsDialog(QDialog):
             lbl_d = QLabel(desc, card_guide)
             lbl_d.setStyleSheet("font-size: 12px; line-height: 1.4;")
             lbl_d.setTextFormat(Qt.TextFormat.RichText)
-            s_row.addWidget(lbl_d)
-            s_row.addStretch()
+            lbl_d.setWordWrap(True)
+            s_row.addWidget(lbl_d, 1)
             l_guide.addLayout(s_row)
 
         layout.addWidget(card_guide)
@@ -800,6 +850,7 @@ class SettingsDialog(QDialog):
 
         lbl_r_info = QLabel("macOS requires applications to restart once granted Accessibility permissions for background event taps to activate.", card_restart)
         lbl_r_info.setStyleSheet("font-size: 11px; color: #64748B;")
+        lbl_r_info.setWordWrap(True)
         l_restart.addWidget(lbl_r_info)
 
         from src.utils.mac_permissions import restart_voxel_app
@@ -833,6 +884,8 @@ class SettingsDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 6, 0)
@@ -847,30 +900,31 @@ class SettingsDialog(QDialog):
         sub_logo.setStyleSheet("font-size: 11px; color: #64748B;")
         l_logo.addWidget(sub_logo)
 
-        logo_row = QHBoxLayout()
-        logo_row.setSpacing(14)
+        # Top sub-row: Preview Card + Action Buttons
+        logo_top_row = QHBoxLayout()
+        logo_top_row.setSpacing(16)
 
         # Left: Current Logo Preview Card
         self.frame_logo_preview = QFrame(card_logo)
-        self.frame_logo_preview.setFixedSize(190, 84)
+        self.frame_logo_preview.setFixedSize(170, 74)
         self.frame_logo_preview.setStyleSheet(
             "QFrame { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; }"
         )
         l_prev = QVBoxLayout(self.frame_logo_preview)
-        l_prev.setContentsMargins(8, 8, 8, 8)
+        l_prev.setContentsMargins(6, 6, 6, 6)
         self.lbl_logo_preview = QLabel(self.frame_logo_preview)
         self.lbl_logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         l_prev.addWidget(self.lbl_logo_preview)
-        logo_row.addWidget(self.frame_logo_preview)
+        logo_top_row.addWidget(self.frame_logo_preview)
 
-        # Middle: Logo Action Buttons
+        # Right: Logo Action Buttons
         logo_btn_col = QVBoxLayout()
         logo_btn_col.setSpacing(8)
-        logo_btn_col.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo_btn_col.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         self.btn_change_logo = QPushButton("  ⭡  Change Logo", card_logo)
         self.btn_change_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_change_logo.setFixedHeight(34)
+        self.btn_change_logo.setFixedHeight(32)
         self.btn_change_logo.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
@@ -890,7 +944,7 @@ class SettingsDialog(QDialog):
 
         self.btn_restore_logo = QPushButton("  ↺  Restore Default", card_logo)
         self.btn_restore_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_restore_logo.setFixedHeight(34)
+        self.btn_restore_logo.setFixedHeight(32)
         self.btn_restore_logo.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
@@ -908,35 +962,31 @@ class SettingsDialog(QDialog):
         """)
         self.btn_restore_logo.clicked.connect(self._on_restore_default_logo)
         logo_btn_col.addWidget(self.btn_restore_logo)
-        logo_row.addLayout(logo_btn_col)
+        logo_top_row.addLayout(logo_btn_col)
+        logo_top_row.addStretch()
+        l_logo.addLayout(logo_top_row)
 
-        logo_row.addSpacing(6)
-
-        # Right: Logo Requirements Info Card
+        # Bottom sub-row: Logo Requirements Info Card (Full Width)
         self.frame_logo_req = QFrame(card_logo)
         self.frame_logo_req.setStyleSheet(
-            "QFrame { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }"
+            "QFrame { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; }"
         )
-        l_req = QVBoxLayout(self.frame_logo_req)
-        l_req.setContentsMargins(14, 10, 14, 10)
-        l_req.setSpacing(4)
+        l_req = QHBoxLayout(self.frame_logo_req)
+        l_req.setContentsMargins(12, 8, 12, 8)
+        l_req.setSpacing(14)
 
-        lbl_req_title = QLabel("ℹ️  Logo Requirements", self.frame_logo_req)
+        lbl_req_title = QLabel("ℹ️  Requirements:", self.frame_logo_req)
         lbl_req_title.setStyleSheet("font-weight: 800; font-size: 12px; color: #1E293B;")
         l_req.addWidget(lbl_req_title)
 
         req_text = QLabel(
-            "<b>Format:</b> PNG, JPG or SVG<br>"
-            "<b>Recommended Size:</b> 512 × 512 px<br>"
-            "<b>Minimum Size:</b> 256 × 256 px<br>"
-            "<b>Aspect Ratio:</b> 1:1 (Square)",
+            "PNG, JPG or SVG &nbsp;•&nbsp; Recommended: 512×512 px &nbsp;•&nbsp; Min: 256×256 px &nbsp;•&nbsp; 1:1 Aspect Ratio",
             self.frame_logo_req
         )
-        req_text.setStyleSheet("font-size: 11px; color: #475569; line-height: 1.4;")
-        l_req.addWidget(req_text)
-        logo_row.addWidget(self.frame_logo_req, stretch=1)
-
-        l_logo.addLayout(logo_row)
+        req_text.setStyleSheet("font-size: 11px; color: #475569;")
+        req_text.setWordWrap(True)
+        l_req.addWidget(req_text, 1)
+        l_logo.addWidget(self.frame_logo_req)
         layout.addWidget(card_logo)
 
         # ─── Card 2: Floating Bubble Appearance (4 selectable cards) ───
@@ -1190,6 +1240,8 @@ class SettingsDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 6, 0)
@@ -1262,6 +1314,8 @@ class SettingsDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 6, 0)
@@ -1307,12 +1361,16 @@ class SettingsDialog(QDialog):
         # Freedom && Disclaimer
         card_free = QGroupBox("Open Source Freedom", content)
         l_f = QVBoxLayout(card_free)
-        l_f.addWidget(QLabel("This software is <b>100% free and open source</b> with no copyright restrictions or telemetry. Anyone is welcome to contribute."))
+        lbl_f = QLabel("This software is <b>100% free and open source</b> with no copyright restrictions or telemetry. Anyone is welcome to contribute.", card_free)
+        lbl_f.setWordWrap(True)
+        l_f.addWidget(lbl_f)
         layout.addWidget(card_free)
 
         card_disc = QGroupBox("Disclaimer", content)
         l_d = QVBoxLayout(card_disc)
-        l_d.addWidget(QLabel("Provided 'as is' for personal and productivity use. Digimo and creators assume no liability for any use or outcome."))
+        lbl_d = QLabel("Provided 'as is' for personal and productivity use. Digimo and creators assume no liability for any use or outcome.", card_disc)
+        lbl_d.setWordWrap(True)
+        l_d.addWidget(lbl_d)
         layout.addWidget(card_disc)
 
         layout.addStretch()
@@ -1323,8 +1381,29 @@ class SettingsDialog(QDialog):
     # THEME STYLESHEET DEFINITIONS (QSS / Custom CSS)
     # ═════════════════════════════════════════════════════════════
 
+    def _get_check_icon_path(self) -> str:
+        path = _get_asset_path("branding/png/checkbox_check.png") or _get_asset_path("checkbox_check.png")
+        if not path or not os.path.exists(path):
+            import tempfile
+            fallback_icon = os.path.join(tempfile.gettempdir(), "voxel_check.png")
+            if not os.path.exists(fallback_icon):
+                from PyQt6.QtGui import QImage, QPainter, QPen, QColor
+                from PyQt6.QtCore import Qt, QPointF
+                img = QImage(32, 32, QImage.Format.Format_ARGB32_Premultiplied)
+                img.fill(0)
+                p = QPainter(img)
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                pen = QPen(QColor("#FFFFFF"), 3.6, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+                p.setPen(pen)
+                p.drawLine(QPointF(7.5, 16.5), QPointF(13.5, 23.0))
+                p.drawLine(QPointF(13.5, 23.0), QPointF(24.5, 9.5))
+                p.end()
+                img.save(fallback_icon, "PNG")
+            path = fallback_icon
+        return path.replace("\\", "/")
+
     def _get_light_stylesheet(self) -> str:
-        check_icon_path = os.path.join(os.getcwd(), "assets", "branding", "png", "checkbox_check.png").replace("\\", "/")
+        check_icon_path = self._get_check_icon_path()
         return f"""
             QDialog {{
                 background-color: #F8FAFC;
@@ -1357,8 +1436,8 @@ class SettingsDialog(QDialog):
             QGroupBox {{
                 border: 1px solid #E2E8F0;
                 border-radius: 12px;
-                margin-top: 10px;
-                padding: 16px 14px 12px 14px;
+                margin-top: 14px;
+                padding: 18px 14px 12px 14px;
                 font-weight: 700;
                 color: #0F172A;
                 background-color: #FFFFFF;
@@ -1366,10 +1445,12 @@ class SettingsDialog(QDialog):
             QGroupBox::title {{
                 color: #0F172A;
                 subcontrol-origin: margin;
+                subcontrol-position: top left;
                 left: 14px;
                 padding: 0 4px;
                 font-size: 13px;
                 font-weight: 700;
+                background-color: transparent;
             }}
             QComboBox, QDoubleSpinBox {{
                 background-color: #F8FAFC;
@@ -1388,9 +1469,12 @@ class SettingsDialog(QDialog):
             }}
             QCheckBox {{
                 color: #0F172A;
-                font-size: 12px;
+                font-size: 13px;
                 spacing: 10px;
                 font-weight: 500;
+            }}
+            QCheckBox:hover {{
+                color: #7C3AED;
             }}
             QCheckBox::indicator {{
                 width: 18px;
@@ -1401,10 +1485,16 @@ class SettingsDialog(QDialog):
             }}
             QCheckBox::indicator:hover {{
                 border-color: #7C3AED;
+                background-color: #F8FAFC;
+            }}
+            QCheckBox::indicator:unchecked {{
+                image: none;
+                background-color: #FFFFFF;
+                border: 1.5px solid #CBD5E1;
             }}
             QCheckBox::indicator:checked {{
                 background-color: #7C3AED;
-                border-color: #7C3AED;
+                border: 1.5px solid #7C3AED;
                 image: url("{check_icon_path}");
             }}
             QSlider::groove:horizontal {{
@@ -1457,10 +1547,31 @@ class SettingsDialog(QDialog):
             #BtnTest:hover {{
                 background-color: #6D28D9;
             }}
+            QScrollBar:horizontal {{
+                height: 0px;
+                background: transparent;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: transparent;
+                width: 6px;
+                margin: 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: #CBD5E1;
+                min-height: 24px;
+                border-radius: 3px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: #94A3B8;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
         """
 
     def _get_dark_stylesheet(self) -> str:
-        check_icon_path = os.path.join(os.getcwd(), "assets", "branding", "png", "checkbox_check.png").replace("\\", "/")
+        check_icon_path = self._get_check_icon_path()
         return f"""
             QDialog {{
                 background-color: #0B0F19;
@@ -1493,8 +1604,8 @@ class SettingsDialog(QDialog):
             QGroupBox {{
                 border: 1px solid rgba(255, 255, 255, 0.08);
                 border-radius: 12px;
-                margin-top: 10px;
-                padding: 16px 14px 12px 14px;
+                margin-top: 14px;
+                padding: 18px 14px 12px 14px;
                 font-weight: 700;
                 color: #F8FAFC;
                 background-color: #161F30;
@@ -1502,10 +1613,12 @@ class SettingsDialog(QDialog):
             QGroupBox::title {{
                 color: #F8FAFC;
                 subcontrol-origin: margin;
+                subcontrol-position: top left;
                 left: 14px;
                 padding: 0 4px;
                 font-size: 13px;
                 font-weight: 700;
+                background-color: transparent;
             }}
             QComboBox, QDoubleSpinBox {{
                 background-color: #1E293B;
@@ -1524,9 +1637,12 @@ class SettingsDialog(QDialog):
             }}
             QCheckBox {{
                 color: #F1F5F9;
-                font-size: 12px;
+                font-size: 13px;
                 spacing: 10px;
                 font-weight: 500;
+            }}
+            QCheckBox:hover {{
+                color: #A78BFA;
             }}
             QCheckBox::indicator {{
                 width: 18px;
@@ -1537,10 +1653,16 @@ class SettingsDialog(QDialog):
             }}
             QCheckBox::indicator:hover {{
                 border-color: #A78BFA;
+                background-color: #334155;
+            }}
+            QCheckBox::indicator:unchecked {{
+                image: none;
+                background-color: #1E293B;
+                border: 1.5px solid #475569;
             }}
             QCheckBox::indicator:checked {{
                 background-color: #7C3AED;
-                border-color: #7C3AED;
+                border: 1.5px solid #7C3AED;
                 image: url("{check_icon_path}");
             }}
             QSlider::groove:horizontal {{
@@ -1592,6 +1714,27 @@ class SettingsDialog(QDialog):
             }}
             #BtnTest:hover {{
                 background-color: #6D28D9;
+            }}
+            QScrollBar:horizontal {{
+                height: 0px;
+                background: transparent;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: transparent;
+                width: 6px;
+                margin: 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: #334155;
+                min-height: 24px;
+                border-radius: 3px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: #475569;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
             }}
         """
 
@@ -1747,7 +1890,8 @@ class SettingsDialog(QDialog):
             self.combo_emotion.setCurrentIndex(idx_e)
 
         self.slider_speed.setValue(100)
-        self.spin_fade_duration.setValue(1.00)
+        self.slider_fade_out.setValue(100)
+        self.lbl_fade_out_val.setText("1.00s")
         self.switch_fade_in.setChecked(True)
         self.chk_startup.setChecked(False)
         self.chk_prebuffer.setChecked(True)
@@ -1793,7 +1937,8 @@ class SettingsDialog(QDialog):
         self.chk_autoclose.setChecked(autoclose)
 
         delay_val = float(settings_db.get("auto_close_delay", 1.0))
-        self.spin_fade_duration.setValue(delay_val)
+        self.slider_fade_out.setValue(max(20, min(300, int(round(delay_val * 100)))))
+        self.lbl_fade_out_val.setText(f"{delay_val:.2f}s")
 
         vol_val = int(settings_db.get("volume", 80))
         self.slider_volume.setValue(vol_val)
@@ -1828,7 +1973,8 @@ class SettingsDialog(QDialog):
         settings_db.set("prebuffer_enabled", self.chk_prebuffer.isChecked())
         settings_db.set("selection_popup_enabled", self.chk_trigger.isChecked())
         settings_db.set("auto_close_finished", self.chk_autoclose.isChecked())
-        settings_db.set("auto_close_delay", self.spin_fade_duration.value())
+        fade_out_secs = round(self.slider_fade_out.value() / 100.0, 2)
+        settings_db.set("auto_close_delay", fade_out_secs)
         settings_db.set("volume", self.slider_volume.value())
         settings_db.set("bubble_transparency", self.slider_transparency.value())
         settings_db.set("bubble_size", self.combo_bubble_size.currentText())
