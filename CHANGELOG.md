@@ -10,6 +10,23 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.21] - 2026-11-01
+
+### Always-Fixed Bottom Test Voice Bar & Clean Minimalist Voice Controls
+- **Always-Fixed Bottom Test Voice Bar (Voice & Speech Tab)**:
+  - Docked the Test Voice control bar permanently at the bottom of the Voice & Speech tab, outside the vertical scroll area.
+  - The bar remains 100% visible at all times regardless of scroll position, allowing users to instantly preview voice changes while adjusting Voice, Emotion, Pitch, Speed, or Equalizer presets without scrolling down.
+- **Minimalist, Clutter-Free Controls**:
+  - Removed verbose title and description headers ("nothing to put more").
+  - Clean, concise button label: **`▶ Test Voice`** (toggles to **`⏹ Stop Voice`** while synthesizing/speaking).
+  - Clean status indicator: displays `"⚡ Synthesizing live audio..."` during generation and clears automatically when idle/stopped.
+  - Integrated the buttery-smooth 18-bar harmonic audio visualizer directly into the fixed bottom bar.
+- **Themed Docked Container**:
+  - Styled with `#FixedTestVoiceBar` across Light (`#FFFFFF` with `#E2E8F0` border) and Dark (`#161F30` with `rgba(255, 255, 255, 0.08)` border) themes.
+  - Zero horizontal overflow guaranteed (`max=0`) across all 5 Settings tabs.
+
+---
+
 ## [v1.1.20] - 2026-11-01
 
 ### Buttery Harmonic Voice Spectrum, Voice Tuning Controls, and External-App Floating Bubble Detection

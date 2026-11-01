@@ -1238,7 +1238,13 @@ class SettingsDialog(QDialog):
     # ═════════════════════════════════════════════════════════════
 
     def _create_voice_page(self) -> QWidget:
-        scroll = QScrollArea()
+        container = QWidget()
+        page_layout = QVBoxLayout(container)
+        page_layout.setContentsMargins(0, 0, 0, 0)
+        page_layout.setSpacing(10)
+
+        # 1. Scrollable Cards Area (Voice, Emotion, Tuning, EQ)
+        scroll = QScrollArea(container)
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -1380,35 +1386,35 @@ class SettingsDialog(QDialog):
         l_eq.addWidget(self.equalizer_widget)
         layout.addWidget(card_eq)
 
-        # Card 3: Performance && Latency Test
-        card_perf = QGroupBox("Voice Performance && Audio Test", content)
-        l_p = QVBoxLayout(card_perf)
-        l_p.setSpacing(8)
-        lbl_p_sub = QLabel("Test speech synthesis speed, neural voice emotion, and latency in real time:")
-        lbl_p_sub.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_p.addWidget(lbl_p_sub)
-
-        p_row = QHBoxLayout()
-        p_row.setSpacing(10)
-        self.btn_test_perf = QPushButton("▶ Test Voice && Latency", card_perf)
-        self.btn_test_perf.setObjectName("BtnTest")
-        self.btn_test_perf.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_test_perf.clicked.connect(self._run_performance_test)
-        p_row.addWidget(self.btn_test_perf)
-
-        self.equalizer_preview = EqualizerPreviewWidget(card_perf)
-        p_row.addWidget(self.equalizer_preview)
-
-        self.lbl_test_status = QLabel("Ready to test live audio", card_perf)
-        self.lbl_test_status.setStyleSheet("color: #7C3AED; font-weight: 600; font-size: 11px;")
-        p_row.addWidget(self.lbl_test_status)
-        p_row.addStretch()
-        l_p.addLayout(p_row)
-        layout.addWidget(card_perf)
-
         layout.addStretch()
         scroll.setWidget(content)
-        return scroll
+        page_layout.addWidget(scroll, 1)
+
+        # 2. Always-Fixed Bottom Test Voice Bar (Docked at bottom of Voice page)
+        self.frame_test_voice = QFrame(container)
+        self.frame_test_voice.setObjectName("FixedTestVoiceBar")
+        bar_layout = QHBoxLayout(self.frame_test_voice)
+        bar_layout.setContentsMargins(14, 8, 14, 8)
+        bar_layout.setSpacing(14)
+
+        self.btn_test_perf = QPushButton("▶ Test Voice", self.frame_test_voice)
+        self.btn_test_perf.setObjectName("BtnTest")
+        self.btn_test_perf.setFixedHeight(36)
+        self.btn_test_perf.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_test_perf.clicked.connect(self._run_performance_test)
+        bar_layout.addWidget(self.btn_test_perf)
+
+        self.equalizer_preview = EqualizerPreviewWidget(self.frame_test_voice)
+        bar_layout.addWidget(self.equalizer_preview)
+
+        self.lbl_test_status = QLabel("", self.frame_test_voice)
+        self.lbl_test_status.setStyleSheet("color: #7C3AED; font-weight: 600; font-size: 11px;")
+        bar_layout.addWidget(self.lbl_test_status)
+
+        bar_layout.addStretch()
+        page_layout.addWidget(self.frame_test_voice, 0)
+
+        return container
 
     # ═════════════════════════════════════════════════════════════
     # PAGE 3: ABOUT VOXEL
@@ -1536,6 +1542,11 @@ class SettingsDialog(QDialog):
             QLabel {{
                 color: #0F172A;
                 font-size: 13px;
+            }}
+            #FixedTestVoiceBar {{
+                background-color: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 12px;
             }}
             QGroupBox {{
                 border: 1px solid #E2E8F0;
@@ -1704,6 +1715,11 @@ class SettingsDialog(QDialog):
             QLabel {{
                 color: #F1F5F9;
                 font-size: 13px;
+            }}
+            #FixedTestVoiceBar {{
+                background-color: #161F30;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
             }}
             QGroupBox {{
                 border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1948,8 +1964,8 @@ class SettingsDialog(QDialog):
 
         if self.tts.is_speaking:
             self.tts.stop()
-            self.btn_test_perf.setText("▶ Test Voice && Latency")
-            self.lbl_test_status.setText("Test stopped.")
+            self.btn_test_perf.setText("▶ Test Voice")
+            self.lbl_test_status.setText("")
             if hasattr(self, "equalizer_preview"):
                 self.equalizer_preview.set_active(False)
             return
@@ -1961,14 +1977,14 @@ class SettingsDialog(QDialog):
                 break
         self.tts.set_emotion_mode(self.combo_emotion.currentData())
 
-        self.btn_test_perf.setText("⏹ Stop Test")
+        self.btn_test_perf.setText("⏹ Stop Voice")
         self.lbl_test_status.setText("⚡ Synthesizing live audio...")
         if hasattr(self, "equalizer_preview"):
             self.equalizer_preview.set_active(True)
 
         test_phrase = (
-            "Hello! This is a live performance test of Voxel with your selected voice, "
-            "playback speed, and emotional tone. Audio synthesis is fast, clear, and running at peak performance."
+            "Hello! This is a live voice preview with your selected voice and tuning. "
+            "Speed, pitch, and timbre are running smoothly."
         )
 
         def _on_test_done():
@@ -1976,8 +1992,8 @@ class SettingsDialog(QDialog):
                 self.tts.playback_finished.disconnect(_on_test_done)
             except Exception:
                 pass
-            self.btn_test_perf.setText("▶ Test Voice && Latency")
-            self.lbl_test_status.setText("✓ Test completed successfully!")
+            self.btn_test_perf.setText("▶ Test Voice")
+            self.lbl_test_status.setText("")
             if hasattr(self, "equalizer_preview"):
                 self.equalizer_preview.set_active(False)
 
