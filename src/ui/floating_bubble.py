@@ -133,6 +133,7 @@ class FloatingBubble(QWidget):
         self.fade_anim.stop()
         self.setWindowOpacity(0.0)
         self.show()
+        self.raise_()
         self.fade_anim.setStartValue(0.0)
         self.fade_anim.setEndValue(self.target_opacity)
         self.fade_anim.start()

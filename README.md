@@ -1,4 +1,4 @@
-<!-- README.md (v1.3) - [2026-11-01] -->
+<!-- README.md (v1.4) - [2026-11-01] -->
 # Voxel — Text to Speech, Anywhere
 
 <p align="center">
@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.16-7441F9?style=for-the-badge&logo=apple" alt="Version v1.1.16"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.17-7441F9?style=for-the-badge&logo=apple" alt="Version v1.1.17"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00F0FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
   <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7441F9&label=Downloads" alt="GitHub Downloads"></a>
@@ -243,7 +243,7 @@ In early development builds, some users experienced a crash dialog:
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel macOS Disk Image (.dmg)** | **`v1.1.16`** *(Latest)* | Drag-and-drop installer with official purple & cyan brand icon, document reader, and voice equalizer | macOS (Apple Silicon / Intel) | [**📥 Download Voxel-v1.1.16.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.dmg) *(Recommended)* |
+| **Voxel macOS Disk Image (.dmg)** | **`v1.1.17`** *(Latest)* | Drag-and-drop installer with native Quartz selection, full document reader, and permission assistant | macOS (Apple Silicon / Intel) | [**📥 Download Voxel-v1.1.17.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.dmg) *(Recommended)* |
 | **Voxel DMG (Latest Alias)** | `latest` | Automatically resolves to the newest macOS disk image | macOS / Applications | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
 #### Run from Source (macOS)
@@ -260,7 +260,7 @@ chmod +x run.sh
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel Windows Standalone** | **`v1.1.16`** *(Latest)* | Zero-dependency standalone portable executable with official brand logo, multi-resolution `.ico`, and document reader | Windows 10 / 11 | [**📥 Download Voxel-v1.1.16.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.exe) *(Recommended)* |
+| **Voxel Windows Standalone** | **`v1.1.17`** *(Latest)* | Zero-dependency standalone portable executable with unified Win32 selection, full document reader, and brand icons | Windows 10 / 11 | [**📥 Download Voxel-v1.1.17.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.exe) *(Recommended)* |
 | **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
 > [!IMPORTANT]
@@ -284,13 +284,34 @@ python main.py
 
 ---
 
+## 📄 Text Selection & Full Document Reading (macOS & Windows Architecture)
+
+Voxel uses a **single unified cross-platform codebase** (`src/`) that operates seamlessly across both operating systems:
+
+```text
+       USER ACTION                           macOS BACKEND                             WINDOWS BACKEND
+ ───────────────────────      ─────────────────────────────────────────      ───────────────────────────────────────
+ 1. Mouse Drag / Select  ──>  Quartz CoreGraphics Event Tap                  ──>  Win32 Low-Level Hook (SetWindowsHookEx)
+ 2. Floating Bubble      ──>  Dual-Action ToolTip (Left: Mic, Right: Doc)    ──>  Dual-Action ToolTip (Left: Mic, Right: Doc)
+ 3. Click Left (Mic)     ──>  Quartz CGEventPost Cmd+C                       ──>  Win32 keybd_event Ctrl+C
+ 4. Click Right (Doc)    ──>  Quartz CGEventPost Cmd+A (Select All) + Cmd+C  ──>  Win32 keybd_event Ctrl+A (Select All) + Ctrl+C
+ 5. Speech Playback      ──>  CoreAudio (via QtMultimedia)                   ──>  WASAPI / DirectSound (via QtMultimedia)
+```
+
+### Key Differences & Why They Matter:
+* **Why macOS Requires Accessibility Permission**: Apple's security framework blocks all third-party apps from monitoring mouse drags outside their own window unless granted in **System Settings → Privacy & Security → Accessibility**. Voxel includes an interactive helper dialog that auto-detects this permission in real-time.
+* **Why Windows Works Out-of-the-Box**: Windows allows standard user-space Win32 hooks (`SetWindowsHookEx` and `keybd_event`) without special accessibility permissions, so text selection works immediately.
+
+---
+
 ## 📦 Releases & Version Archive (Historical Builds)
 
 All past and current versions are preserved below according to [`VERSIONING_RULES.md`](VERSIONING_RULES.md):
 
 | Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
 | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`v1.1.16`** | 🟢 **Latest** | [**📥 Voxel-v1.1.16.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.exe) | — | [**📥 Voxel-v1.1.16.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.dmg) | • **Official Brand Logo Integration**: Regenerated native Apple `icon.icns` and Windows `icon.ico` with authentic purple (`#7441F9`) and cyan ring (`#00F0FF`) emblem<br>• **Voice-Reactive MiniPlayer**: Updated `VoxelLogoWidget` to render authentic emblem when idle and dynamic equalizer lines when speaking<br>• **Gatekeeper & Troubleshooting Guide**: Exhaustive documentation of macOS quarantine bypass (`xattr -cr`) and crash resolution<br>• **Automated Brand Script**: Added `scripts/generate_official_brand_assets.py` for reproducible icon generation |
+| **`v1.1.17`** | 🟢 **Latest** | [**📥 Voxel-v1.1.17.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.exe) | — | [**📥 Voxel-v1.1.17.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.17/Voxel-v1.1.17.dmg) | • **Hardware-Level Quartz Tap**: Native macOS CoreGraphics event posting for instant text selection and Cmd+C<br>• **Full Document Narration**: Click right document icon to Select All (`Cmd+A` / `Ctrl+A`) and read entire document<br>• **Interactive Permission Assistant**: Real-time macOS Accessibility guidance dialog and Settings status card<br>• **320ms Polling Resilience**: Enhanced clipboard polling for heavy apps and web pages |
+| **`v1.1.16`** | 📦 Archived | [📥 Voxel-v1.1.16.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.exe) | — | [📥 Voxel-v1.1.16.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.16/Voxel-v1.1.16.dmg) | • Official Brand Logo: Regenerated native Apple `icon.icns` and Windows `icon.ico` with authentic purple (`#7441F9`) and cyan ring (`#00F0FF`) emblem<br>• Voice-Reactive MiniPlayer: Renders authentic emblem when idle, dynamic equalizer lines when speaking |
 | **`v1.1.15`** | 📦 Archived | [📥 Voxel-v1.1.15.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.exe) | — | [📥 Voxel-v1.1.15.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.15/Voxel-v1.1.15.dmg) | • Appearance Tab Redesign: App logo uploader, Logo Requirements card, and live preview<br>• Official Document Logo: Replaced document icon with circular purple badge matching brand<br>• Dynamic Bubble Settings: Transparency, corner radius, and bubble size |
 | **`v1.1.14`** | 📦 Archived | [📥 Voxel-v1.1.14.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.exe) | — | [📥 Voxel-v1.1.14.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.14/Voxel-v1.1.14.dmg) | • Official Brand Logo: Embedded high-resolution official logo in Settings sidebar header<br>• Custom CSS/QSS styling: Styled toggle switches, indicator checkmarks, and dark/light card previews |
 | **`v1.1.13`** | 📦 Archived | [📥 Voxel-v1.1.13.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.13/Voxel-v1.1.13.exe) | — | [📥 Voxel-v1.1.13.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.13/Voxel-v1.1.13.dmg) | • Dedicated Circular System Tray Logo: Exclusively updated tray/startup bar icon to official purple badge with 4x supersampled antialiasing |

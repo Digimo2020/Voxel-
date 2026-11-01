@@ -1,4 +1,4 @@
-<!-- CHANGELOG.md (v1.2) - [2026-11-01] -->
+<!-- CHANGELOG.md (v1.3) - [2026-11-01] -->
 # Changelog
 
 All notable changes to the **Voxel** project will be documented in this file.
@@ -7,6 +7,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Versioning structure: `v<Major>.<Minor>.<Patch:02d>` (e.g. `v1.0.01`).
 Every 10th patch increments minor, and every 10th minor increments major.
+
+---
+
+## [v1.1.17] - 2026-11-01
+
+### Hardware-Level Quartz Event Tap, Full Document Reader & Interactive Mac Permission Helper
+- **Native Quartz CoreGraphics Event Simulation**:
+  - Replaced fragile AppleScript and high-level virtual keyboard injection with hardware-level Apple Quartz CoreGraphics (`CGEventCreateKeyboardEvent` + `CGEventPost(kCGHIDEventTap)`).
+  - Eliminates macOS AppleScript `-54` permission errors and guarantees instantaneous text capture on `Cmd+C`.
+- **Full Document Narration (Select All & Read)**:
+  - Upgraded `capture_full_document_from_active_window()` to issue native `Cmd+A` (Mac) / `Ctrl+A` (Win) followed by copy and clean deselect via Right Arrow.
+  - Clicking the right Document icon (or pressing `Cmd+Option+D` / `Ctrl+Alt+D`) captures and reads entire Google Docs, Word documents, PDFs, and browser articles from top to bottom.
+- **Interactive macOS Accessibility Helper Dialog**:
+  - Created `MacPermissionDialog` (`src/ui/mac_permission_dialog.py`):
+    - Shows beautiful brand guidance card with 1-click button to open System Settings.
+    - Live polls macOS TCC status every 1.2s; as soon as permission is toggled ON, automatically restarts selection listeners with zero app restart needed.
+  - Added dedicated **macOS Permissions & Text Selection** status card inside the Settings Dialog Playback tab.
+- **Clipboard Resilience**:
+  - Increased copy poll timeout from 180ms to 320ms with automatic secondary retry for heavy browser and PDF applications.
 
 ---
 

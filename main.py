@@ -231,12 +231,34 @@ class VoxelApp:
     def _on_permission_needed(self):
         """Informs user if macOS Accessibility permission is required for global hooks."""
         if IS_MAC:
-            self.tray.showMessage(
-                "Voxel: Accessibility Permission",
-                "To detect selected text across your apps, please grant Accessibility in System Settings.",
-                AppTrayIcon.MessageIcon.Warning,
-                6000
-            )
+            try:
+                from src.ui.mac_permission_dialog import MacPermissionDialog
+                if not hasattr(self, "_perm_dialog") or self._perm_dialog is None:
+                    self._perm_dialog = MacPermissionDialog()
+                    self._perm_dialog.permission_granted.connect(self._on_permission_granted)
+                self._perm_dialog.show()
+                self._perm_dialog.raise_()
+                self._perm_dialog.activateWindow()
+            except Exception as e:
+                print(f"[Main] Permission dialog error: {e}", file=sys.stderr)
+                self.tray.showMessage(
+                    "Voxel: Accessibility Permission",
+                    "To detect selected text across your apps, please grant Accessibility in System Settings.",
+                    AppTrayIcon.MessageIcon.Warning,
+                    6000
+                )
+
+    def _on_permission_granted(self):
+        """Called dynamically as soon as user enables Accessibility in System Settings."""
+        print("[Main] Accessibility permission granted! Restarting listeners...")
+        self.listener.stop()
+        self.listener.start()
+        self.tray.showMessage(
+            "Voxel Active",
+            "Accessibility enabled! Highlight any text to see the floating bubble.",
+            AppTrayIcon.MessageIcon.Information,
+            4000
+        )
 
     def _show_history(self):
         """Displays the JSON history dialog."""

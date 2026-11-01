@@ -29,6 +29,42 @@ else:
     _user32 = None
 
 
+def _send_key_combo_mac(keycode: int):
+    """Sends a Cmd+Key combination using native macOS Quartz CoreGraphics HID Event Tap."""
+    try:
+        from Quartz.CoreGraphics import (
+            CGEventCreateKeyboardEvent, CGEventSetFlags, CGEventPost,
+            kCGHIDEventTap, kCGEventFlagMaskCommand
+        )
+        down = CGEventCreateKeyboardEvent(None, keycode, True)
+        up = CGEventCreateKeyboardEvent(None, keycode, False)
+        CGEventSetFlags(down, kCGEventFlagMaskCommand)
+        CGEventSetFlags(up, kCGEventFlagMaskCommand)
+        CGEventPost(kCGHIDEventTap, down)
+        time.sleep(0.025)
+        CGEventPost(kCGHIDEventTap, up)
+        return True
+    except Exception as e:
+        print(f"[DocumentReader] Mac Quartz key error: {e}")
+        return False
+
+
+def _send_key_mac_plain(keycode: int):
+    """Sends a plain keystroke (like Right Arrow) using native macOS Quartz."""
+    try:
+        from Quartz.CoreGraphics import (
+            CGEventCreateKeyboardEvent, CGEventPost, kCGHIDEventTap
+        )
+        down = CGEventCreateKeyboardEvent(None, keycode, True)
+        up = CGEventCreateKeyboardEvent(None, keycode, False)
+        CGEventPost(kCGHIDEventTap, down)
+        time.sleep(0.02)
+        CGEventPost(kCGHIDEventTap, up)
+        return True
+    except Exception:
+        return False
+
+
 def _send_key_combo_win(vk_key: int):
     """Sends a Ctrl+Key combination using native Windows keybd_event."""
     if not _user32:
@@ -75,13 +111,18 @@ def capture_full_document_from_active_window(timeout_ms: int = 1400) -> str:
     time.sleep(0.12)
 
     # 1. Send Select All (Ctrl+A on Windows, Cmd+A on Mac)
-    if IS_WIN and _user32:
+    if IS_MAC:
+        # Keycode 0 = 'a', Keycode 8 = 'c'
+        _send_key_combo_mac(0)
+        time.sleep(0.18)
+        _send_key_combo_mac(8)
+    elif IS_WIN and _user32:
         _send_key_combo_win(VK_A)
         # Google Docs HTML5 Canvas editor needs ~180ms to update internal selection model
         time.sleep(0.18)
         _send_key_combo_win(VK_C)
     else:
-        # Cross-platform / macOS pynput & AppleScript
+        # Cross-platform fallback via pynput
         try:
             with _kb_controller.pressed(MODIFIER_KEY):
                 time.sleep(0.04)
@@ -96,21 +137,6 @@ def capture_full_document_from_active_window(timeout_ms: int = 1400) -> str:
                 _kb_controller.release("c")
         except Exception as e:
             print(f"[DocumentReader] Keystroke error: {e}")
-
-        if IS_MAC:
-            try:
-                subprocess.run(
-                    [
-                        "osascript", "-e",
-                        'tell application "System Events" to keystroke "a" using {command down}\n'
-                        'delay 0.18\n'
-                        'tell application "System Events" to keystroke "c" using {command down}'
-                    ],
-                    timeout=1.2,
-                    capture_output=True
-                )
-            except Exception:
-                pass
 
     # 2. Poll clipboard for new text
     start_time = time.time()
@@ -128,7 +154,9 @@ def capture_full_document_from_active_window(timeout_ms: int = 1400) -> str:
             continue
 
     # 3. Deselect text so the document returns to normal visual state
-    if IS_WIN and _user32:
+    if IS_MAC:
+        _send_key_mac_plain(124)  # Keycode 124 = Right Arrow
+    elif IS_WIN and _user32:
         _user32.keybd_event(VK_RIGHT, 0, 0, 0)
         time.sleep(0.02)
         _user32.keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)

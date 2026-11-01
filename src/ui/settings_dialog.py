@@ -673,6 +673,35 @@ class SettingsDialog(QDialog):
         l_out.addLayout(rec_row)
 
         layout.addWidget(card_out)
+
+        if IS_MAC:
+            card_perm = QGroupBox("macOS Permissions & Text Selection", content)
+            l_perm = QVBoxLayout(card_perm)
+            l_perm.setSpacing(8)
+
+            perm_row = QHBoxLayout()
+            trusted = is_accessibility_trusted(prompt=False)
+            status_text = "● Accessibility Granted (Active)" if trusted else "● Accessibility Not Granted"
+            status_color = "#10B981" if trusted else "#F59E0B"
+
+            lbl_perm_status = QLabel(f"<b>Status:</b> <span style='color: {status_color};'>{status_text}</span>", card_perm)
+            lbl_perm_status.setStyleSheet("font-size: 12px;")
+            perm_row.addWidget(lbl_perm_status)
+            perm_row.addStretch()
+
+            btn_open_perm = QPushButton("⚙️ Open Accessibility Settings", card_perm)
+            btn_open_perm.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_open_perm.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 6px 14px;")
+            btn_open_perm.clicked.connect(open_accessibility_settings)
+            perm_row.addWidget(btn_open_perm)
+            l_perm.addLayout(perm_row)
+
+            lbl_perm_desc = QLabel("Required for Voxel to display the floating bubble when highlighting text and to read full documents.", card_perm)
+            lbl_perm_desc.setStyleSheet("font-size: 11px; color: #64748B;")
+            l_perm.addWidget(lbl_perm_desc)
+
+            layout.addWidget(card_perm)
+
         layout.addStretch()
 
         scroll.setWidget(content)

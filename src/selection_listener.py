@@ -147,9 +147,9 @@ class SelectionListener(QObject):
             drag_dist = math.hypot(x - self._press_pos[0], y - self._press_pos[1])
             is_drag = drag_dist >= DRAG_THRESHOLD_PIXELS
 
-            # Double-click check (within 380ms and small displacement)
+            # Double-click check (within 450ms and small displacement)
             double_click_dist = math.hypot(x - self._last_click_pos[0], y - self._last_click_pos[1])
-            is_double_click = (now - self._last_click_time < 0.38) and (double_click_dist < 10)
+            is_double_click = (now - self._last_click_time < 0.45) and (double_click_dist < 15)
 
             self._last_click_time = now
             self._last_click_pos = (x, y)
@@ -166,9 +166,9 @@ class SelectionListener(QObject):
         if _is_screenshot_app_active():
             return
 
-        time.sleep(0.08)
+        time.sleep(0.12)
 
-        text = grab_selected_text(timeout_ms=180)
+        text = grab_selected_text(timeout_ms=320)
         if text and len(text) >= MIN_SELECTED_LENGTH:
             if any(c.isalnum() for c in text):
                 self.text_selected.emit(text, cursor_x, cursor_y)
