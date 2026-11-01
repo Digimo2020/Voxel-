@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QWidget, QMenu
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer, QRectF
 from PyQt6.QtGui import (
     QPainter, QColor, QBrush, QPen, QCursor, QMouseEvent,
-    QRadialGradient, QLinearGradient, QAction, QEnterEvent
+    QRadialGradient, QLinearGradient, QAction, QEnterEvent, QGuiApplication
 )
 
 from src.config import BUBBLE_TIMEOUT_SECONDS, THEME, FONT_FAMILY
@@ -52,13 +52,14 @@ class FloatingBubble(QWidget):
         self.target_opacity: float = 0.90
 
         self.setWindowFlags(
-            Qt.WindowType.ToolTip |
+            Qt.WindowType.Tool |
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.NoDropShadowWindowHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         # Smooth Fade In / Fade Out Animations
@@ -120,7 +121,7 @@ class FloatingBubble(QWidget):
         target_x = cursor_x + offset_x
         target_y = cursor_y + offset_y
 
-        screen = self.screen() or self.parent().screen() if self.parent() else None
+        screen = QGuiApplication.screenAt(QPoint(cursor_x, cursor_y)) or QGuiApplication.primaryScreen()
         if screen:
             geo = screen.availableGeometry()
             if target_y < geo.top() + 8:

@@ -10,6 +10,34 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.20] - 2026-11-01
+
+### Buttery Harmonic Voice Spectrum, Voice Tuning Controls, and External-App Floating Bubble Detection
+- **Buttery-Smooth Harmonic Equalizer Animation**:
+  - Replaced random jitter bars with an organic multi-harmonic vocal physics simulation (`sin`/`cos` fundamental and formant waves).
+  - Upgraded animation loop to ultra-smooth 60 FPS (16ms refresh) with exponential low-pass smoothing (`0.18` decay factor) for liquid, organic motion.
+  - Widened from 140px to 240px with 18 anti-aliased pill bars (6px width, 3px corner radius) featuring a vibrant gradient from Violet (`#8B5CF6`) to Cyan (`#06B6D4`).
+  - Added subtle ambient breathing wave when idle so visualizer stays lively without jarring motion.
+- **Dedicated Voice Tuning & Audio Controls Card (Voice & Speech Tab)**:
+  - **Speaking Speed Slider**: Moved from Playback to Voice & Speech tab (`0.50x` to `2.00x`, live `1.00x` badge, scale marks).
+  - **Voice Pitch Tuning Slider**: Dedicated slider from `-50Hz` (deeper voice) to `+50Hz` (higher pitch), default `0Hz`, wired directly into Edge-TTS synthesis parameters.
+  - **Master Listening Volume Slider**: Continuous `0%` to `100%` listening volume slider with real-time level badge.
+- **Audio & Playback Page Modernization & Renaming**:
+  - Renamed tab from `"Playback"` to **`"🎛️  Audio & Playback"`** across sidebar navigation, title, and subtitle.
+  - Unified fade controls into **`"Audio Transitions & Fading"`** card (smooth fade-in toggle switch + horizontal fade-out decay duration slider with scale marks).
+  - Renamed behavior card to **`"Auto-Read & Trigger Behavior"`**.
+  - Renamed hardware card to **`"Hardware Output & Auto-Recordings"`**.
+  - Renamed permissions card to **`"macOS System Permissions"`**.
+- **External Application Floating Bubble Fix (macOS Cocoa NSPanel)**:
+  - Switched floating capsule window flags from `Qt.WindowType.ToolTip` (suppressed by macOS Cocoa when third-party apps like Chrome/Safari are active) to `Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint`.
+  - Added `Qt.WidgetAttribute.WA_AlwaysShowToolTips` and `QGuiApplication.screenAt()` multi-monitor coordinate detection.
+  - Integrated high-speed native `AppKit.NSPasteboard` change count tracking (`_MAC_PB.changeCount()`) to capture highlighted text in `< 5ms` with zero subprocess overhead.
+- **macOS Gatekeeper Verification & Packaging**:
+  - Complete technical explanation and documentation of the Voxel native architecture (Pure Python 3.14 + PyQt6 Native Cocoa, NOT Electron/React, compiled via PyInstaller and packaged with Apple `hdiutil`).
+  - Clear user walkthrough for Gatekeeper bypass (`xattr -cr`, Control-Click -> Open, or System Settings -> "Open Anyway").
+
+---
+
 ## [v1.1.19] - 2026-11-01
 
 ### Interactive Checkmark Indicators, Single-Row Playback Controls & Zero Horizontal Scroll

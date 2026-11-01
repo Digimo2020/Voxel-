@@ -295,16 +295,20 @@ class SidebarWidget(QWidget):
 
 
 class EqualizerPreviewWidget(QWidget):
-    """Voice-reactive animated spectrum equalizer visualizer widget."""
+    """Voice-reactive animated spectrum equalizer visualizer widget with buttery organic harmonic physics."""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(28)
-        self.setMinimumWidth(140)
+        self.setFixedHeight(34)
+        self.setFixedWidth(240)
         self.is_active = False
-        self._levels = [0.15] * 12
+        self.num_bars = 18
+        self._levels = [0.12] * self.num_bars
+        self._target_levels = [0.12] * self.num_bars
+        self._phase = 0.0
 
+        # Ultra-smooth 60 FPS animation timer (16ms)
         self._timer = QTimer(self)
-        self._timer.setInterval(40)
+        self._timer.setInterval(16)
         self._timer.timeout.connect(self._update_bars)
         self._timer.start()
 
@@ -313,13 +317,31 @@ class EqualizerPreviewWidget(QWidget):
         self.update()
 
     def _update_bars(self):
-        import random
-        if self.is_active:
-            for i in range(12):
-                self._levels[i] = random.uniform(0.25, 0.95)
-        else:
-            for i in range(12):
-                self._levels[i] = max(0.12, self._levels[i] * 0.85)
+        import math
+        self._phase += 0.065
+        t = self._phase
+
+        for i in range(self.num_bars):
+            idx_norm = i / float(self.num_bars - 1)  # 0.0 to 1.0
+            # Bell curve envelope so mid-frequencies dominate naturally
+            envelope = math.sin(idx_norm * math.pi)
+
+            if self.is_active:
+                # Organic multi-harmonic vocal physics: fundamental + formant harmonics
+                w1 = math.sin(t * 3.8 + i * 0.42)
+                w2 = math.cos(t * 2.1 - i * 0.28)
+                w3 = math.sin(t * 5.4 + i * 0.65)
+                raw = 0.45 + 0.35 * w1 * w2 + 0.20 * w3
+                target = 0.15 + (raw * envelope * 0.82)
+                self._target_levels[i] = max(0.12, min(0.98, target))
+            else:
+                # Subtle ambient breathing wave when idle
+                idle_wave = math.sin(t * 1.2 + i * 0.3) * 0.05
+                self._target_levels[i] = max(0.08, 0.12 + idle_wave * envelope)
+
+            # Exponential low-pass smoothing for buttery, liquid motion
+            self._levels[i] += (self._target_levels[i] - self._levels[i]) * 0.18
+
         self.update()
 
     def paintEvent(self, event):
@@ -328,19 +350,28 @@ class EqualizerPreviewWidget(QWidget):
 
         w = float(self.width())
         h = float(self.height())
-        num_bars = len(self._levels)
-        bar_w = 4.0
+        num_bars = self.num_bars
+        bar_w = 6.0
         gap = (w - (num_bars * bar_w)) / max(1, num_bars - 1)
 
         for i, lvl in enumerate(self._levels):
             x = i * (bar_w + gap)
-            bar_h = max(3.0, h * lvl)
+            bar_h = max(4.0, h * lvl)
             y = (h - bar_h) / 2.0
 
-            color = QColor("#7C3AED") if self.is_active else QColor(148, 163, 184, 90)
+            if self.is_active:
+                # Rich vibrant gradient from Violet (#8B5CF6) to Cyan (#06B6D4)
+                ratio = i / float(num_bars - 1)
+                r_c = int(139 * (1.0 - ratio) + 6 * ratio)
+                g_c = int(92 * (1.0 - ratio) + 182 * ratio)
+                b_c = int(246 * (1.0 - ratio) + 212 * ratio)
+                bar_color = QColor(r_c, g_c, b_c, 240)
+            else:
+                bar_color = QColor(148, 163, 184, 100)
+
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(color))
-            painter.drawRoundedRect(int(x), int(y), int(bar_w), int(bar_h), 2, 2)
+            painter.setBrush(QBrush(bar_color))
+            painter.drawRoundedRect(QRectF(x, y, bar_w, bar_h), 3.0, 3.0)
 
         painter.end()
 
@@ -394,7 +425,7 @@ class SettingsDialog(QDialog):
         # Navigation Items matching user mockups (literal '&&' avoids underscore mnemonic)
         self.nav_items = [
             ("🎙️  Voice && Speech", 0, "🎙️", "Voice && Speech", "Fine-tune neural voices, cadence, and parametric equalizer"),
-            ("▶  Playback", 1, "▶", "Playback", "Control how Voxel plays text-to-speech audio"),
+            ("🎛️  Audio && Playback", 1, "🎛️", "Audio && Playback", "Control transitions, hardware output, and auto-read behaviors"),
             ("🎨  Appearance", 2, "🎨", "Appearance", "Personalize the look and feel of Voxel"),
             ("ℹ️  About", 3, "ℹ️", "About Voxel", "Product information, licenses, and social links"),
         ]
@@ -430,7 +461,7 @@ class SettingsDialog(QDialog):
         top_header_layout = QHBoxLayout()
         top_header_layout.setSpacing(12)
 
-        self.header_badge = QLabel("▶", self.main_content_widget)
+        self.header_badge = QLabel("🎛️", self.main_content_widget)
         self.header_badge.setFixedSize(36, 36)
         self.header_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.header_badge.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-size: 16px; font-weight: 700; border-radius: 8px;")
@@ -438,11 +469,11 @@ class SettingsDialog(QDialog):
 
         header_text_layout = QVBoxLayout()
         header_text_layout.setSpacing(2)
-        self.lbl_header_title = QLabel("Playback", self.main_content_widget)
+        self.lbl_header_title = QLabel("Audio & Playback", self.main_content_widget)
         self.lbl_header_title.setStyleSheet("font-size: 21px; font-weight: 800;")
         header_text_layout.addWidget(self.lbl_header_title)
 
-        self.lbl_header_subtitle = QLabel("Control how Voxel plays text-to-speech audio", self.main_content_widget)
+        self.lbl_header_subtitle = QLabel("Control transitions, hardware output, and auto-read behaviors", self.main_content_widget)
         self.lbl_header_subtitle.setStyleSheet("font-size: 12px; color: #64748B;")
         header_text_layout.addWidget(self.lbl_header_subtitle)
         top_header_layout.addLayout(header_text_layout)
@@ -510,10 +541,10 @@ class SettingsDialog(QDialog):
         main_col.addLayout(action_bar_layout)
         root_layout.addWidget(self.main_content_widget)
 
-        # Default select Playback tab matching user mockup
+        # Default select Audio & Playback tab matching user mockup
         if len(self.nav_buttons) > 1:
             self.nav_buttons[1].setChecked(True)
-            self._on_nav_clicked(1, "▶", "Playback", "Control how Voxel plays text-to-speech audio")
+            self._on_nav_clicked(1, "🎛️", "Audio & Playback", "Control transitions, hardware output, and auto-read behaviors")
 
     def _update_sidebar_logo(self):
         """Displays the official Voxel Logo Main image in the sidebar."""
@@ -538,103 +569,63 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(0, 0, 8, 12)
         layout.setSpacing(14)
 
-        # ─── ROW 1: Playback Speed (Own Row, Full Width) ───────────────
-        card_speed = QGroupBox("Playback Speed", content)
-        l_speed = QVBoxLayout(card_speed)
-        l_speed.setSpacing(6)
-        sub_s = QLabel("Set the speaking speed for playback.", card_speed)
-        sub_s.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_speed.addWidget(sub_s)
+        # ─── SECTION 1: Audio Transitions & Fading ───────────────────────────
+        card_transitions = QGroupBox("Audio Transitions & Fading", content)
+        l_trans = QVBoxLayout(card_transitions)
+        l_trans.setSpacing(10)
+        sub_t = QLabel("Configure start ramp-up and end decay transitions for smooth audio playback.", card_transitions)
+        sub_t.setStyleSheet("font-size: 11px; color: #64748B;")
+        l_trans.addWidget(sub_t)
 
-        slider_row = QHBoxLayout()
-        slider_row.setSpacing(10)
-        self.slider_speed = QSlider(Qt.Orientation.Horizontal, card_speed)
-        self.slider_speed.setRange(50, 200)
-        self.slider_speed.setValue(100)
-        self.slider_speed.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.slider_speed.valueChanged.connect(self._on_speed_slider_changed)
-        slider_row.addWidget(self.slider_speed)
-
-        self.lbl_speed_val = QLabel("1.00x", card_speed)
-        self.lbl_speed_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 3px 8px; min-width: 44px;")
-        self.lbl_speed_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        slider_row.addWidget(self.lbl_speed_val)
-        l_speed.addLayout(slider_row)
-
-        scale_row = QHBoxLayout()
-        scale_row.addWidget(QLabel("0.5x"))
-        scale_row.addStretch()
-        scale_row.addWidget(QLabel("Normal (1.0x)"))
-        scale_row.addStretch()
-        scale_row.addWidget(QLabel("2.0x"))
-        for i in range(scale_row.count()):
-            w = scale_row.itemAt(i).widget()
-            if w:
-                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
-        l_speed.addLayout(scale_row)
-        layout.addWidget(card_speed)
-
-        # ─── ROW 2: Fade-In Timing (Own Row, Full Width) ───────────────
-        card_fade_in = QGroupBox("Fade-In Timing", content)
-        l_fade_in = QVBoxLayout(card_fade_in)
-        l_fade_in.setSpacing(8)
-        sub_fi = QLabel("Gradually ramp up audio volume at start of speech.", card_fade_in)
-        sub_fi.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_fade_in.addWidget(sub_fi)
-
+        # Fade-in Toggle Row
         fi_row = QHBoxLayout()
-        lbl_fi_title = QLabel("Smooth fade-in at start", card_fade_in)
+        lbl_fi_title = QLabel("Smooth fade-in at speech start", card_transitions)
         lbl_fi_title.setStyleSheet("font-size: 13px; font-weight: 500;")
         fi_row.addWidget(lbl_fi_title)
         fi_row.addStretch()
-        self.switch_fade_in = ToggleSwitch(checked=True, parent=card_fade_in)
+        self.switch_fade_in = ToggleSwitch(checked=True, parent=card_transitions)
         fi_row.addWidget(self.switch_fade_in)
-        l_fade_in.addLayout(fi_row)
-        layout.addWidget(card_fade_in)
+        l_trans.addLayout(fi_row)
 
-        # ─── ROW 3: Fade-Out Timing (Own Row, Slider instead of clickable element) ───
-        card_fade_out = QGroupBox("Fade-Out Timing", content)
-        l_fade_out = QVBoxLayout(card_fade_out)
-        l_fade_out.setSpacing(6)
-        sub_fo = QLabel("Adjust duration for smooth audio decay when stopping or finishing speech.", card_fade_out)
-        sub_fo.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_fade_out.addWidget(sub_fo)
+        # Fade-out Duration Slider
+        fo_header = QHBoxLayout()
+        lbl_fo_title = QLabel("Fade-out decay duration", card_transitions)
+        lbl_fo_title.setStyleSheet("font-size: 13px; font-weight: 500;")
+        fo_header.addWidget(lbl_fo_title)
+        fo_header.addStretch()
+        self.lbl_fade_out_val = QLabel("1.00s", card_transitions)
+        self.lbl_fade_out_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
+        self.lbl_fade_out_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fo_header.addWidget(self.lbl_fade_out_val)
+        l_trans.addLayout(fo_header)
 
-        fo_row = QHBoxLayout()
-        fo_row.setSpacing(10)
-        self.slider_fade_out = QSlider(Qt.Orientation.Horizontal, card_fade_out)
+        self.slider_fade_out = QSlider(Qt.Orientation.Horizontal, card_transitions)
         self.slider_fade_out.setRange(20, 300)  # 0.20s to 3.00s
         self.slider_fade_out.setValue(100)      # 1.00s default
         self.slider_fade_out.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.slider_fade_out.valueChanged.connect(self._on_fade_out_slider_changed)
-        fo_row.addWidget(self.slider_fade_out)
-
-        self.lbl_fade_out_val = QLabel("1.00s", card_fade_out)
-        self.lbl_fade_out_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 3px 8px; min-width: 44px;")
-        self.lbl_fade_out_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        fo_row.addWidget(self.lbl_fade_out_val)
-        l_fade_out.addLayout(fo_row)
+        l_trans.addWidget(self.slider_fade_out)
 
         fo_scale_row = QHBoxLayout()
-        fo_scale_row.addWidget(QLabel("0.2s"))
+        fo_scale_row.addWidget(QLabel("0.2s (Fast)"))
         fo_scale_row.addStretch()
         fo_scale_row.addWidget(QLabel("1.0s (Default)"))
         fo_scale_row.addStretch()
         fo_scale_row.addWidget(QLabel("2.0s"))
         fo_scale_row.addStretch()
-        fo_scale_row.addWidget(QLabel("3.0s"))
+        fo_scale_row.addWidget(QLabel("3.0s (Gentle)"))
         for i in range(fo_scale_row.count()):
             w = fo_scale_row.itemAt(i).widget()
             if w:
                 w.setStyleSheet("color: #94A3B8; font-size: 10px;")
-        l_fade_out.addLayout(fo_scale_row)
-        layout.addWidget(card_fade_out)
+        l_trans.addLayout(fo_scale_row)
+        layout.addWidget(card_transitions)
 
-        # ─── ROW 4: Playback Behavior (Clean checkboxes, clickable, blank when unchecked) ───
-        card_behavior = QGroupBox("Playback Behavior", content)
+        # ─── SECTION 2: Auto-Read & Trigger Behavior ─────────────────────────
+        card_behavior = QGroupBox("Auto-Read & Trigger Behavior", content)
         l_beh = QVBoxLayout(card_behavior)
         l_beh.setSpacing(10)
-        sub_b = QLabel("Choose when and how Voxel plays audio.", card_behavior)
+        sub_b = QLabel("Choose when and how Voxel triggers speech playback.", card_behavior)
         sub_b.setStyleSheet("font-size: 11px; color: #64748B;")
         l_beh.addWidget(sub_b)
 
@@ -661,11 +652,11 @@ class SettingsDialog(QDialog):
         l_beh.addLayout(beh_items_layout)
         layout.addWidget(card_behavior)
 
-        # ─── ROW 5: Audio Output && Recordings (2 Rows: Output Device + Volume & Folder) ───
-        card_out = QGroupBox("Audio Output && Recordings", content)
+        # ─── SECTION 3: Hardware Output & Recordings ─────────────────────────
+        card_out = QGroupBox("Hardware Output && Auto-Recordings", content)
         l_out = QVBoxLayout(card_out)
         l_out.setSpacing(12)
-        sub_o = QLabel("Choose where to play audio and automatically save speech recordings.", card_out)
+        sub_o = QLabel("Choose hardware output device and manage speech recordings destination.", card_out)
         sub_o.setStyleSheet("font-size: 11px; color: #64748B;")
         l_out.addWidget(sub_o)
 
@@ -723,9 +714,9 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(card_out)
 
-        # ─── ROW 6: macOS Permissions (Word-Wrapped, Clean & Compact) ───
+        # ─── SECTION 4: macOS System Permissions ─────────────────────────────
         if IS_MAC:
-            card_perm = QGroupBox("macOS Permissions & Text Selection", content)
+            card_perm = QGroupBox("macOS System Permissions", content)
             l_perm = QVBoxLayout(card_perm)
             l_perm.setSpacing(10)
 
@@ -764,6 +755,16 @@ class SettingsDialog(QDialog):
         self.lbl_speed_val.setText(f"{speed:.2f}x")
         if self.tts:
             self.tts.set_speed(speed)
+
+    def _on_pitch_slider_changed(self, val: int):
+        self.lbl_pitch_val.setText(f"{val:+d}Hz" if val != 0 else "0Hz")
+        if self.tts and hasattr(self.tts, "set_pitch"):
+            self.tts.set_pitch(val)
+
+    def _on_volume_slider_changed(self, val: int):
+        self.lbl_vol_val.setText(f"{val}%")
+        if self.tts and hasattr(self.tts, "set_volume"):
+            self.tts.set_volume(val / 100.0)
 
     def _on_fade_out_slider_changed(self, val: int):
         duration = round(val / 100.0, 2)
@@ -1264,7 +1265,110 @@ class SettingsDialog(QDialog):
         l_v.addRow(QLabel("<b>Emotion && Tone:</b>"), self.combo_emotion)
         layout.addWidget(card_v)
 
-        # Card 2: Interactive Voice Equalizer (EQ)
+        # Card 2: Voice Tuning & Audio Controls (Speed, Pitch, Volume)
+        card_tune = QGroupBox("Voice Tuning && Audio Controls", content)
+        l_tune = QVBoxLayout(card_tune)
+        l_tune.setSpacing(10)
+        lbl_tune_sub = QLabel("Fine-tune cadence speed, neural pitch, and master listening volume:", card_tune)
+        lbl_tune_sub.setStyleSheet("font-size: 11px; color: #64748B;")
+        l_tune.addWidget(lbl_tune_sub)
+
+        # 1. Speaking Speed
+        speed_header = QHBoxLayout()
+        lbl_s_title = QLabel("Speaking Speed", card_tune)
+        lbl_s_title.setStyleSheet("font-weight: 600; font-size: 12px;")
+        speed_header.addWidget(lbl_s_title)
+        speed_header.addStretch()
+        self.lbl_speed_val = QLabel("1.00x", card_tune)
+        self.lbl_speed_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
+        self.lbl_speed_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        speed_header.addWidget(self.lbl_speed_val)
+        l_tune.addLayout(speed_header)
+
+        self.slider_speed = QSlider(Qt.Orientation.Horizontal, card_tune)
+        self.slider_speed.setRange(50, 200)
+        self.slider_speed.setValue(100)
+        self.slider_speed.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.slider_speed.valueChanged.connect(self._on_speed_slider_changed)
+        l_tune.addWidget(self.slider_speed)
+
+        scale_s = QHBoxLayout()
+        scale_s.addWidget(QLabel("0.5x (Slow)"))
+        scale_s.addStretch()
+        scale_s.addWidget(QLabel("1.0x (Normal)"))
+        scale_s.addStretch()
+        scale_s.addWidget(QLabel("2.0x (Fast)"))
+        for i in range(scale_s.count()):
+            w = scale_s.itemAt(i).widget()
+            if w:
+                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
+        l_tune.addLayout(scale_s)
+
+        # 2. Pitch Tuning
+        pitch_header = QHBoxLayout()
+        lbl_p_title = QLabel("Voice Pitch Tuning", card_tune)
+        lbl_p_title.setStyleSheet("font-weight: 600; font-size: 12px;")
+        pitch_header.addWidget(lbl_p_title)
+        pitch_header.addStretch()
+        self.lbl_pitch_val = QLabel("0Hz", card_tune)
+        self.lbl_pitch_val.setStyleSheet("background-color: #E0F2FE; color: #0284C7; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
+        self.lbl_pitch_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        pitch_header.addWidget(self.lbl_pitch_val)
+        l_tune.addLayout(pitch_header)
+
+        self.slider_pitch = QSlider(Qt.Orientation.Horizontal, card_tune)
+        self.slider_pitch.setRange(-50, 50)
+        self.slider_pitch.setValue(0)
+        self.slider_pitch.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.slider_pitch.valueChanged.connect(self._on_pitch_slider_changed)
+        l_tune.addWidget(self.slider_pitch)
+
+        scale_p = QHBoxLayout()
+        scale_p.addWidget(QLabel("-50Hz (Deeper)"))
+        scale_p.addStretch()
+        scale_p.addWidget(QLabel("Default (0Hz)"))
+        scale_p.addStretch()
+        scale_p.addWidget(QLabel("+50Hz (Higher)"))
+        for i in range(scale_p.count()):
+            w = scale_p.itemAt(i).widget()
+            if w:
+                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
+        l_tune.addLayout(scale_p)
+
+        # 3. Master Listening Volume
+        vol_header = QHBoxLayout()
+        lbl_v_title = QLabel("Master Listening Volume", card_tune)
+        lbl_v_title.setStyleSheet("font-weight: 600; font-size: 12px;")
+        vol_header.addWidget(lbl_v_title)
+        vol_header.addStretch()
+        self.lbl_vol_val = QLabel("80%", card_tune)
+        self.lbl_vol_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
+        self.lbl_vol_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        vol_header.addWidget(self.lbl_vol_val)
+        l_tune.addLayout(vol_header)
+
+        self.slider_volume = QSlider(Qt.Orientation.Horizontal, card_tune)
+        self.slider_volume.setRange(0, 100)
+        self.slider_volume.setValue(80)
+        self.slider_volume.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.slider_volume.valueChanged.connect(self._on_volume_slider_changed)
+        l_tune.addWidget(self.slider_volume)
+
+        scale_v = QHBoxLayout()
+        scale_v.addWidget(QLabel("0% (Mute)"))
+        scale_v.addStretch()
+        scale_v.addWidget(QLabel("80% (Recommended)"))
+        scale_v.addStretch()
+        scale_v.addWidget(QLabel("100% (Maximum)"))
+        for i in range(scale_v.count()):
+            w = scale_v.itemAt(i).widget()
+            if w:
+                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
+        l_tune.addLayout(scale_v)
+
+        layout.addWidget(card_tune)
+
+        # Card 3: Interactive Voice Equalizer (EQ)
         card_eq = QGroupBox("Voice Equalizer (EQ)", content)
         l_eq = QVBoxLayout(card_eq)
         l_eq.setSpacing(6)
@@ -1824,7 +1928,7 @@ class SettingsDialog(QDialog):
     def open_preferences(self):
         if len(self.nav_buttons) > 1:
             self.nav_buttons[1].setChecked(True)
-        self._on_nav_clicked(1, "▶", "Playback", "Control how Voxel plays text-to-speech audio")
+        self._on_nav_clicked(1, "🎛️", "Audio & Playback", "Control transitions, hardware output, and auto-read behaviors")
         self.show()
         self.raise_()
         self.activateWindow()
@@ -1890,6 +1994,8 @@ class SettingsDialog(QDialog):
             self.combo_emotion.setCurrentIndex(idx_e)
 
         self.slider_speed.setValue(100)
+        self.slider_pitch.setValue(0)
+        self.lbl_pitch_val.setText("0Hz")
         self.slider_fade_out.setValue(100)
         self.lbl_fade_out_val.setText("1.00s")
         self.switch_fade_in.setChecked(True)
@@ -1898,6 +2004,7 @@ class SettingsDialog(QDialog):
         self.chk_trigger.setChecked(True)
         self.chk_autoclose.setChecked(True)
         self.slider_volume.setValue(80)
+        self.lbl_vol_val.setText("80%")
         self.slider_transparency.setValue(90)
         self.slider_bubble_size.setValue(2)
         self.combo_bubble_size.setCurrentIndex(1)
@@ -1925,6 +2032,10 @@ class SettingsDialog(QDialog):
         speed_val = float(settings_db.get("default_speed", 1.0))
         self.slider_speed.setValue(int(round(speed_val * 100)))
 
+        pitch_val = int(settings_db.get("default_pitch", 0))
+        self.slider_pitch.setValue(pitch_val)
+        self.lbl_pitch_val.setText(f"{pitch_val:+d}Hz" if pitch_val != 0 else "0Hz")
+
         self.chk_startup.setChecked(is_startup_enabled())
 
         prebuffer = settings_db.get("prebuffer_enabled", True)
@@ -1942,6 +2053,7 @@ class SettingsDialog(QDialog):
 
         vol_val = int(settings_db.get("volume", 80))
         self.slider_volume.setValue(vol_val)
+        self.lbl_vol_val.setText(f"{vol_val}%")
 
         trans_val = int(settings_db.get("bubble_transparency", 90))
         self.slider_transparency.setValue(trans_val)
@@ -1970,12 +2082,17 @@ class SettingsDialog(QDialog):
         settings_db.set("emotion_mode", self.combo_emotion.currentData())
         speed = round(self.slider_speed.value() / 100.0, 2)
         settings_db.set("default_speed", speed)
+        settings_db.set("default_pitch", self.slider_pitch.value())
+        if self.tts and hasattr(self.tts, "set_pitch"):
+            self.tts.set_pitch(self.slider_pitch.value())
         settings_db.set("prebuffer_enabled", self.chk_prebuffer.isChecked())
         settings_db.set("selection_popup_enabled", self.chk_trigger.isChecked())
         settings_db.set("auto_close_finished", self.chk_autoclose.isChecked())
         fade_out_secs = round(self.slider_fade_out.value() / 100.0, 2)
         settings_db.set("auto_close_delay", fade_out_secs)
         settings_db.set("volume", self.slider_volume.value())
+        if self.tts and hasattr(self.tts, "set_volume"):
+            self.tts.set_volume(self.slider_volume.value() / 100.0)
         settings_db.set("bubble_transparency", self.slider_transparency.value())
         settings_db.set("bubble_size", self.combo_bubble_size.currentText())
         settings_db.set("bubble_corner_radius", getattr(self, "current_corner_radius", "Medium"))

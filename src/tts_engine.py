@@ -93,7 +93,8 @@ class TTSEngine(QObject):
             self.player = QMediaPlayer(self)
             self.audio_output = QAudioOutput(self)
             self.player.setAudioOutput(self.audio_output)
-            self.audio_output.setVolume(1.0)
+            vol_init = float(settings_db.get("volume", 80)) / 100.0
+            self.audio_output.setVolume(vol_init)
             self.player.playbackStateChanged.connect(self._on_player_state_changed)
             self.player.mediaStatusChanged.connect(self._on_media_status_changed)
             self.player.errorOccurred.connect(self._on_player_error)
@@ -110,6 +111,8 @@ class TTSEngine(QObject):
                 self.winmm = None
                 self._mac_audio_proc = None
 
+        self.current_pitch: int = int(settings_db.get("default_pitch", 0))
+
     @property
     def current_voice(self) -> dict:
         return VOICES[self.current_voice_index]
@@ -117,6 +120,19 @@ class TTSEngine(QObject):
     def set_speed(self, speed: float):
         """Sets playback speed multiplier (0.5x to 2.5x)."""
         self.current_speed = round(max(0.5, min(2.5, speed)), 2)
+
+    def set_pitch(self, pitch_hz: int):
+        """Sets user pitch offset in Hz (-50Hz to +50Hz)."""
+        self.current_pitch = max(-50, min(50, int(pitch_hz)))
+        settings_db.set("default_pitch", self.current_pitch)
+
+    def set_volume(self, volume: float):
+        """Sets playback volume (0.0 to 1.0 or 0 to 100)."""
+        val = volume / 100.0 if volume > 1.0 else volume
+        val = max(0.0, min(1.0, val))
+        if self.audio_output:
+            self.audio_output.setVolume(val)
+        settings_db.set("volume", int(round(val * 100)))
 
     def set_voice_index(self, index: int):
         """Sets current voice index."""
@@ -136,13 +152,20 @@ class TTSEngine(QObject):
         return self.current_voice
 
     def _get_emotion_params(self) -> tuple[str, str]:
-        """Returns (rate_str, pitch_str) combining user speed and emotion preset."""
+        """Returns (rate_str, pitch_str) combining user speed, pitch, and emotion preset."""
         # Find active emotion profile
         profile = next((m for m in EMOTION_MODES if m["id"] == self.current_emotion), EMOTION_MODES[0])
-        pitch_str = profile.get("pitch", "+0Hz")
-        rate_adj_pct = int(profile.get("rate_adjust", "+0%").replace("%", "").replace("+", "") or 0)
+        raw_emotion_pitch = profile.get("pitch", "+0Hz").replace("Hz", "").replace("+", "").strip()
+        try:
+            emotion_pitch_val = int(raw_emotion_pitch)
+        except ValueError:
+            emotion_pitch_val = 0
 
-        # Base speed percentage
+        user_pitch = getattr(self, "current_pitch", 0)
+        total_pitch = user_pitch + emotion_pitch_val
+        pitch_str = f"+{total_pitch}Hz" if total_pitch >= 0 else f"{total_pitch}Hz"
+
+        rate_adj_pct = int(profile.get("rate_adjust", "+0%").replace("%", "").replace("+", "") or 0)
         speed_pct = int(round((self.current_speed - 1.0) * 100))
         total_rate_pct = speed_pct + rate_adj_pct
         rate_str = f"+{total_rate_pct}%" if total_rate_pct >= 0 else f"{total_rate_pct}%"
