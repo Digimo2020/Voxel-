@@ -57,7 +57,7 @@ class SelectionListener(QObject):
     """
     Background listener that triggers when user selects text or presses the global hotkey.
     """
-    text_selected = pyqtSignal(str, int, int)  # (text, cursor_x, cursor_y)
+    text_selected = pyqtSignal(str, int, int, int, int)  # (text, cursor_x, cursor_y, start_x, start_y)
     clicked_outside = pyqtSignal()
     permission_needed = pyqtSignal()
     document_hotkey_triggered = pyqtSignal()
@@ -156,17 +156,19 @@ class SelectionListener(QObject):
             self._last_click_pos = (x, y)
 
             if is_drag or is_double_click:
+                start_x = int(self._press_pos[0])
+                start_y = int(self._press_pos[1])
                 # Dispatch immediately to background worker thread so Quartz event tap never times out
                 threading.Thread(
                     target=self._handle_possible_selection,
-                    args=(int(x), int(y)),
+                    args=(int(x), int(y), start_x, start_y),
                     daemon=True
                 ).start()
             else:
                 # User clicked empty space or single-clicked without dragging
                 self.clicked_outside.emit()
 
-    def _handle_possible_selection(self, cursor_x: int, cursor_y: int):
+    def _handle_possible_selection(self, cursor_x: int, cursor_y: int, start_x: int = 0, start_y: int = 0):
         """Waits briefly for selection to settle in target app, then grabs text."""
         # Never inject copy keystrokes into screenshot overlay apps (Flameshot, Lightshot, Snipping Tool)
         if _is_screenshot_app_active():
@@ -177,7 +179,7 @@ class SelectionListener(QObject):
         text = grab_selected_text(timeout_ms=320)
         if text and len(text) >= MIN_SELECTED_LENGTH:
             if any(c.isalnum() for c in text):
-                self.text_selected.emit(text, cursor_x, cursor_y)
+                self.text_selected.emit(text, cursor_x, cursor_y, start_x, start_y)
 
     def _on_hotkey_triggered(self):
         """Triggered when pressing Cmd+Alt+S (or Ctrl+Alt+S)."""
@@ -189,7 +191,7 @@ class SelectionListener(QObject):
             if text and len(text) >= MIN_SELECTED_LENGTH:
                 ctrl = mouse.Controller()
                 cx, cy = ctrl.position
-                self.text_selected.emit(text, int(cx), int(cy))
+                self.text_selected.emit(text, int(cx), int(cy), int(cx), int(cy))
 
         threading.Thread(target=_worker, daemon=True).start()
 

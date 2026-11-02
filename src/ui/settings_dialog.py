@@ -1089,20 +1089,42 @@ class SettingsDialog(QDialog):
         size_h.setSpacing(10)
         self.slider_bubble_size = QSlider(Qt.Orientation.Horizontal, card_b_set)
         self.slider_bubble_size.setRange(1, 3)
-        self.slider_bubble_size.setValue(2)
+        self.slider_bubble_size.setValue(3)
         size_h.addWidget(self.slider_bubble_size)
 
         self.combo_bubble_size = QComboBox(card_b_set)
-        self.combo_bubble_size.addItem("Small", 1)
+        self.combo_bubble_size.addItem("Small Dot", 1)
         self.combo_bubble_size.addItem("Medium", 2)
         self.combo_bubble_size.addItem("Large", 3)
-        self.combo_bubble_size.setCurrentIndex(1)
-        self.combo_bubble_size.setFixedWidth(105)
+        self.combo_bubble_size.setCurrentIndex(2)
+        self.combo_bubble_size.setFixedWidth(115)
         self.combo_bubble_size.currentIndexChanged.connect(lambda idx: self.slider_bubble_size.setValue(idx + 1))
         self.slider_bubble_size.valueChanged.connect(lambda val: self.combo_bubble_size.setCurrentIndex(val - 1))
         size_h.addWidget(self.combo_bubble_size)
         size_col.addLayout(size_h)
         bs_row.addLayout(size_col)
+
+        # Distance Padding column
+        dist_col = QVBoxLayout()
+        dist_col.setSpacing(6)
+        lbl_dist_title = QLabel("Distance Padding", card_b_set)
+        lbl_dist_title.setStyleSheet("font-weight: 700; font-size: 12px;")
+        dist_col.addWidget(lbl_dist_title)
+
+        dist_h = QHBoxLayout()
+        dist_h.setSpacing(10)
+        self.slider_distance = QSlider(Qt.Orientation.Horizontal, card_b_set)
+        self.slider_distance.setRange(15, 75)
+        self.slider_distance.setValue(28)
+        self.slider_distance.valueChanged.connect(lambda v: self.lbl_dist_val.setText(f"{v}px"))
+        dist_h.addWidget(self.slider_distance)
+
+        self.lbl_dist_val = QLabel("28px", card_b_set)
+        self.lbl_dist_val.setFixedWidth(40)
+        self.lbl_dist_val.setStyleSheet("font-weight: 700; color: #7C3AED; font-size: 12px;")
+        dist_h.addWidget(self.lbl_dist_val)
+        dist_col.addLayout(dist_h)
+        bs_row.addLayout(dist_col)
 
         l_bs.addLayout(bs_row)
 
@@ -2022,8 +2044,11 @@ class SettingsDialog(QDialog):
         self.slider_volume.setValue(80)
         self.lbl_vol_val.setText("80%")
         self.slider_transparency.setValue(90)
-        self.slider_bubble_size.setValue(2)
-        self.combo_bubble_size.setCurrentIndex(1)
+        self.slider_bubble_size.setValue(3)
+        self.combo_bubble_size.setCurrentIndex(2)
+        if hasattr(self, "slider_distance"):
+            self.slider_distance.setValue(28)
+            self.lbl_dist_val.setText("28px")
 
         if hasattr(self, "equalizer_widget"):
             self.equalizer_widget.apply_preset("Podcast Warmth")
@@ -2075,11 +2100,27 @@ class SettingsDialog(QDialog):
         self.slider_transparency.setValue(trans_val)
         self.lbl_trans_val.setText(f"{trans_val}%")
 
-        b_size = str(settings_db.get("bubble_size", "Medium")).capitalize()
-        idx_size = self.combo_bubble_size.findText(b_size)
+        b_size = str(settings_db.get("bubble_size", "Large"))
+        idx_size = -1
+        for i in range(self.combo_bubble_size.count()):
+            txt = self.combo_bubble_size.itemText(i).lower()
+            if "small" in b_size.lower() and "small" in txt:
+                idx_size = i
+                break
+            elif "medium" in b_size.lower() and "medium" in txt:
+                idx_size = i
+                break
+            elif "large" in b_size.lower() and "large" in txt:
+                idx_size = i
+                break
         if idx_size >= 0:
             self.combo_bubble_size.setCurrentIndex(idx_size)
             self.slider_bubble_size.setValue(idx_size + 1)
+
+        dist_val = int(settings_db.get("bubble_distance", 28))
+        if hasattr(self, "slider_distance"):
+            self.slider_distance.setValue(dist_val)
+            self.lbl_dist_val.setText(f"{dist_val}px")
 
         curr_corner = settings_db.get("bubble_corner_radius", "Medium")
         self._select_corner_radius(curr_corner)
@@ -2111,6 +2152,8 @@ class SettingsDialog(QDialog):
             self.tts.set_volume(self.slider_volume.value() / 100.0)
         settings_db.set("bubble_transparency", self.slider_transparency.value())
         settings_db.set("bubble_size", self.combo_bubble_size.currentText())
+        if hasattr(self, "slider_distance"):
+            settings_db.set("bubble_distance", self.slider_distance.value())
         settings_db.set("bubble_corner_radius", getattr(self, "current_corner_radius", "Medium"))
         settings_db.set("bubble_appearance", getattr(self, "current_bubble_style", "Frosted Glass"))
         settings_db.set("smooth_fade_in", self.switch_fade_in.isChecked())

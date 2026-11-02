@@ -76,27 +76,31 @@ class FloatingBubble(QWidget):
         self.apply_settings()
 
     def apply_settings(self):
-        """Loads and applies all appearance, size, corner radius and transparency settings."""
-        size_str = str(settings_db.get("bubble_size", "Medium")).lower()
-        if size_str in ("1", "small"):
-            self.capsule_width = 66
+        """Loads and applies all appearance, size, corner radius, distance padding and transparency settings."""
+        size_str = str(settings_db.get("bubble_size", "Large")).lower()
+        if "small" in size_str or size_str == "1" or "dot" in size_str:
+            self.size_mode = "small"
+            self.capsule_width = 28
+            self.capsule_height = 28
+            self.divider_x = 0
+            self.icon_size = 18
+        elif "medium" in size_str or size_str == "2":
+            self.size_mode = "medium"
+            self.capsule_width = 62
             self.capsule_height = 32
-            self.divider_x = 33
+            self.divider_x = 31
             self.icon_size = 22
-        elif size_str in ("3", "large"):
-            self.capsule_width = 92
-            self.capsule_height = 44
-            self.divider_x = 46
-            self.icon_size = 30
-        else:  # Medium / default
-            self.capsule_width = 78
-            self.capsule_height = 38
-            self.divider_x = 39
+        else:  # Large / default (standard dual capsule)
+            self.size_mode = "large"
+            self.capsule_width = 82
+            self.capsule_height = 40
+            self.divider_x = 41
             self.icon_size = 26
 
         self.setFixedSize(self.capsule_width, self.capsule_height)
         self.bubble_pixmap = get_selection_bubble_pixmap(self.icon_size)
         self.doc_pixmap = get_selection_bubble_doc_pixmap(self.icon_size)
+        self.distance_padding = int(settings_db.get("bubble_distance", 28))
 
         self.corner_radius_mode = str(settings_db.get("bubble_corner_radius", "Medium"))
         self.bubble_style = str(settings_db.get("bubble_appearance", "Frosted Glass"))
@@ -109,23 +113,32 @@ class FloatingBubble(QWidget):
         self.theme_mode = mode
         self.update()
 
-    def show_at(self, text: str, cursor_x: int, cursor_y: int):
-        """Positions the floating capsule near cursor and fades in."""
+    def show_at(self, text: str, cursor_x: int, cursor_y: int, start_x: int = None, start_y: int = None):
+        """Positions the floating capsule near cursor and fades in with generous distance padding."""
         self.apply_settings()
         self.selected_text = text
         self.hover_side = ""
 
-        offset_x = 10
-        offset_y = -self.capsule_height - 12
+        pad = getattr(self, "distance_padding", 28)
 
-        target_x = cursor_x + offset_x
-        target_y = cursor_y + offset_y
+        # Smart multi-line detection: if selection spans multiple lines,
+        # place above the top line near left margin rather than inside the text.
+        if start_y is not None and abs(start_y - cursor_y) > 15:
+            top_y = min(start_y, cursor_y)
+            bottom_y = max(start_y, cursor_y)
+            target_y = top_y - self.capsule_height - pad
+            target_x = min(start_x, cursor_x) + 10
+        else:
+            top_y = cursor_y
+            bottom_y = cursor_y
+            target_y = cursor_y - self.capsule_height - pad
+            target_x = cursor_x + 14
 
         screen = QGuiApplication.screenAt(QPoint(cursor_x, cursor_y)) or QGuiApplication.primaryScreen()
         if screen:
             geo = screen.availableGeometry()
             if target_y < geo.top() + 8:
-                target_y = cursor_y + 22
+                target_y = bottom_y + pad + 8
             target_x = max(geo.left() + 8, min(geo.right() - self.capsule_width - 8, target_x))
             target_y = max(geo.top() + 8, min(geo.bottom() - self.capsule_height - 8, target_y))
 
@@ -173,6 +186,14 @@ class FloatingBubble(QWidget):
         super().leaveEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
+        if getattr(self, "size_mode", "large") == "small":
+            if self.hover_side != "center":
+                self.hover_side = "center"
+                self.setToolTip("Read Selected Text (Left Click) • Document Reader & Options (Right Click)")
+                self.update()
+            super().mouseMoveEvent(event)
+            return
+
         pos_x = event.position().x()
         new_side = "left" if pos_x < self.divider_x else "right"
         if new_side != self.hover_side:
@@ -186,15 +207,16 @@ class FloatingBubble(QWidget):
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
-            pos_x = event.position().x()
             fallback = self.selected_text
             self.fade_out()
-            if pos_x < self.divider_x:
-                # Read selected text
+            if getattr(self, "size_mode", "large") == "small":
                 self.clicked.emit(fallback)
             else:
-                # Read entire document / presentation (passing fallback text)
-                self.read_document_requested.emit(fallback)
+                pos_x = event.position().x()
+                if pos_x < self.divider_x:
+                    self.clicked.emit(fallback)
+                else:
+                    self.read_document_requested.emit(fallback)
         elif event.button() == Qt.MouseButton.RightButton:
             self._show_context_menu(event.globalPosition().toPoint())
         super().mousePressEvent(event)
@@ -254,13 +276,16 @@ class FloatingBubble(QWidget):
         h = float(self.height())
 
         # Determine dynamic corner radius based on settings
-        c_mode = getattr(self, "corner_radius_mode", "Medium")
-        if c_mode == "Square":
-            r = 4.0
-        elif c_mode == "Round":
-            r = h / 2.0
-        else:  # Medium
-            r = 10.0
+        if getattr(self, "size_mode", "large") == "small":
+            r = h / 2.0  # Perfect circle dot
+        else:
+            c_mode = getattr(self, "corner_radius_mode", "Medium")
+            if c_mode == "Square":
+                r = 4.0
+            elif c_mode == "Round":
+                r = h / 2.0
+            else:  # Medium
+                r = 10.0
 
         # 1. Outer ambient glow on hover
         if self.is_hovered:
@@ -319,13 +344,23 @@ class FloatingBubble(QWidget):
             painter.drawRoundedRect(capsule_rect, r, r)
 
             # Top Specular Glass Reflection Sheen
-            sheen_rect = QRectF(r / 2.0, 2.0, w - r, h * 0.42)
+            sheen_rect = QRectF(r / 2.0, 2.0, max(2.0, w - r), h * 0.42)
             sheen = QLinearGradient(0, 2.0, 0, h * 0.45)
             sheen.setColorAt(0.0, QColor(255, 255, 255, 90 if is_light else 75))
             sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(sheen))
-            painter.drawRoundedRect(sheen_rect, 4.0, 4.0)
+            painter.drawRoundedRect(sheen_rect, 3.0, 3.0)
+
+        # If Small Dot, render centered logo and finish (no divider, no doc button)
+        if getattr(self, "size_mode", "large") == "small":
+            icon_sz = getattr(self, "icon_size", 18)
+            if hasattr(self, "bubble_pixmap") and not self.bubble_pixmap.isNull():
+                lx = (w - icon_sz) / 2.0
+                ly = (h - icon_sz) / 2.0
+                painter.drawPixmap(int(lx), int(ly), icon_sz, icon_sz, self.bubble_pixmap)
+            painter.end()
+            return
 
         # 3. Subtle Vertical Divider separating Selection vs Document actions
         div_col = QColor(148, 163, 184, 80) if is_light else QColor(255, 255, 255, 45)

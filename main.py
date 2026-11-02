@@ -148,11 +148,11 @@ class VoxelApp:
         # App shutdown hook
         self.app.aboutToQuit.connect(self._cleanup)
 
-    def _on_text_selected(self, text: str, x: int, y: int):
+    def _on_text_selected(self, text: str, x: int, y: int, start_x: int = 0, start_y: int = 0):
         """Called when text is selected in any application."""
         self._last_selected_text = text
         if settings_db.get("selection_popup_enabled", True):
-            self.bubble.show_at(text, x, y)
+            self.bubble.show_at(text, x, y, start_x=start_x, start_y=start_y)
 
     def _on_bubble_clicked(self, text: str):
         """Called when user clicks the floating Voxel logo to read selected text."""

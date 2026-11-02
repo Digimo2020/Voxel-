@@ -54,13 +54,15 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "default_voice": "en-US-JennyNeural",
     "default_speed": 1.0,
     "selection_popup_enabled": True,
+    "bubble_size": "Large",
+    "bubble_distance": 28,
     "bubble_timeout": 4.0,
     "dock_position": "bottom_right",   # "bottom_right" or "near_cursor"
     "hotkey": "<cmd>+<alt>+s" if IS_MAC else "<ctrl>+<alt>+s",
     "theme_mode": "light_glass",       # "dark_glass" or "light_glass"
     "auto_close_finished": True,      # Auto-close player after speech completes
     "auto_close_delay": 1.0,          # Fade-out duration in seconds
-    "version": "v1.0.03"
+    "version": "v1.1.22"
 }
 
 

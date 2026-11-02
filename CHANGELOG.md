@@ -10,6 +10,23 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.22] - 2026-11-02
+
+### Workable Bubble Sizes (Small Dot, Medium, Large) & Selection Distance Padding
+- **Workable Bubble Sizing in Settings**:
+  - Implemented 3 distinct, functional bubble formats:
+    - **🔴 Small Dot (Mini 28px)**: Minimalist circular floating dot badge with centered Voxel logo. Unobtrusive, zero screen obstruction. Single click reads selected text; right click opens full options menu.
+    - **💊 Medium Capsule (Compact 62×32px)**: Sleek streamlined dual-action capsule (Selection + Document Reader).
+    - **🏷️ Large Capsule (Full 82×40px)**: Standard full-size dual-action capsule.
+- **Smart Distance Padding & Clearance Offset from Selected Text**:
+  - Added configurable **Distance Padding** slider (default 28px, range 15px–75px) in Settings Appearance tab.
+  - Ensures the floating bubble hovers safely distanced above the selection without covering text lines or colliding with third-party software popups (e.g., Google Docs inline menus, Chrome `Quote Ctrl+L` toolbar).
+- **Multi-Line Selection Paragraph Collision Prevention**:
+  - Selection listener captures selection start and release coordinates.
+  - For multi-line selections, places the bubble safely above the *top line* (`top_y = min(start_y, cursor_y)`) near the left margin rather than inside the middle of the selected block.
+
+---
+
 ## [v1.1.21] - 2026-11-01
 
 ### Always-Fixed Bottom Test Voice Bar & Clean Minimalist Voice Controls
