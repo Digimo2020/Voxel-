@@ -294,7 +294,7 @@ class SliderRow(QWidget):
         lay.addLayout(col, 1)
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setRange(lo, hi)
-        self.slider.setMinimumWidth(200)
+        self.slider.setMinimumWidth(120)
         self.slider.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.slider.setAccessibleName(title)
         lay.addWidget(self.slider, 2)
@@ -396,7 +396,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(create_app_icon(64))
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-        self.setMinimumSize(820, 580)
+        self.setMinimumSize(720, 480)  # fits 1080p screens at 200% scaling
         self.resize(920, 660)
 
         self._init_ui()
@@ -507,6 +507,13 @@ class SettingsDialog(QDialog):
         self.stacked_pages.addWidget(self._create_settings_page())
         col.addWidget(self.stacked_pages, 1)
         root.addWidget(main, 1)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        narrow = self.width() < 900
+        want = True if narrow else bool(settings_db.get("ui_sidebar_collapsed", False))
+        if want != self._collapsed:
+            self._set_sidebar_collapsed(want)
 
     def _add_section_label(self, layout, text):
         l = QLabel(text, self.sidebar_widget)
@@ -653,16 +660,19 @@ class SettingsDialog(QDialog):
         self.btn_save_text.setToolTip("Keep this text in Resources")
         self.btn_save_text.clicked.connect(self._save_reader_text)
         bl.addWidget(self.btn_save_text)
+        bl.addStretch()
+        info = QHBoxLayout()
+        info.setContentsMargins(4, 0, 4, 0)
         self.lbl_reader_count = QLabel("")
         self.lbl_reader_count.setObjectName("RowHint")
-        bl.addSpacing(6)
-        bl.addWidget(self.lbl_reader_count)
-        bl.addStretch()
+        info.addWidget(self.lbl_reader_count)
+        info.addStretch()
         self.lbl_reader_status = QLabel("")
         self.lbl_reader_status.setObjectName("RowHint")
-        bl.addWidget(self.lbl_reader_status)
-        self.reader_viz = EqualizerPreviewWidget(90, 11, bar)
-        bl.addWidget(self.reader_viz)
+        info.addWidget(self.lbl_reader_status)
+        self.reader_viz = EqualizerPreviewWidget(90, 11, page)
+        info.addWidget(self.reader_viz)
+        lay.addLayout(info)
         self.btn_reader_pause = self._btn(" Pause")
         self.btn_reader_pause.clicked.connect(self._toggle_pause)
         bl.addWidget(self.btn_reader_pause)
@@ -1053,7 +1063,9 @@ class SettingsDialog(QDialog):
             self.combo_voice = QComboBox()
             for v in VOICES:
                 self.combo_voice.addItem(v["label"], v["id"])
-            self.combo_voice.setFixedWidth(320)
+            self.combo_voice.setMinimumWidth(200)
+            self.combo_voice.setMaximumWidth(320)
+            self.combo_voice.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             self.combo_voice.currentIndexChanged.connect(self._schedule_apply)
             c.add(setting_row("Voice", self.combo_voice))
             self.row_speed = SliderRow("Reading speed", 50, 200, 100, lambda v: f"{v / 100:.2f}×")
@@ -1067,7 +1079,9 @@ class SettingsDialog(QDialog):
                 self.combo_emotion.addItem(short, m["id"])
                 if detail:
                     self.combo_emotion.setItemData(self.combo_emotion.count() - 1, detail.rstrip(")"), Qt.ItemDataRole.ToolTipRole)
-            self.combo_emotion.setFixedWidth(320)
+            self.combo_emotion.setMinimumWidth(200)
+            self.combo_emotion.setMaximumWidth(320)
+            self.combo_emotion.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             self.combo_emotion.currentIndexChanged.connect(self._schedule_apply)
             c.add(setting_row("Tone", self.combo_emotion))
             test = QWidget()
@@ -1109,7 +1123,9 @@ class SettingsDialog(QDialog):
             c = Card("Playback")
             self.combo_device = QComboBox()
             self.combo_device.addItem("System default", "default")
-            self.combo_device.setFixedWidth(320)
+            self.combo_device.setMinimumWidth(200)
+            self.combo_device.setMaximumWidth(320)
+            self.combo_device.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             c.add(setting_row("Output device", self.combo_device))
             self.row_volume = SliderRow("Volume", 0, 100, 80, lambda v: f"{v}%")
             self.slider_volume = self.row_volume.slider
@@ -1501,8 +1517,8 @@ class SettingsDialog(QDialog):
                        border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 500; }}
         QPushButton:focus {{ border-color: {pal['accent']}; }}
         QPushButton:disabled {{ color: {pal['faint']}; }}
-        QPushButton#BtnPrimary {{ background: {pal['accent']}; color: #FFFFFF; border: none; padding: 8px 20px; font-weight: 600; }}
-        QPushButton#BtnPrimary:hover {{ background: {pal['accent_hover']}; }}
+        QPushButton#BtnPrimary {{ background: {pal['btn']}; color: {pal['on_accent']}; border: none; padding: 8px 20px; font-weight: 600; }}
+        QPushButton#BtnPrimary:hover {{ background: {pal['btn_hover']}; }}
         QPushButton#BtnSoft {{ background: {pal['accent_soft']}; color: {pal['accent_text']}; border: none; }}
         QPushButton#BtnSoft:hover {{ background: {pal['border']}; }}
         QPushButton#BtnSoft:disabled {{ background: {pal['surface2']}; color: {pal['faint']}; }}
@@ -1533,8 +1549,8 @@ class SettingsDialog(QDialog):
             btn.setIcon(line_icon(icon, pal["muted"], pal["accent_text"], 18))
         self.btn_collapse.setIcon(line_icon("panel-left", pal["muted"], size=18))
         soft, muted = pal["accent_text"], pal["muted"]
-        self._icon_play = line_icon("play", "#FFFFFF", size=14)
-        self._icon_stop = line_icon("square", "#FFFFFF", size=14)
+        self._icon_play = line_icon("play", pal["on_accent"], size=14)
+        self._icon_stop = line_icon("square", pal["on_accent"], size=14)
         self._icon_play_soft = line_icon("play", soft, size=14)
         self._icon_stop_soft = line_icon("square", soft, size=14)
         self._icon_pause_soft = line_icon("pause", soft, size=14)

@@ -14,15 +14,18 @@ FONT_STACK = '"Inter", "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", ".Ap
 PALETTES = {
     "light": {
         "bg": "#FFFFFF", "sidebar": "#F7F7F7", "surface": "#FFFFFF", "surface2": "#F7F7F7",
-        "border": "#EAEAEA", "text": "#222222", "muted": "#777777", "faint": "#A3A3A3",
+        "border": "#EAEAEA", "text": "#222222", "muted": "#6B6B6B", "faint": "#858585",
         "accent": "#3478F6", "accent_hover": "#2A66D9", "accent_soft": "#EAF1FE",
         "accent_text": "#2A66D9", "track_off": "#DCDCDC", "ok": "#1F9D55", "warn": "#C77700",
+        # filled buttons: text/icons on them meet WCAG AA contrast
+        "btn": "#2A66D9", "btn_hover": "#2457BD", "on_accent": "#FFFFFF",
     },
     "dark": {
         "bg": "#171717", "sidebar": "#202020", "surface": "#252525", "surface2": "#202020",
         "border": "#343434", "text": "#F5F5F5", "muted": "#A3A3A3", "faint": "#6E6E6E",
         "accent": "#6B9FFF", "accent_hover": "#8BB4FF", "accent_soft": "#1E2A40",
         "accent_text": "#8BB4FF", "track_off": "#3C3C3C", "ok": "#4ADE80", "warn": "#FBBF24",
+        "btn": "#6B9FFF", "btn_hover": "#8BB4FF", "on_accent": "#171717",
     },
 }
 

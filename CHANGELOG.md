@@ -10,6 +10,22 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.24] - 2026-11-21
+
+### New design: calm, simple, one window
+- **New identity**: minimal waveform logo (three bars) replaces the microphone on app icon, tray, bubble and mini player. Flat colours, outline icons, no gradients or glow. Light, Dark and System theme.
+- **One main window**: Listen, Read Text, Resources and History, plus Settings. Collapsible sidebar (folds automatically on narrow windows); remembers the last page.
+- **Settings**: General, Voice, Playback, Appearance, Accessibility, About on one page. Advanced options fold away. Changes save automatically; Reset to defaults kept.
+- **Read Text**: Read, Pause/Resume, Stop, status, and Save to Resources.
+- **Resources**: saved text, bookmarks (kept beyond the 50-item history) and recordings. Stored safely in `library.json`.
+- **History**: back in the tray menu, with replay, copy, bookmark and clear.
+- **Mini player**: smaller and flat, progress line, More menu for whole-document reading and recording.
+- **Accessibility**: text contrast meets WCAG AA; checked at 100–200% display scaling; keyboard-operable switches.
+- **Fixes**: Reset to defaults and Reset logo crashed; dark mini player text was unreadable.
+- Existing settings and history are kept.
+
+---
+
 ## [v1.1.23] - 2026-11-21
 
 ### Redesigned Settings & New Read Text Page

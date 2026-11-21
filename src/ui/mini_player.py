@@ -39,9 +39,10 @@ class GradientGlowPlayButton(QPushButton):
         self.is_hovered = False
         self.accent = QColor(PALETTES["light"]["accent"])
         self.accent_hover = QColor(PALETTES["light"]["accent_hover"])
+        self.icon_color = "#FFFFFF"
 
-    def set_colors(self, accent: str, hover: str):
-        self.accent, self.accent_hover = QColor(accent), QColor(hover)
+    def set_colors(self, accent: str, hover: str, icon: str = "#FFFFFF"):
+        self.accent, self.accent_hover, self.icon_color = QColor(accent), QColor(hover), icon
         self.update()
 
     def set_playing(self, playing: bool):
@@ -68,7 +69,7 @@ class GradientGlowPlayButton(QPushButton):
         p.setBrush(self.accent_hover if (self.is_hovered or self.isDown()) else self.accent)
         p.drawEllipse(QRectF(0, 0, s, s))
         ic = int(s * 0.46)
-        pm = line_icon("pause" if self.is_playing else "play", "#FFFFFF", size=ic).pixmap(ic, ic)
+        pm = line_icon("pause" if self.is_playing else "play", self.icon_color, size=ic).pixmap(ic, ic)
         dx = 0 if self.is_playing else 1  # optical centre for the play triangle
         p.drawPixmap(int((s - ic) / 2 + dx), int((s - ic) / 2), pm)
         p.end()
@@ -189,7 +190,7 @@ class MiniPlayer(QWidget):
         self._theme_mode = theme_mode
         pal = _pal(theme_mode)
         dark = theme_mode == "dark_glass"
-        self.btn_play_pause.set_colors(pal["accent"], pal["accent_hover"])
+        self.btn_play_pause.set_colors(pal["btn"], pal["btn_hover"], pal["on_accent"])
         brand_color = "#E5484D" if self.is_recording else pal["text"]
         # Style each child directly: re-applying a parent style sheet does not reliably repolish children.
         self.lbl_brand.setStyleSheet(
