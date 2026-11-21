@@ -16,8 +16,12 @@ _BARS = [(20, 31, 17, 38), (41.5, 12, 17, 76), (63, 31, 17, 38)]
 
 
 class VoxelLogoWidget(QWidget):
-    def __init__(self, size: int = 34, animated: bool = False, parent=None):
+    def __init__(self, size: int = 34, animated: bool = False, parent=None, badge: bool = True):
+        """badge=True: white bars on a blue circle. badge=False: bars only (outline-style mark)."""
         super().__init__(parent)
+        self.badge = badge
+        self.bar_color = QColor("#8A8A8A")
+        self.bar_active_color = ACCENT
         self.logo_size = size
         self.setFixedSize(size, size)
         self.is_animating = False
@@ -28,6 +32,10 @@ class VoxelLogoWidget(QWidget):
         self._timer.timeout.connect(self._on_anim_frame)
         if animated:
             self.start_voice_animation()
+
+    def set_bar_colors(self, idle: str, active: str):
+        self.bar_color, self.bar_active_color = QColor(idle), QColor(active)
+        self.update()
 
     def set_size(self, size: int):
         self.logo_size = size
@@ -66,13 +74,16 @@ class VoxelLogoWidget(QWidget):
         oy = (self.height() - size) / 2.0
 
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(ACCENT)
-        p.drawEllipse(QRectF(ox, oy, size, size))
-
-        # bars sit inside the circle (same scale as the bubble icon)
-        s = size / 100.0 * 0.62
-        pad = size * 0.19
-        p.setBrush(QColor("#FFFFFF"))
+        if self.badge:
+            p.setBrush(ACCENT)
+            p.drawEllipse(QRectF(ox, oy, size, size))
+            s = size / 100.0 * 0.62          # bars inside the circle (same scale as the bubble icon)
+            pad = size * 0.19
+            p.setBrush(QColor("#FFFFFF"))
+        else:
+            s = size / 100.0                 # bars fill the box
+            pad = 0.0
+            p.setBrush(self.bar_active_color if self.is_animating else self.bar_color)
         for (x, y, w, h), k in zip(_BARS, self._line_scales):
             bh = h * k
             cy = y + h / 2.0                      # keep each bar centred while it scales

@@ -9,9 +9,11 @@ Behaviour kept from v1: frameless always-on-top tool window that never steals fo
 move, slide/fade in, auto-close fade after speech (paused while hovered), recording to MP3,
 document reading, replay of the last text.
 """
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QLabel, QApplication, QMenu, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QPushButton, QLabel, QApplication, QMenu,
+                             QGraphicsDropShadowEffect, QGraphicsOpacityEffect, QLayout)
 from PyQt6.QtCore import (
-    Qt, QPoint, QSize, pyqtSignal, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QRectF
+    Qt, QPoint, QSize, pyqtSignal, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QRectF,
+    QTimer, QVariantAnimation
 )
 from PyQt6.QtGui import QColor, QCursor, QMouseEvent, QPainter, QPen, QAction
 
@@ -47,7 +49,7 @@ class GradientGlowPlayButton(QPushButton):
 
     def set_playing(self, playing: bool):
         self.is_playing = playing
-        self.setToolTip("Pause" if playing else "Play")
+        self.setToolTip(("Pause" if playing else "Play") + "  ·  hover the player for more")
         self.setAccessibleName("Pause" if playing else "Play")
         self.update()
 
@@ -82,6 +84,8 @@ class MiniPlayer(QWidget):
     recording_saved = pyqtSignal(str)
 
     HEIGHT = 46
+    COLLAPSED_W = 96    # wave + play
+    EXPANDED_W = 236    # + speed, more, settings, close
 
     def __init__(self, tts_engine: TTSEngine, parent=None):
         super().__init__(parent)
@@ -101,7 +105,9 @@ class MiniPlayer(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setFixedHeight(self.HEIGHT + 10)   # room for the soft shadow
-        self.setFixedWidth(292)
+        self.setFixedWidth(self.COLLAPSED_W)
+        self._expanded = False
+        self._menu_open = False
 
         self.shadow_effect = QGraphicsDropShadowEffect(self)
         self.shadow_effect.setBlurRadius(16)
@@ -132,48 +138,106 @@ class MiniPlayer(QWidget):
 
     def _init_ui(self):
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(12, 5, 10, 5 + 10)
+        lay.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)  # window width is animated, not driven by layout
+        lay.setContentsMargins(16, 5, 8, 5 + 10)
         lay.setSpacing(4)
 
-        self.logo = VoxelLogoWidget(size=24, animated=False, parent=self)
+        # status mark: outline wave, grey at rest, blue while reading, red while recording (not a button)
+        self.logo = VoxelLogoWidget(size=20, animated=False, parent=self, badge=False)
+        self.logo.setToolTip("Voxel")
         lay.addWidget(self.logo)
-        lay.addSpacing(4)
-        self.lbl_brand = QLabel("Voxel", self)
-        self.lbl_brand.setObjectName("Brand")
-        lay.addWidget(self.lbl_brand)
-        lay.addStretch()
+        lay.addSpacing(10)
+        self.lbl_brand = QLabel("Voxel", self)   # kept for compatibility; not shown
+        self.lbl_brand.hide()
 
-        self.btn_play_pause = GradientGlowPlayButton(size=30, parent=self)
+        # the one primary action
+        self.btn_play_pause = GradientGlowPlayButton(size=32, parent=self)
         self.btn_play_pause.set_playing(False)
         self.btn_play_pause.clicked.connect(self._toggle_play_pause)
         lay.addWidget(self.btn_play_pause)
-        lay.addSpacing(4)
 
+        # secondary controls appear on hover
+        self.extras = QWidget(self)
+        ex = QHBoxLayout(self.extras)
+        ex.setContentsMargins(8, 0, 0, 0)
+        ex.setSpacing(2)
         curr_speed = getattr(self.tts, "current_speed", DEFAULT_SPEED)
-        self.btn_speed = QPushButton(self._speed_text(curr_speed), self)
+        self.btn_speed = QPushButton(self._speed_text(curr_speed), self.extras)
         self.btn_speed.setObjectName("Speed")
-        self.btn_speed.setFixedHeight(26)
+        self.btn_speed.setFixedHeight(28)
         self.btn_speed.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_speed.setToolTip("Speed")
         self.btn_speed.setAccessibleName("Speed")
         self.btn_speed.clicked.connect(self._show_speed_menu)
-        lay.addWidget(self.btn_speed)
-
+        ex.addWidget(self.btn_speed)
         self.btn_more = self._icon_button("More: read whole document, record")
         self.btn_more.clicked.connect(self._show_more_menu)
-        lay.addWidget(self.btn_more)
-
+        ex.addWidget(self.btn_more)
         self.btn_settings = self._icon_button("Settings")
         self.btn_settings.clicked.connect(self.settings_requested.emit)
-        lay.addWidget(self.btn_settings)
-
+        ex.addWidget(self.btn_settings)
         self.btn_close = self._icon_button("Close")
         self.btn_close.clicked.connect(self.hide_player)
-        lay.addWidget(self.btn_close)
+        ex.addWidget(self.btn_close)
+        lay.addWidget(self.extras)
+        lay.addStretch()
+        # no fade effect here: a graphics effect nested inside the window shadow is drawn offset by Qt;
+        # the width animation already reveals the controls smoothly
+        self.extras.hide()
 
         # v1 attribute names, still used by other code paths
         self.btn_doc = self.btn_more
         self.btn_record = self.btn_more
+
+        # hover expand / collapse
+        self._width_anim = QVariantAnimation(self)
+        self._width_anim.setDuration(200)
+        self._width_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._width_anim.valueChanged.connect(self._on_width_anim)
+        self._width_anim.finished.connect(self._on_width_anim_done)
+        self._collapse_timer = QTimer(self)
+        self._collapse_timer.setSingleShot(True)
+        self._collapse_timer.setInterval(700)
+        self._collapse_timer.timeout.connect(self.collapse)
+
+    # ── Expand on hover ─────────────────────────────────────────────────────
+    def expand(self):
+        self._collapse_timer.stop()
+        if self._expanded:
+            return
+        self._expanded = True
+        self.extras.show()
+        self._animate_width(self.EXPANDED_W)
+
+    def collapse(self):
+        if not self._expanded or self._menu_open or self._is_dragging:
+            return
+        self._expanded = False
+        self._animate_width(self.COLLAPSED_W)
+
+    def _animate_width(self, target: int):
+        self._width_anim.stop()
+        self._width_anim.setStartValue(self.width())
+        self._width_anim.setEndValue(target)
+        self._width_anim.start()
+
+    def _on_width_anim(self, w):
+        w = int(w)
+        right = self.x() + self.width()          # grow / shrink towards the left, right edge stays put
+        self.setFixedWidth(w)
+        self.move(right - w, self.y())
+        self.update()
+
+    def _on_width_anim_done(self):
+        if not self._expanded:
+            self.extras.hide()
+
+    def _collapse_now(self):
+        """Back to the compact size without animation (used when the player is shown)."""
+        self._width_anim.stop()
+        self._expanded = False
+        self.extras.hide()
+        self.setFixedWidth(self.COLLAPSED_W)
 
     @staticmethod
     def _speed_text(speed: float) -> str:
@@ -191,7 +255,9 @@ class MiniPlayer(QWidget):
         pal = _pal(theme_mode)
         dark = theme_mode == "dark_glass"
         self.btn_play_pause.set_colors(pal["btn"], pal["btn_hover"], pal["on_accent"])
-        brand_color = "#E5484D" if self.is_recording else pal["text"]
+        rec = "#E5484D"
+        self.logo.set_bar_colors(rec if self.is_recording else pal["faint"], rec if self.is_recording else pal["accent"])
+        brand_color = rec if self.is_recording else pal["text"]
         # Style each child directly: re-applying a parent style sheet does not reliably repolish children.
         self.lbl_brand.setStyleSheet(
             f"QLabel {{ color: {brand_color}; font-family: {FONT_STACK}; font-size: 13px; font-weight: 600; background: transparent; }}")
@@ -229,7 +295,13 @@ class MiniPlayer(QWidget):
     def _popup(self, menu: QMenu, anchor: QWidget):
         menu.adjustSize()
         top = anchor.mapToGlobal(QPoint(0, 0))
-        menu.exec(QPoint(top.x(), top.y() - menu.sizeHint().height() - 6))
+        self._menu_open = True
+        try:
+            menu.exec(QPoint(top.x(), top.y() - menu.sizeHint().height() - 6))
+        finally:
+            self._menu_open = False
+            if not self.underMouse():
+                self._collapse_timer.start()
 
     # ── Menus ───────────────────────────────────────────────────────────────
     def _show_speed_menu(self):
@@ -309,6 +381,12 @@ class MiniPlayer(QWidget):
         self.pos_anim_in.setEndValue(target_pos)
         self.fade_anim_in.setStartValue(0.0)
         self.fade_anim_in.setEndValue(1.0)
+        self._collapse_now()
+        if not (dock_mode == "near_cursor" and show_at_pos) and not self._user_moved:
+            target_pos = self._get_bottom_right_pos()
+            start_pos = QPoint(target_pos.x(), target_pos.y() + 12)
+            self.pos_anim_in.setStartValue(start_pos)
+            self.pos_anim_in.setEndValue(target_pos)
         self.move(start_pos)
         self.setWindowOpacity(0.0)
         self._set_progress(0.0)
@@ -369,12 +447,15 @@ class MiniPlayer(QWidget):
             self.closed.emit()
 
     def enterEvent(self, event):
+        self.expand()
         if self.auto_close_anim.state() == QPropertyAnimation.State.Running:
             self.auto_close_anim.stop()
             self.setWindowOpacity(1.0)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        if not self._menu_open:
+            self._collapse_timer.start()
         if not self.btn_play_pause.is_playing and self.isVisible() and settings_db.get("auto_close_finished", True):
             self._start_auto_close_fadeout(float(settings_db.get("auto_close_delay", 1.0)))
         super().leaveEvent(event)
@@ -384,6 +465,7 @@ class MiniPlayer(QWidget):
         self.is_recording = not self.is_recording
         if self.is_recording:
             self.lbl_brand.setText("Recording")
+            self.logo.setToolTip("Recording to MP3")
             self.apply_theme(self._theme_mode)
             if not self.tts.is_speaking and getattr(self.tts, "current_text", ""):
                 self.tts.speak(self.tts.current_text)
@@ -393,6 +475,7 @@ class MiniPlayer(QWidget):
     def _finish_and_save_recording(self):
         self.is_recording = False
         self.lbl_brand.setText("Voxel")
+        self.logo.setToolTip("Voxel")
         self.apply_theme(self._theme_mode)
         saved = save_recording_from_chunks(self.tts.get_speech_audio_chunks(), getattr(self.tts, "current_text", ""))
         if saved:

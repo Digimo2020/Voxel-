@@ -129,15 +129,20 @@ def grab_bubble(style="Frosted Glass", size="Large"):
     return pm
 
 
-def grab_player(theme="light_glass", playing=False):
+def grab_player(theme="light_glass", playing=False, expanded=False):
     m = offscreen(MiniPlayer(TTSEngine()))
     m.apply_theme(theme)
     m.show()
     if playing:
         m._on_playback_started()
+        m._on_chunk_progress(2, 5)
+    if expanded:
+        m.expand()
     m.setWindowOpacity(1.0)
-    for _ in range(25):
-        pump(1)
+    import time
+    end = time.time() + 0.4
+    while time.time() < end:
+        pump(1); time.sleep(0.01)
     pm = m.grab()
     m.close()
     return pm
@@ -194,17 +199,18 @@ def bubble_styles_image():
 
 
 def player_image():
-    W, H = 460, 190
+    rows = [("At rest", "light_glass", False, False), ("Reading", "light_glass", True, False),
+            ("Hover: more controls", "light_glass", True, True), ("Dark theme", "dark_glass", True, True)]
+    W, H = 470, 58 + len(rows) * 62
     img, p = card(W, H)
     label(p, "Mini player", 24, 14, 15, True)
-    for i, (theme, playing, cap) in enumerate([("light_glass", True, "Playing (light)"),
-                                              ("dark_glass", True, "Playing (dark)")]):
-        y = 52 + i * 66
-        bg = "#EEF0F7" if i == 0 else "#2A2740"
-        p.setBrush(QColor(bg)); p.setPen(Qt.PenStyle.NoPen)
-        p.drawRoundedRect(QRectF(24, y, W - 48, 56), 12, 12)
-        pm = grab_player(theme, playing)
-        p.drawPixmap(QPointF(34, y + 4), pm)
+    for i, (cap, theme, playing, exp) in enumerate(rows):
+        y = 50 + i * 62
+        p.setBrush(QColor("#F3F3F3" if theme == "light_glass" else "#2B2B2B")); p.setPen(Qt.PenStyle.NoPen)
+        p.drawRoundedRect(QRectF(24, y, W - 48, 54), 12, 12)
+        pm = grab_player(theme, playing, exp)
+        p.drawPixmap(QPointF(32, y + 2), pm)
+        label(p, cap, 290, y + 16, 12, False, "#6B6B6B" if theme == "light_glass" else "#A3A3A3", w=160)
     p.end()
     save(img, "player.png")
 

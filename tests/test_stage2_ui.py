@@ -132,7 +132,14 @@ check("tts events", ev[:1] == ["started"] and "paused" in ev and "resumed" in ev
 player.apply_theme("dark_glass"); player.apply_theme("light_glass")
 player._on_speed_selected(1.5)
 check("speed button", player.btn_speed.text() == "1.5×")
-check("mini player compact", player.width() <= 300)
+check("mini player compact at rest", player.width() == player.COLLAPSED_W and not player.extras.isVisible())
+import time as _t
+player.expand(); _end = _t.time() + 0.5
+while _t.time() < _end: app.processEvents(); _t.sleep(0.01)
+check("hover expands with controls", player.width() == player.EXPANDED_W and player.extras.isVisible())
+player.collapse(); _end = _t.time() + 0.5
+while _t.time() < _end: app.processEvents(); _t.sleep(0.01)
+check("leaving collapses again", player.width() == player.COLLAPSED_W and not player.extras.isVisible())
 player._on_chunk_progress(2, 4); check("progress shown", abs(player._progress - 0.5) < 1e-6)
 player._toggle_recording(); check("recording state", player.is_recording and player.lbl_brand.text() == "Recording")
 player._toggle_recording(); check("recording stops", not player.is_recording)
