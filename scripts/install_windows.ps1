@@ -4,7 +4,12 @@
 $ErrorActionPreference = "Stop"
 
 $AppName = "Voxel"
-$Version = "1.1.11"
+$Version = "unknown"
+$VersionFile = Join-Path (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)) "src\utils\version.py"
+if (Test-Path $VersionFile) {
+    $m = Select-String -Path $VersionFile -Pattern 'CURRENT_VERSION\s*=\s*"v?([\d\.]+)"' | Select-Object -First 1
+    if ($m) { $Version = $m.Matches[0].Groups[1].Value }
+}
 $Publisher = "Voxel Labs"
 $Description = "Voxel - Instant AI Voice & Document Reader"
 
