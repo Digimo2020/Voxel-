@@ -38,11 +38,11 @@
 
 ## A look around
 
-| Read Text (paste anything) | Voice |
+| Listen | Read Text (paste anything) |
 | :---: | :---: |
-| <img src="docs/images/settings-read-text-light.png" alt="Read Text" width="100%"> | <img src="docs/images/settings-voice-light.png" alt="Voice" width="100%"> |
-| **Playback** | **Appearance** |
-| <img src="docs/images/settings-playback-light.png" alt="Playback" width="100%"> | <img src="docs/images/settings-appearance-light.png" alt="Appearance" width="100%"> |
+| <img src="docs/images/settings-listen-light.png" alt="Listen" width="100%"> | <img src="docs/images/settings-read-text-light.png" alt="Read Text" width="100%"> |
+| **History** | **Dark theme** |
+| <img src="docs/images/settings-history-light.png" alt="History" width="100%"> | <img src="docs/images/settings-history-dark.png" alt="History, dark" width="100%"> |
 
 <p align="center">
   <img src="docs/images/player.png" alt="Mini player, light and dark" width="46%">

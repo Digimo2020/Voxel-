@@ -37,6 +37,15 @@ Voxel lives in the **system tray** (Windows) or **menu bar** (macOS) after it st
 
 | Button | What it does |
 | :--- | :--- |
+| Round blue button | Pause / resume |
+| `1×` | Change speed |
+| `•••` More | Read the whole document · Record to MP3 (saved in *Documents/Voxel Recordings*) |
+| Sliders icon | Open Settings |
+| ✕ | Close the player |
+
+A thin line along the bottom of the player shows progress through long texts.
+
+--- | :--- |
 | ⏯ Round blue button | Pause / resume |
 | `1.0x ▾` | Change speed |
 | 📄 Page icon | Read the entire document |
@@ -56,24 +65,31 @@ Some apps and websites do not let Voxel read a selection. Copy the text yourself
 2. Check the text. The window shows word count and how long it will take.
 3. **Read aloud**. Press it again to stop. Shortcut: **Ctrl+Enter**.
 
-Open it any time: right-click the tray icon → **Read Text...**
+Open it any time: right-click the tray icon → **Read Text...**, or open Voxel and pick **Read Text** in the sidebar.
 
 <img src="images/tray-menu.png" alt="Tray menu" width="240">
 
 ---
 
-## 4. Make it yours (Settings)
+## 4. The Voxel window
 
-Open Settings from the tray menu or the gear on the player. Change things, then press **Save changes**. Light and Dark are switched at the bottom of the sidebar.
+Double-click the tray icon (or tray menu → **Open Voxel**). The sidebar has:
 
-### Voice: pick the voice, tone, speed, pitch and equalizer
-<img src="images/settings-voice-light.png" alt="Voice settings" width="620">
+| Page | What it is for |
+| :--- | :--- |
+| **Listen** | Turn selection reading on/off, see what is playing, shortcuts |
+| **Read Text** | Paste text and listen |
+| **Resources** | Your saved recordings |
+| **History** | Everything Voxel read: replay, copy, clear |
+| **Settings** | General, Voice, Playback, Appearance, Accessibility, About |
 
-### Playback: what happens when you select text
-<img src="images/settings-playback-light.png" alt="Playback settings" width="620">
+<img src="images/settings-listen-light.png" alt="Listen page" width="620">
 
-### Appearance: bubble style, size, corners, opacity
-<img src="images/settings-appearance-light.png" alt="Appearance settings" width="620">
+### Settings
+
+Changes are saved automatically. Less common options are under **More options** / **Advanced**. Theme (Light, Dark, System) is in **Appearance**.
+
+<img src="images/settings-settings-light.png" alt="Settings page" width="620">
 
 <img src="images/bubble-styles.png" alt="Bubble styles and sizes" width="620">
 
@@ -81,7 +97,7 @@ Open Settings from the tray menu or the gear on the player. Change things, then 
 
 <p>
   <img src="images/settings-read-text-dark.png" alt="Read Text, dark" width="49%">
-  <img src="images/settings-voice-dark.png" alt="Voice, dark" width="49%">
+  <img src="images/settings-history-dark.png" alt="History, dark" width="49%">
 </p>
 
 ---
@@ -90,11 +106,11 @@ Open Settings from the tray menu or the gear on the player. Change things, then 
 
 | Problem | Try this |
 | :--- | :--- |
-| No bubble appears when I highlight text | Settings → Playback → turn on **Show bubble on selection**. On macOS check Accessibility permission. |
+| No bubble appears when I highlight text | **Listen** page → turn on **Read selected text**. On macOS check Accessibility permission. |
 | App or website does not allow selecting | Use **Read Text** (section 3). |
 | Windows says "blocked an app" | Not signed yet. Run `run.bat`, or see the [signing plan](WINDOWS_STORE_GUIDE.md). |
-| No sound | Settings → Playback → **Volume** and **Device**. |
-| Which version do I have? | Bottom of the Settings sidebar, for example `Voxel v1.1.23`. |
+| No sound | Settings → Playback → **Volume** and **Output device**. |
+| Which version do I have? | Bottom of the sidebar, or Settings → About. |
 
 Still stuck? [Open an issue](https://github.com/Digimo2020/Voxel-/issues). Privacy: [PRIVACY.md](PRIVACY.md).
 

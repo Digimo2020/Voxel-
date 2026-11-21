@@ -88,8 +88,8 @@ def shoot_settings():
         "Paste text from anywhere: a locked PDF, a web page that blocks copying, a chat message.\n\n"
         "Press Read aloud and Voxel reads it to you in the voice you picked.")
     d.show()
-    names = {d.PAGE_READ: "read-text", d.PAGE_VOICE: "voice", d.PAGE_PLAYBACK: "playback",
-             d.PAGE_APPEARANCE: "appearance", d.PAGE_ABOUT: "about"}
+    names = {d.PAGE_LISTEN: "listen", d.PAGE_READ: "read-text", d.PAGE_RESOURCES: "resources",
+             d.PAGE_HISTORY: "history", d.PAGE_SETTINGS: "settings"}
     for theme in ("light", "dark"):
         d.apply_theme(theme)
         for page, slug in names.items():
@@ -100,7 +100,7 @@ def shoot_settings():
             sa = cur if isinstance(cur, QScrollArea) else cur.findChild(QScrollArea)
             if sa is not None:  # grow the window so the whole page is visible
                 extra = d.height() - sa.viewport().height()
-                d.resize(880, min(1400, sa.widget().sizeHint().height() + extra + 4))
+                d.resize(880, min(2600, sa.widget().sizeHint().height() + extra + 4))
                 pump()
             save(d.grab(), f"settings-{slug}-{theme}.png")
     d.resize(880, 640)

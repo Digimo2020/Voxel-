@@ -74,7 +74,7 @@ class VoxelApp:
         # 2. Speed
         saved_speed = settings_db.get("default_speed", 1.0)
         self.tts.set_speed(saved_speed)
-        self.player.btn_speed.setText(f"{saved_speed}x ▾")
+        self.player.btn_speed.setText(self.player._speed_text(saved_speed))
 
         # 3. Bubble timeout
         saved_timeout = settings_db.get("bubble_timeout", 4.0)
@@ -142,6 +142,7 @@ class VoxelApp:
         self.settings_dialog.test_bubble_requested.connect(self._test_floating_bubble)
         self.settings_dialog.read_text_requested.connect(lambda t: self.player.play_text(t))
         self.tray.reader_requested.connect(self._show_reader)
+        self.tray.open_requested.connect(self._show_main)
         self.tray.quit_requested.connect(self.quit)
 
         # 5. Global Hotkeys: Document reader & Permission guidance
@@ -272,12 +273,17 @@ class VoxelApp:
             4000
         )
 
-    def _show_history(self):
-        """Displays the JSON history dialog."""
+    def _show_main(self):
+        """Opens the main window on the last page the user used."""
         try:
-            self.history_dialog.load_history()
-            self.history_dialog.show()
-            self.history_dialog.activateWindow()
+            self.settings_dialog.open_main()
+        except Exception as e:
+            print(f"[Voxel] Error showing main window: {e}", file=sys.stderr)
+
+    def _show_history(self):
+        """Opens the History page of the main window."""
+        try:
+            self.settings_dialog.open_history()
         except Exception as e:
             print(f"[Voxel] Error showing history dialog: {e}", file=sys.stderr)
 
