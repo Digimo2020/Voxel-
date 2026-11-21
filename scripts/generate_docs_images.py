@@ -57,7 +57,7 @@ from src.ui.mini_player import MiniPlayer
 from src.ui.history_dialog import HistoryDialog
 from src.ui.tray_icon import AppTrayIcon as TrayIcon
 
-PURPLE = QColor("#7C3AED")
+PURPLE = QColor("#3478F6")
 FONT = "Segoe UI"
 
 
@@ -315,7 +315,7 @@ def scene(step):
         p.setPen(QPen(QColor(124, 58, 237, 150), 2)); p.setBrush(Qt.BrushStyle.NoBrush)
         p.drawEllipse(QPointF(bx + bw * 0.25, by + bh * 0.5), 20, 20)
         badge(2, bx + bw + 28, by + bh / 2)
-        caption("Click the mic to listen", bx + bw + 46, by + bh / 2 - 14)
+        caption("Click the wave to listen", bx + bw + 46, by + bh / 2 - 14)
     else:
         player = grab_player("light_glass", True)
         pw, ph = player.width() / player.devicePixelRatio(), player.height() / player.devicePixelRatio()

@@ -22,10 +22,10 @@ Voxel lives in the **system tray** (Windows) or **menu bar** (macOS) after it st
 ### Step 1: Highlight text in any app
 <img src="images/step1-select.png" alt="Highlight text" width="620">
 
-### Step 2: Click the bubble that appears
-<img src="images/step2-click.png" alt="Click the mic on the bubble" width="620">
+### Step 2: Click the wave icon on the bubble
+<img src="images/step2-click.png" alt="Click the wave icon on the bubble" width="620">
 
-- **Mic** reads your selection. **Page icon** reads the whole document or PDF.
+- **Wave icon** reads your selection. **Page icon** reads the whole document or PDF.
 - Shortcuts: **Ctrl+Alt+S** reads the selection, **Ctrl+Alt+D** reads the whole document (macOS uses the same keys with Cmd+Option).
 
 ### Step 3: Listen

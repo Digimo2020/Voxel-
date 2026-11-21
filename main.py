@@ -81,7 +81,8 @@ class VoxelApp:
         self.bubble.hide_timer.setInterval(int(saved_timeout * 1000))
 
         # 4. Player & Bubble Theme
-        saved_theme = settings_db.get("settings_theme", "light")
+        from src.ui.design import resolve_theme
+        saved_theme = resolve_theme(settings_db.get("settings_theme", "light"))
         player_theme = "light_glass" if saved_theme == "light" else "dark_glass"
         self.player.apply_theme(player_theme)
         if hasattr(self.bubble, "set_theme_mode"):

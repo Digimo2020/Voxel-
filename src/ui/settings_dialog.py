@@ -19,9 +19,9 @@ from PyQt6.QtWidgets import (
     QLabel, QComboBox, QPushButton, QFrame, QButtonGroup, QSlider, QFileDialog,
     QPlainTextEdit, QSizePolicy, QApplication
 )
-from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QTimer, QRectF, QPointF, QVariantAnimation, QEasingCurve
+from PyQt6.QtCore import QSize, Qt, QUrl, pyqtSignal, QTimer, QRectF, QPointF, QVariantAnimation, QEasingCurve
 from PyQt6.QtGui import (
-    QCursor, QDesktopServices, QPainter, QColor, QBrush, QPen, QLinearGradient,
+    QGuiApplication, QCursor, QDesktopServices, QPainter, QColor, QBrush, QPen, QLinearGradient,
     QImage, QShortcut, QKeySequence, QFontMetrics
 )
 
@@ -39,23 +39,7 @@ from assets.icons import create_app_icon, get_brand_logo_pixmap
 
 LINKEDIN_URL = "https://www.linkedin.com/in/fahimdigital/"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Theme palettes
-# ─────────────────────────────────────────────────────────────────────────────
-PALETTES = {
-    "light": {
-        "bg": "#F6F5FB", "sidebar": "#FFFFFF", "surface": "#FFFFFF", "surface2": "#F4F2FA",
-        "border": "#E9E6F2", "text": "#17142B", "muted": "#6E6A86", "faint": "#A9A5BC",
-        "accent": "#7C3AED", "accent_hover": "#6D28D9", "accent_soft": "#F1EBFE",
-        "accent_text": "#6D28D9", "track_off": "#D9D5E6", "ok": "#10B981", "warn": "#F59E0B",
-    },
-    "dark": {
-        "bg": "#0E0D16", "sidebar": "#13121D", "surface": "#191826", "surface2": "#211F31",
-        "border": "#2A2840", "text": "#F3F1FA", "muted": "#A19DB8", "faint": "#6B6784",
-        "accent": "#8B5CF6", "accent_hover": "#7C3AED", "accent_soft": "#2A2050",
-        "accent_text": "#C4B5FD", "track_off": "#3A3754", "ok": "#34D399", "warn": "#FBBF24",
-    },
-}
+from src.ui.design import PALETTES, FONT_STACK, resolve_theme, line_icon, THEME_PREFS
 
 
 def _icon_file(name: str, color: str, draw: Callable[[QPainter], None]) -> str:
@@ -297,28 +281,22 @@ class BubbleStyleGraphic(QWidget):
             p.setPen(QPen(QColor("#94A3B8"), 1.2))
             p.setBrush(QColor("#1E293B") if self.is_dark else QColor("#FFFFFF"))
         elif self.style_name == "Frosted Glass":
-            g = QLinearGradient(0, 0, w, h)
-            if self.is_dark:
-                g.setColorAt(0, QColor(46, 16, 101, 220)); g.setColorAt(1, QColor(30, 27, 75, 240))
-                p.setPen(QPen(QColor("#A78BFA"), 1.5))
-            else:
-                g.setColorAt(0, QColor("#FFFFFF")); g.setColorAt(1, QColor("#EDE9FE"))
-                p.setPen(QPen(QColor("#7C3AED"), 1.5))
-            p.setBrush(QBrush(g))
+            p.setPen(QPen(QColor("#6B9FFF") if self.is_dark else QColor("#3478F6"), 1.5))
+            p.setBrush(QColor(37, 37, 37, 235) if self.is_dark else QColor(255, 255, 255, 235))
         elif self.style_name == "Transparent":
             p.setPen(QPen(QColor("#94A3B8"), 1.2, Qt.PenStyle.DashLine))
             p.setBrush(QColor(0, 0, 0, 40) if self.is_dark else QColor(255, 255, 255, 40))
         else:  # Minimal
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor("#312E81") if self.is_dark else QColor("#EDE9FE"))
+            p.setBrush(QColor("#2A2A2A") if self.is_dark else QColor("#EFEFEF"))
         p.drawRoundedRect(rect, r, r)
         p.setPen(QPen(QColor(255, 255, 255, 40) if self.is_dark else QColor("#CBD5E1"), 1.0))
         p.drawLine(int(w / 2), 5, int(w / 2), int(h - 5))
-        c = QColor("#A78BFA") if self.is_dark else QColor("#7C3AED")
-        p.setPen(QPen(c, 1.2)); p.setBrush(c)
-        p.drawRoundedRect(QRectF(w * 0.25 - 3, h * 0.5 - 5, 6, 8), 3, 3)
-        p.drawLine(int(w * 0.25), int(h * 0.5 + 3), int(w * 0.25), int(h * 0.5 + 6))
-        p.setBrush(Qt.BrushStyle.NoBrush)
+        c = QColor("#6B9FFF") if self.is_dark else QColor("#3478F6")
+        p.setPen(Qt.PenStyle.NoPen); p.setBrush(c)
+        for dx, bh in ((-4, 6), (0, 11), (4, 6)):
+            p.drawRoundedRect(QRectF(w * 0.25 + dx - 1.25, h * 0.5 - bh / 2, 2.5, bh), 1.25, 1.25)
+        p.setPen(QPen(c, 1.2)); p.setBrush(Qt.BrushStyle.NoBrush)
         p.drawRoundedRect(QRectF(w * 0.75 - 4, h * 0.5 - 5, 8, 10), 1.5, 1.5)
         p.end()
 
@@ -409,9 +387,10 @@ class SettingsDialog(QDialog):
     def __init__(self, tts_engine: Optional[TTSEngine] = None, parent=None):
         super().__init__(parent)
         self.tts = tts_engine
-        self.current_theme = settings_db.get("settings_theme", "light")
-        if self.current_theme not in PALETTES:
-            self.current_theme = "light"
+        self.theme_pref = settings_db.get("settings_theme", "light")
+        if self.theme_pref not in THEME_PREFS:
+            self.theme_pref = "light"
+        self.current_theme = resolve_theme(self.theme_pref)
         self.current_bubble_style: str = "Frosted Glass"
         self.current_corner_radius: str = "Medium"
         self.nav_buttons: List[QPushButton] = []
@@ -432,7 +411,12 @@ class SettingsDialog(QDialog):
             self.tts.playback_finished.connect(self._on_tts_finished)
             if hasattr(self.tts, "playback_error"):
                 self.tts.playback_error.connect(lambda _msg: self._on_tts_finished())
-        self.apply_theme(self.current_theme)
+        self.apply_theme(self.theme_pref)
+        try:  # follow the OS when "System" is chosen
+            QGuiApplication.styleHints().colorSchemeChanged.connect(
+                lambda _s: self.apply_theme("system") if self.theme_pref == "system" else None)
+        except Exception:
+            pass
         self.load_values()
         self._go_to(self.PAGE_READ)
 
@@ -457,15 +441,17 @@ class SettingsDialog(QDialog):
         side.addSpacing(18)
 
         self.pages_meta = [
-            (self.PAGE_READ, "📝   Read Text", "Read Text", "Paste any text and listen."),
-            (self.PAGE_VOICE, "🎙️   Voice", "Voice", "Pick a voice and tune how it sounds."),
-            (self.PAGE_PLAYBACK, "🎚️   Playback", "Playback", "When and how Voxel plays."),
-            (self.PAGE_APPEARANCE, "🎨   Appearance", "Appearance", "Style of the floating bubble."),
-            (self.PAGE_ABOUT, "ℹ️   About", "About", "Version, links and license."),
+            (self.PAGE_READ, "Read Text", "Read Text", "Paste any text and listen."),
+            (self.PAGE_VOICE, "Voice", "Voice", "Pick a voice and tune how it sounds."),
+            (self.PAGE_PLAYBACK, "Playback", "Playback", "When and how Voxel plays."),
+            (self.PAGE_APPEARANCE, "Appearance", "Appearance", "Theme and floating bubble."),
+            (self.PAGE_ABOUT, "About", "About", "Version, links and license."),
         ]
         if IS_MAC:
-            self.pages_meta.append((self.PAGE_PERMISSIONS, "🛡️   Permissions", "Permissions", "Let Voxel read selected text."))
+            self.pages_meta.append((self.PAGE_PERMISSIONS, "Accessibility", "Accessibility", "Let Voxel read selected text."))
 
+        self._nav_icons = {self.PAGE_READ: "file-text", self.PAGE_VOICE: "audio-lines", self.PAGE_PLAYBACK: "play",
+                           self.PAGE_APPEARANCE: "palette", self.PAGE_ABOUT: "info", self.PAGE_PERMISSIONS: "accessibility"}
         self.btn_group_nav = QButtonGroup(self)
         self._nav_by_page: Dict[int, QPushButton] = {}
         for page, label, _t, _s in self.pages_meta:
@@ -480,7 +466,7 @@ class SettingsDialog(QDialog):
             side.addWidget(b)
         side.addStretch()
 
-        self.seg_theme = Segmented([("☀  Light", "light"), ("☾  Dark", "dark")], self.sidebar_widget)
+        self.seg_theme = Segmented([("Light", "light"), ("Dark", "dark"), ("System", "system")], self.sidebar_widget)
         self.seg_theme.changed.connect(self.apply_theme)
         side.addWidget(self.seg_theme, 0, Qt.AlignmentFlag.AlignHCenter)
         side.addSpacing(8)
@@ -578,7 +564,7 @@ class SettingsDialog(QDialog):
         bl.setContentsMargins(10, 8, 10, 8)
         bl.setSpacing(8)
 
-        btn_paste = QPushButton("📋  Paste", bar)
+        btn_paste = self.btn_paste = QPushButton(" Paste", bar)
         btn_paste.setObjectName("BtnSoft")
         btn_paste.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_paste.clicked.connect(self._paste_into_reader)
@@ -599,7 +585,7 @@ class SettingsDialog(QDialog):
         self.reader_viz = EqualizerPreviewWidget(110, 12, bar)
         bl.addWidget(self.reader_viz)
 
-        self.btn_read = QPushButton("▶  Read aloud", bar)
+        self.btn_read = QPushButton(" Read aloud", bar)
         self.btn_read.setObjectName("BtnPrimary")
         self.btn_read.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_read.setToolTip("Ctrl+Enter")
@@ -645,7 +631,9 @@ class SettingsDialog(QDialog):
         self._set_reading_ui(True)
 
     def _set_reading_ui(self, active: bool):
-        self.btn_read.setText("■  Stop" if active else "▶  Read aloud")
+        self.btn_read.setText(" Stop" if active else " Read aloud")
+        if hasattr(self, "_icon_play"):
+            self.btn_read.setIcon(self._icon_stop if active else self._icon_play)
         self.reader_viz.set_active(active)
 
     # ── Page: Voice ─────────────────────────────────────────────────────────
@@ -697,7 +685,7 @@ class SettingsDialog(QDialog):
         tb = QHBoxLayout(self.frame_test_voice)
         tb.setContentsMargins(10, 8, 14, 8)
         tb.setSpacing(12)
-        self.btn_test_perf = QPushButton("▶  Test voice", self.frame_test_voice)
+        self.btn_test_perf = QPushButton(" Test voice", self.frame_test_voice)
         self.btn_test_perf.setObjectName("BtnSoft")
         self.btn_test_perf.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_test_perf.clicked.connect(self._run_performance_test)
@@ -1027,7 +1015,9 @@ class SettingsDialog(QDialog):
 
     def _on_tts_finished(self):
         self._test_running = False
-        self.btn_test_perf.setText("▶  Test voice")
+        self.btn_test_perf.setText(" Test voice")
+        if hasattr(self, "_icon_play_soft"):
+            self.btn_test_perf.setIcon(self._icon_play_soft)
         self.lbl_test_status.setText("")
         self.equalizer_preview.set_active(False)
         self._set_reading_ui(False)
@@ -1042,7 +1032,9 @@ class SettingsDialog(QDialog):
             return
         self._apply_voice_choice()
         self._test_running = True
-        self.btn_test_perf.setText("■  Stop")
+        self.btn_test_perf.setText(" Stop")
+        if hasattr(self, "_icon_stop_soft"):
+            self.btn_test_perf.setIcon(self._icon_stop_soft)
         self.lbl_test_status.setText("Preparing…")
         self.equalizer_preview.set_active(True)
         self.tts.speak("Hi, I'm Voxel. This is how I sound with your current settings.")
@@ -1051,7 +1043,7 @@ class SettingsDialog(QDialog):
     def _stylesheet(self, pal: dict) -> str:
         chevron = _icon_file("chevron", pal["muted"], _chevron)
         return f"""
-        QDialog {{ background: {pal['bg']}; font-family: {FONT_FAMILY}; }}
+        QDialog {{ background: {pal['bg']}; font-family: {FONT_STACK}; }}
         QWidget#Main, QWidget#ScrollContent {{ background: transparent; }}
         QScrollArea {{ background: transparent; border: none; }}
         QLabel {{ background: transparent; color: {pal['text']}; font-size: 13px; }}
@@ -1060,30 +1052,30 @@ class SettingsDialog(QDialog):
         QFrame#Sidebar {{ background: {pal['sidebar']}; border-right: 1px solid {pal['border']}; }}
         QPushButton#NavBtn {{
             background: transparent; color: {pal['muted']}; border: none; border-radius: 10px;
-            padding: 10px 12px; text-align: left; font-size: 13px; font-weight: 600;
+            padding: 9px 12px; text-align: left; font-size: 13px; font-weight: 500;
         }}
         QPushButton#NavBtn:hover {{ background: {pal['surface2']}; color: {pal['text']}; }}
         QPushButton#NavBtn:checked {{ background: {pal['accent_soft']}; color: {pal['accent_text']}; }}
 
-        QLabel#PageTitle {{ font-size: 22px; font-weight: 800; }}
+        QLabel#PageTitle {{ font-size: 22px; font-weight: 600; }}
         QLabel#PageSub {{ font-size: 13px; color: {pal['muted']}; }}
         QLabel#Faint {{ font-size: 11px; color: {pal['faint']}; }}
 
-        QFrame#Card {{ background: {pal['surface']}; border: 1px solid {pal['border']}; border-radius: 14px; }}
-        QLabel#CardTitle {{ font-size: 12px; font-weight: 700; color: {pal['muted']}; }}
+        QFrame#Card {{ background: {pal['surface']}; border: 1px solid {pal['border']}; border-radius: 12px; }}
+        QLabel#CardTitle {{ font-size: 12px; font-weight: 600; color: {pal['muted']}; }}
         QFrame#Divider {{ background: {pal['border']}; border: none; }}
-        QLabel#RowTitle {{ font-size: 13px; font-weight: 600; }}
+        QLabel#RowTitle {{ font-size: 13px; font-weight: 500; }}
         QLabel#RowHint {{ font-size: 11px; color: {pal['muted']}; }}
         QLabel#Pill {{
             background: {pal['accent_soft']}; color: {pal['accent_text']};
             border-radius: 8px; padding: 3px 6px; font-size: 12px; font-weight: 700;
         }}
-        QFrame#Bar {{ background: {pal['surface']}; border: 1px solid {pal['border']}; border-radius: 14px; }}
+        QFrame#Bar {{ background: {pal['surface']}; border: 1px solid {pal['border']}; border-radius: 12px; }}
 
         QFrame#Segmented {{ background: {pal['surface2']}; border: 1px solid {pal['border']}; border-radius: 10px; }}
         QPushButton#SegBtn {{
             background: transparent; color: {pal['muted']}; border: none; border-radius: 8px;
-            padding: 5px 12px; font-size: 12px; font-weight: 600; min-width: 46px;
+            padding: 5px 10px; font-size: 12px; font-weight: 500; min-width: 40px;
         }}
         QPushButton#SegBtn:hover {{ color: {pal['text']}; }}
         QPushButton#SegBtn:checked {{ background: {pal['surface']}; color: {pal['accent_text']}; border: 1px solid {pal['border']}; }}
@@ -1096,7 +1088,7 @@ class SettingsDialog(QDialog):
 
         QPlainTextEdit#Reader {{
             background: {pal['surface']}; color: {pal['text']}; border: 1px solid {pal['border']};
-            border-radius: 14px; padding: 14px; font-size: 14px;
+            border-radius: 12px; padding: 14px; font-size: 14px;
             selection-background-color: {pal['accent']}; selection-color: #FFFFFF;
         }}
         QPlainTextEdit#Reader:focus {{ border: 1.5px solid {pal['accent']}; }}
@@ -1126,10 +1118,10 @@ class SettingsDialog(QDialog):
 
         QPushButton {{
             background: {pal['surface2']}; color: {pal['text']}; border: 1px solid {pal['border']};
-            border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 600;
+            border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500;
         }}
         QPushButton#BtnPrimary {{
-            background: {pal['accent']}; color: #FFFFFF; border: none; padding: 9px 22px; font-weight: 700;
+            background: {pal['accent']}; color: #FFFFFF; border: none; padding: 9px 22px; font-weight: 600;
         }}
         QPushButton#BtnPrimary:hover {{ background: {pal['accent_hover']}; }}
         QPushButton#BtnSoft {{ background: {pal['accent_soft']}; color: {pal['accent_text']}; border: none; }}
@@ -1143,13 +1135,27 @@ class SettingsDialog(QDialog):
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
         """
 
-    def apply_theme(self, theme: str):
-        if theme not in PALETTES:
-            theme = "light"
+    def apply_theme(self, pref: str):
+        """pref is the saved choice ('light' | 'dark' | 'system'); the drawn theme is resolved from it."""
+        if pref not in THEME_PREFS:
+            pref = "light"
+        self.theme_pref = pref
+        theme = resolve_theme(pref)
         self.current_theme = theme
-        settings_db.set("settings_theme", theme)
-        self.setStyleSheet(self._stylesheet(PALETTES[theme]))
-        self.seg_theme.set_value(theme)
+        settings_db.set("settings_theme", pref)
+        pal = PALETTES[theme]
+        self.setStyleSheet(self._stylesheet(pal))
+        self.seg_theme.set_value(pref)
+        for page, btn in self._nav_by_page.items():
+            btn.setIcon(line_icon(self._nav_icons.get(page, "info"), pal["muted"], pal["accent_text"], 18))
+            btn.setIconSize(QSize(18, 18))
+        self.btn_paste.setIcon(line_icon("clipboard", pal["accent_text"], size=16))
+        self._icon_play = line_icon("play", "#FFFFFF", size=14)
+        self._icon_stop = line_icon("square", "#FFFFFF", size=14)
+        self._icon_play_soft = line_icon("play", pal["accent_text"], size=14)
+        self._icon_stop_soft = line_icon("square", pal["accent_text"], size=14)
+        self._set_reading_ui(bool(self.tts and self.tts.is_speaking and not self._test_running))
+        self.btn_test_perf.setIcon(self._icon_stop_soft if self._test_running else self._icon_play_soft)
         for s in self.switches:
             s.set_theme_mode(theme)
         for g in self.bubble_graphics:
@@ -1233,7 +1239,7 @@ class SettingsDialog(QDialog):
         settings_db.set("bubble_corner_radius", self.current_corner_radius)
         settings_db.set("bubble_appearance", self.current_bubble_style)
         settings_db.set("smooth_fade_in", self.switch_fade_in.isChecked())
-        settings_db.set("settings_theme", self.current_theme)
+        settings_db.set("settings_theme", self.theme_pref)
         set_startup_enabled(self.chk_startup.isChecked())
         self.settings_applied.emit()
         self.close()
