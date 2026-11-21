@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-7441F9?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-0F172A?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-0F172A?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
 </p>
 
 ---
