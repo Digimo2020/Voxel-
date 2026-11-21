@@ -62,7 +62,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          dist/Voxel.dmg
           dist/Voxel-*.dmg
           dist/SHA256SUMS.txt
         fail_on_unmatched_files: true
@@ -108,7 +107,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          dist/Voxel.exe
           dist/Voxel-*.exe
         fail_on_unmatched_files: false
         generate_release_notes: true

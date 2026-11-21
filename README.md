@@ -12,9 +12,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-7441F9?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases/download/v1.1.23/Voxel-v1.1.23.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-7441F9?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-0F172A?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases/download/v1.1.23/Voxel-v1.1.23.dmg"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-0F172A?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
 </p>
 
 ---
@@ -47,7 +47,7 @@
 
 ## Install
 
-**Windows**: download `Voxel.exe`, run it. If SmartScreen warns, choose *More info → Run anyway*.
+**Windows**: download `Voxel-v1.1.23.exe`, run it. If SmartScreen warns, choose *More info → Run anyway*.
 
 **macOS**: open the `.dmg`, drag Voxel to Applications, then run once in Terminal:
 

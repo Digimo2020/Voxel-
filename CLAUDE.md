@@ -2,7 +2,7 @@
 
 ## Always
 - Follow `VERSIONING_RULES.md` for every release (version file, CHANGELOG, README links, tag).
-- Download links must use the matching release tag. After any release, check each link returns HTTP 200.
+- Every download must carry its version (e.g. `Voxel-v1.1.23.exe`); never publish unversioned `Voxel.exe`/`Voxel.dmg`. After each release run `python scripts/update_download_links.py`, then check each link returns HTTP 200.
 - Keep the README short and visual; put long detail in `docs/DETAILS.md`.
 
 ## End of every session: summary

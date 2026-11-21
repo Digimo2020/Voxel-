@@ -30,10 +30,10 @@
      - `dist/Voxel-v1.1.06.exe` (kept intact)
      - `dist/Voxel-v1.1.21.exe` (kept intact)
      - `dist/Voxel-v1.1.22.exe` (new build)
-  2. Maintain a `dist/Voxel.exe` alias pointing to the latest version for convenience.
+  2. Local builds may keep a `dist/Voxel.exe` alias, but it is **never published**: every released/downloaded file must carry its version (`Voxel-v1.1.22.exe`).
   3. On macOS, maintain the same version preservation:
      - `dist/Voxel-v1.1.22.dmg`
-  4. Keep `dist/Voxel.dmg` as the latest-build alias.
+  4. Same for macOS: only `Voxel-v<version>.dmg` is published.
   5. Historical `.pkg` files may remain in older GitHub releases, but new macOS releases are DMG-only.
 
 ---
@@ -42,7 +42,7 @@
 * Whenever a new version is created:
   1. **`src/utils/version.py`**: Update `CURRENT_VERSION = "v<Major>.<Minor>.<Patch:02d>"`.
   2. **`CHANGELOG.md`**: Add the new version header with date, fixes, and feature highlights.
-  3. **`README.md`**:
+  3. **`README.md`** (run `python scripts/update_download_links.py` to repoint the download buttons at the versioned files):
      - Update the top version badge.
      - Update direct download links in the Quick Download section.
      - Add a new row to the **Releases & Version Archive** table marked 🟢 **Latest**, and mark the previous release as 📦 **Archived**.
