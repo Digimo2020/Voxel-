@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.22-7441F9?style=for-the-badge&logo=apple" alt="Version v1.1.22"></a>
+  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/badge/Version-v1.1.23-7441F9?style=for-the-badge&logo=apple" alt="Version v1.1.23"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/Digimo2020/Voxel-"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-00F0FF?style=for-the-badge" alt="Platform: macOS & Windows"></a>
   <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=7441F9&label=Downloads" alt="GitHub Downloads"></a>
@@ -243,7 +243,7 @@ In early development builds, some users experienced a crash dialog:
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel macOS Disk Image (.dmg)** | **`v1.1.22`** *(Latest)* | Drag-and-drop installer with native Quartz selection, full document reader, and permission assistant | macOS (Apple Silicon / Intel) | [**📥 Download Voxel-v1.1.22.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.22/Voxel-v1.1.22.dmg) *(Recommended)* |
+| **Voxel macOS Disk Image (.dmg)** | **`v1.1.23`** *(Latest)* | Drag-and-drop installer with native Quartz selection, full document reader, and permission assistant | macOS (Apple Silicon / Intel) | [**📥 Download Voxel-v1.1.23.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.23/Voxel-v1.1.23.dmg) *(Recommended)* |
 | **Voxel DMG (Latest Alias)** | `latest` | Automatically resolves to the newest macOS disk image | macOS / Applications | [📥 Download Voxel.dmg](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.dmg) |
 
 #### Run from Source (macOS)
@@ -260,7 +260,7 @@ chmod +x run.sh
 
 | Package Format | Version | Description | Target | Direct Download |
 | :--- | :---: | :--- | :---: | :---: |
-| **Voxel Windows Standalone** | **`v1.1.22`** *(Latest)* | Zero-dependency standalone portable executable with unified Win32 selection, full document reader, and brand icons | Windows 10 / 11 | [**📥 Download Voxel-v1.1.22.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.22/Voxel-v1.1.22.exe) *(Recommended)* |
+| **Voxel Windows Standalone** | **`v1.1.23`** *(Latest)* | Zero-dependency standalone portable executable with unified Win32 selection, full document reader, and brand icons | Windows 10 / 11 | [**📥 Download Voxel-v1.1.23.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.23/Voxel-v1.1.23.exe) *(Recommended)* |
 | **Voxel Windows (Latest Alias)** | `latest` | Automatically resolves to newest release | Windows 10 / 11 | [📥 Download Voxel.exe](https://github.com/Digimo2020/Voxel-/releases/latest/download/Voxel.exe) |
 
 > [!IMPORTANT]
@@ -310,7 +310,8 @@ All past and current versions are preserved below according to [`VERSIONING_RULE
 
 | Release Tag | Status | Windows Executable (.exe) | macOS Package (.pkg) | macOS Disk Image (.dmg) | Key Changes & Highlights |
 | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`v1.1.22`** | 🟢 **Latest** | [**📥 Voxel-v1.1.22.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.22/Voxel-v1.1.22.exe) | — | [**📥 Voxel-v1.1.22.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.22/Voxel-v1.1.22.dmg) | • **Workable Bubble Sizing**: 3 distinct, functional formats in Settings: **Small Dot (Mini 28px)**, **Medium (Compact 62×32px)**, and **Large (Full 82×40px)**<br>• **Smart Distance Padding**: Configurable clearance slider (default 28px, 15px–75px) in Settings Appearance tab to hover safely clear of text and web popups (Google Docs, Chrome Quote)<br>• **Multi-Line Selection Offset**: Automatically floats above the top line of selected blocks near left margin, eliminating collisions with highlighted paragraphs |
+| **`v1.1.23`** | 🟢 **Latest** | [**📥 Voxel-v1.1.23.exe**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.23/Voxel-v1.1.23.exe) | — | [**📥 Voxel-v1.1.23.dmg**](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.23/Voxel-v1.1.23.dmg) | • **Redesigned Settings**: card layout, animated toggle switches, segmented controls, shorter text, Light/Dark in sidebar<br>• **New Read Text page**: paste or type any text and listen (for apps that block selection), also in the tray menu<br>• **Fixes**: duplicate volume slider, mislabeled close delay, "Bright & Airy" preset label |
+| **`v1.1.22`** | 📦 Archived | [📥 Voxel-v1.1.22.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.22/Voxel-v1.1.22.exe) | — | [📥 Voxel-v1.1.22.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.22/Voxel-v1.1.22.dmg) | • **Workable Bubble Sizing**: 3 distinct, functional formats in Settings: **Small Dot (Mini 28px)**, **Medium (Compact 62×32px)**, and **Large (Full 82×40px)**<br>• **Smart Distance Padding**: Configurable clearance slider (default 28px, 15px–75px) in Settings Appearance tab to hover safely clear of text and web popups (Google Docs, Chrome Quote)<br>• **Multi-Line Selection Offset**: Automatically floats above the top line of selected blocks near left margin, eliminating collisions with highlighted paragraphs |
 | **`v1.1.21`** | 📦 Archived | Voxel-v1.1.21.exe *(not published)* | — | [📥 Voxel-v1.1.21.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.21/Voxel-v1.1.21.dmg) | • **Always-Fixed Test Voice Bar**: Anchored permanently at bottom of Voice & Speech tab, 100% visible regardless of scroll position<br>• **Minimalist Clean UI**: Removed verbose titles/subtitles, concise `▶ Test Voice` button + buttery-smooth 18-bar harmonic visualizer<br>• **Instant Voice Preview**: Test voices, cadence, pitch, and EQ curves instantly without scrolling up or down<br>• **Zero Horizontal Overflow**: Verified 0px across all 5 Settings tabs in Light and Dark themes |
 | **`v1.1.20`** | 📦 Archived | Voxel-v1.1.20.exe *(not published)* | — | [📥 Voxel-v1.1.20.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.20/Voxel-v1.1.20.dmg) | • **Buttery Voice Visualizer**: 60 FPS multi-harmonic vocal physics simulation with 18 vibrant gradient pill bars (240x34px) and organic exponential decay<br>• **Voice Tuning Controls**: Dedicated Speed slider (`0.5x`–`2.0x`), Voice Pitch slider (`-50Hz`–`+50Hz`), and Volume slider (`0%`–`100%`) in Voice & Speech<br>• **Audio & Playback Page**: Unified "Audio Transitions & Fading" card (fade-in toggle + decay slider), modernized "Auto-Read & Trigger Behavior", and "Hardware Output"<br>• **External App Floating Bubble**: Replaced `ToolTip` with Cocoa-native `NSPanel` (`Qt.WindowType.Tool`) and `NSPasteboard.changeCount()` for instant selection display over Chrome, Safari & Word<br>• **Zero Horizontal Overflow**: Verified 0px horizontal scroll across all 5 Settings tabs |
 | **`v1.1.19`** | 📦 Archived | [📥 Voxel-v1.1.19.exe](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.19/Voxel-v1.1.19.exe) | — | [📥 Voxel-v1.1.19.dmg](https://github.com/Digimo2020/Voxel-/releases/download/v1.1.19/Voxel-v1.1.19.dmg) | • **Interactive Checkmarks**: Anti-aliased white vector checkmark in purple box when checked; clean blank square when unchecked<br>• **Single-Row Controls**: Individual full-width rows for Playback Speed, Fade-In (toggle switch), and Fade-Out (duration slider)<br>• **2-Row Audio Settings**: Full-width Output Device dropdown + Volume slider and Recordings folder<br>• **Zero Horizontal Overflow**: Guaranteed 0px horizontal scroll across all 5 Settings tabs (Voice, Playback, Appearance, About, Permissions) |
@@ -338,7 +339,7 @@ chmod +x build_mac.sh
 Outputs:
 - **`dist/Voxel.app`**: Native standalone application bundle.
 - **`dist/Voxel.dmg`**: Drag-and-drop installer disk image.
-- **`dist/Voxel-v1.1.22.dmg`**: Versioned release disk image.
+- **`dist/Voxel-v1.1.23.dmg`**: Versioned release disk image.
 - **`dist/SHA256SUMS.txt`**: Verification checksums.
 
 ### Building on Windows (`.exe`)
@@ -347,7 +348,7 @@ Outputs:
 ```
 Outputs:
 - **`dist/Voxel.exe`**: Zero-dependency standalone executable.
-- **`dist/Voxel-v1.1.22.exe`**: Versioned release executable.
+- **`dist/Voxel-v1.1.23.exe`**: Versioned release executable.
 
 ---
 

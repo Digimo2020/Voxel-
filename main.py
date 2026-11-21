@@ -139,6 +139,8 @@ class VoxelApp:
         self.history_dialog.replay_requested.connect(self._replay_history)
         self.settings_dialog.settings_applied.connect(self._on_settings_applied)
         self.settings_dialog.test_bubble_requested.connect(self._test_floating_bubble)
+        self.settings_dialog.read_text_requested.connect(lambda t: self.player.play_text(t))
+        self.tray.reader_requested.connect(self._show_reader)
         self.tray.quit_requested.connect(self.quit)
 
         # 5. Global Hotkeys: Document reader & Permission guidance
@@ -285,6 +287,13 @@ class VoxelApp:
             self.settings_dialog.open_preferences()
         except Exception as e:
             print(f"[Voxel] Error showing settings dialog: {e}", file=sys.stderr)
+
+    def _show_reader(self):
+        """Opens the Read Text page (paste any text and listen)."""
+        try:
+            self.settings_dialog.open_reader()
+        except Exception as e:
+            print(f"[Voxel] Error showing reader: {e}", file=sys.stderr)
 
     def _show_about(self):
         """Displays the settings dialog on About tab."""

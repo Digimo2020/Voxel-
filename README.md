@@ -34,8 +34,16 @@
 - 🎙 **Natural voices**: Microsoft Edge neural voices, with offline fallback (macOS Speech / Windows SAPI)
 - 🫧 **Never steals focus**: the bubble sits on top of your work without interrupting it
 - 📄 **Read whole documents** with one click
+- 📝 **Read Text**: paste text from apps that block selection and listen
 - 🎚 **Your pace**: speed, pitch, volume and equalizer presets
 - 🌗 **Light, dark and frosted-glass** themes; small / medium / large bubble sizes
+
+## Settings
+
+<p align="center">
+  <img src="assets/screenshots/settings_read_text.png" alt="Read Text page" width="49%">
+  <img src="assets/screenshots/settings_playback_dark.png" alt="Playback settings, dark theme" width="49%">
+</p>
 
 ## Install
 

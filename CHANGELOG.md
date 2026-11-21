@@ -10,6 +10,15 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.23] - 2026-11-21
+
+### Redesigned Settings & New Read Text Page
+- **Read Text page**: paste or type any text and press Read aloud (Ctrl+Enter). Works for apps and websites that block selection. Also opens from the tray menu ("Read Text...").
+- **New Settings design**: rounded cards with one setting per row, animated toggle switches instead of checkboxes, segmented controls for theme, bubble size and corners, shorter labels, nothing clipped at the window edge.
+- **Fixes**: removed the duplicate Volume slider on the Voice page; renamed "Fade-out decay" to "Close delay" (it controls auto-close) and disabled it when auto-close is off; the "Bright & Airy" EQ preset no longer shows as "Bright _Airy"; long Tone names are shortened with a tooltip.
+
+---
+
 ## [v1.1.22] - 2026-11-02
 
 ### Workable Bubble Sizes (Small Dot, Medium, Large) & Selection Distance Padding

@@ -302,7 +302,7 @@ class VoiceEqualizerWidget(QWidget):
         self.preset_buttons: Dict[str, QPushButton] = {}
 
         for preset_name in EQ_PRESETS.keys():
-            btn = QPushButton(preset_name)
+            btn = QPushButton(preset_name.replace("&", "&&"))  # "&" would become a mnemonic underscore
             btn.setCheckable(True)
             btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             btn.clicked.connect(lambda checked, name=preset_name: self.apply_preset(name))

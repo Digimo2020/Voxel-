@@ -1,146 +1,282 @@
 """
-Settings, Preferences & About Dialog for Voxel.
-Faithfully styled with modern custom CSS and components matching user mockups:
-- Official Voxel Brand Logo in Sidebar Header (Light / Dark mode auto-switch).
-- Ampersand bug resolved (literal '&&' so no Windows underscores appear).
-- Custom ToggleSwitch widget for smooth fade-in.
-- SVG/PNG white checkmark indicators for custom purple checkboxes.
-- Interactive Theme Selection cards with mini window graphics and checkmarks.
-- 4 Floating Bubble Appearance cards (Default, Frosted Glass, Transparent, Minimal).
-- Automatic Voxel Recordings folder integration with one-click folder opener.
-- Parametric Voice Equalizer (EQ) and live performance spectrum test.
+Voxel Settings window (v2.0).
+
+Clean card-based layout built from a few reusable pieces:
+- Card / setting rows with a title on the left and the control on the right
+- Animated ToggleSwitch for every on/off option (no raw checkboxes)
+- Segmented controls for small choice sets (theme, bubble size, corners)
+- "Read Text" page: paste or type any text and listen, for apps that block selection
+
+All colors come from one palette per theme, so Light and Dark stay consistent.
+Public API and settings keys are unchanged from v1.x.
 """
 import os
-import sys
-from typing import Optional, List, Dict
+import tempfile
+from typing import Optional, List, Dict, Callable
+
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QStackedWidget, QScrollArea,
-    QWidget, QLabel, QComboBox, QCheckBox, QDoubleSpinBox, QPushButton,
-    QGroupBox, QFormLayout, QFrame, QButtonGroup, QSlider, QFileDialog
+    QDialog, QVBoxLayout, QHBoxLayout, QStackedWidget, QScrollArea, QWidget,
+    QLabel, QComboBox, QPushButton, QFrame, QButtonGroup, QSlider, QFileDialog,
+    QPlainTextEdit, QSizePolicy, QApplication
 )
-from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QTimer, QRectF, QPointF
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QTimer, QRectF, QPointF, QVariantAnimation, QEasingCurve
 from PyQt6.QtGui import (
-    QCursor, QDesktopServices, QPainter, QColor, QBrush, QPen, QFont,
-    QPainterPath, QLinearGradient, QPixmap
+    QCursor, QDesktopServices, QPainter, QColor, QBrush, QPen, QLinearGradient,
+    QImage, QShortcut, QKeySequence, QFontMetrics
 )
 
 from src.config import (
-    VOICES, EMOTION_MODES, DEFAULT_EMOTION_MODE, SPEED_STEPS,
-    VERSION, GITHUB_URL, APP_NAME, APP_TAGLINE, FONT_FAMILY, IS_MAC,
-    COMPANY_NAME, COMPANY_URL
+    VOICES, EMOTION_MODES, DEFAULT_EMOTION_MODE, VERSION, GITHUB_URL, APP_NAME,
+    FONT_FAMILY, IS_MAC, COMPANY_NAME, COMPANY_URL
 )
 from src.tts_engine import TTSEngine
 from src.utils.settings import settings_db
 from src.utils.startup import is_startup_enabled, set_startup_enabled
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from src.utils.audio_recorder import get_recordings_dir, open_recordings_folder
-from src.ui.equalizer_widget import VoiceEqualizerWidget, EQ_PRESETS
-from assets.icons import create_app_icon, get_brand_logo_pixmap, _get_asset_path
+from src.ui.equalizer_widget import VoiceEqualizerWidget
+from assets.icons import create_app_icon, get_brand_logo_pixmap
 
 LINKEDIN_URL = "https://www.linkedin.com/in/fahimdigital/"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Theme palettes
+# ─────────────────────────────────────────────────────────────────────────────
+PALETTES = {
+    "light": {
+        "bg": "#F6F5FB", "sidebar": "#FFFFFF", "surface": "#FFFFFF", "surface2": "#F4F2FA",
+        "border": "#E9E6F2", "text": "#17142B", "muted": "#6E6A86", "faint": "#A9A5BC",
+        "accent": "#7C3AED", "accent_hover": "#6D28D9", "accent_soft": "#F1EBFE",
+        "accent_text": "#6D28D9", "track_off": "#D9D5E6", "ok": "#10B981", "warn": "#F59E0B",
+    },
+    "dark": {
+        "bg": "#0E0D16", "sidebar": "#13121D", "surface": "#191826", "surface2": "#211F31",
+        "border": "#2A2840", "text": "#F3F1FA", "muted": "#A19DB8", "faint": "#6B6784",
+        "accent": "#8B5CF6", "accent_hover": "#7C3AED", "accent_soft": "#2A2050",
+        "accent_text": "#C4B5FD", "track_off": "#3A3754", "ok": "#34D399", "warn": "#FBBF24",
+    },
+}
 
+
+def _icon_file(name: str, color: str, draw: Callable[[QPainter], None]) -> str:
+    """Renders a tiny 32px icon once into the temp folder and returns a QSS-safe path."""
+    path = os.path.join(tempfile.gettempdir(), f"voxel_{name}_{color.strip('#')}.png")
+    if not os.path.exists(path):
+        img = QImage(32, 32, QImage.Format.Format_ARGB32_Premultiplied)
+        img.fill(0)
+        p = QPainter(img)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(QPen(QColor(color), 3.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        draw(p)
+        p.end()
+        img.save(path, "PNG")
+    return path.replace("\\", "/")
+
+
+def _chevron(p: QPainter):
+    p.drawPolyline([QPointF(9, 12.5), QPointF(16, 19.5), QPointF(23, 12.5)])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reusable widgets
+# ─────────────────────────────────────────────────────────────────────────────
 class ToggleSwitch(QWidget):
-    """Modern iOS/Windows 11 rounded pill toggle switch widget."""
+    """Animated pill switch. API-compatible with the old ToggleSwitch."""
     toggled = pyqtSignal(bool)
 
     def __init__(self, checked: bool = True, parent=None):
         super().__init__(parent)
-        self.setFixedSize(44, 24)
+        self.setFixedSize(40, 22)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self._checked = checked
-        self.theme_mode = "light"
+        self._pos = 1.0 if checked else 0.0
+        self.palette_ = PALETTES["light"]
+        self._anim = QVariantAnimation(self)
+        self._anim.setDuration(160)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._anim.valueChanged.connect(self._on_anim)
+
+    def _on_anim(self, v):
+        self._pos = float(v)
+        self.update()
 
     def isChecked(self) -> bool:
         return self._checked
 
-    def setChecked(self, checked: bool):
-        if self._checked != checked:
-            self._checked = checked
-            self.toggled.emit(self._checked)
+    def setChecked(self, checked: bool, animate: bool = True):
+        checked = bool(checked)
+        if self._checked == checked:
+            return
+        self._checked = checked
+        if animate and self.isVisible():
+            self._anim.stop()
+            self._anim.setStartValue(self._pos)
+            self._anim.setEndValue(1.0 if checked else 0.0)
+            self._anim.start()
+        else:
+            self._pos = 1.0 if checked else 0.0
             self.update()
+        self.toggled.emit(checked)
 
     def set_theme_mode(self, mode: str):
-        self.theme_mode = mode
+        self.palette_ = PALETTES.get(mode, PALETTES["light"])
         self.update()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton and self.isEnabled():
             self.setChecked(not self._checked)
-        super().mousePressEvent(event)
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w = float(self.width())
-        h = float(self.height())
-        r = h / 2.0
-        is_dark = (self.theme_mode == "dark")
-
-        # Track
-        if self._checked:
-            track_col = QColor("#7C3AED")
-        else:
-            track_col = QColor("#334155") if is_dark else QColor("#CBD5E1")
-
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(track_col))
-        painter.drawRoundedRect(QRectF(0, 0, w, h), r, r)
-
-        # Sliding Knob
-        knob_d = h - 6.0
-        knob_x = (w - knob_d - 3.0) if self._checked else 3.0
-        knob_y = 3.0
-
-        painter.setBrush(QBrush(QColor("#FFFFFF")))
-        painter.drawEllipse(QRectF(knob_x, knob_y, knob_d, knob_d))
-        painter.end()
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = float(self.width()), float(self.height())
+        off, on = QColor(self.palette_["track_off"]), QColor(self.palette_["accent"])
+        t = self._pos
+        track = QColor(
+            int(off.red() + (on.red() - off.red()) * t),
+            int(off.green() + (on.green() - off.green()) * t),
+            int(off.blue() + (on.blue() - off.blue()) * t),
+        )
+        if not self.isEnabled():
+            track.setAlpha(110)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(track)
+        p.drawRoundedRect(QRectF(0, 0, w, h), h / 2, h / 2)
+        d = h - 6
+        x = 3 + (w - d - 6) * t
+        p.setBrush(QColor(0, 0, 0, 30))
+        p.drawEllipse(QRectF(x, 4, d, d))
+        p.setBrush(QColor("#FFFFFF"))
+        p.drawEllipse(QRectF(x, 3, d, d))
+        p.end()
 
 
-class MiniWindowGraphic(QWidget):
-    """Paints a mini desktop window illustration for the Light/Dark theme cards."""
-    def __init__(self, is_dark: bool = False, parent=None):
+class Segmented(QFrame):
+    """Pill-style segmented control. Emits the selected value."""
+    changed = pyqtSignal(object)
+
+    def __init__(self, options, parent=None):
         super().__init__(parent)
-        self.setFixedSize(48, 36)
-        self.is_dark = is_dark
+        self.setObjectName("Segmented")
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(3, 3, 3, 3)
+        lay.setSpacing(2)
+        self._group = QButtonGroup(self)
+        self._buttons: Dict[object, QPushButton] = {}
+        for label, value in options:
+            b = QPushButton(label, self)
+            b.setObjectName("SegBtn")
+            b.setCheckable(True)
+            b.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            b.clicked.connect(lambda _=False, v=value: self.changed.emit(v))
+            self._group.addButton(b)
+            self._buttons[value] = b
+            lay.addWidget(b)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    def value(self):
+        for v, b in self._buttons.items():
+            if b.isChecked():
+                return v
+        return None
 
-        w = float(self.width())
-        h = float(self.height())
+    def set_value(self, value):
+        b = self._buttons.get(value)
+        if b:
+            b.setChecked(True)
 
-        # Window body
-        bg_col = QColor("#1E2438") if self.is_dark else QColor("#F1F5F9")
-        border_col = QColor(255, 255, 255, 30) if self.is_dark else QColor("#CBD5E1")
-        painter.setBrush(QBrush(bg_col))
-        painter.setPen(QPen(border_col, 1.0))
-        painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), 4, 4)
 
-        # Sidebar strip
-        side_col = QColor("#131627") if self.is_dark else QColor("#E2E8F0")
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(side_col))
-        painter.drawRoundedRect(QRectF(2, 2, 14, h - 4), 3, 3)
+class Card(QFrame):
+    """Rounded surface with an optional title and stacked rows separated by dividers."""
 
-        # Content lines
-        line_col = QColor(255, 255, 255, 45) if self.is_dark else QColor(148, 163, 184, 110)
-        painter.setBrush(QBrush(line_col))
-        painter.drawRoundedRect(QRectF(20, 7, 22, 3), 1.5, 1.5)
-        painter.drawRoundedRect(QRectF(20, 13, 16, 3), 1.5, 1.5)
+    def __init__(self, title: str = "", parent=None):
+        super().__init__(parent)
+        self.setObjectName("Card")
+        self._lay = QVBoxLayout(self)
+        self._lay.setContentsMargins(18, 14, 18, 14)
+        self._lay.setSpacing(0)
+        self._rows = 0
+        if title:
+            t = QLabel(title, self)
+            t.setObjectName("CardTitle")
+            self._lay.addWidget(t)
+            self._lay.addSpacing(6)
 
-        # Button accent
-        btn_col = QColor("#7C3AED") if self.is_dark else QColor("#0084FF")
-        painter.setBrush(QBrush(btn_col))
-        painter.drawRoundedRect(QRectF(20, 21, 18, 7), 2, 2)
+    def add(self, widget: QWidget, divider: bool = True):
+        if self._rows and divider:
+            d = QFrame(self)
+            d.setObjectName("Divider")
+            d.setFixedHeight(1)
+            self._lay.addWidget(d)
+        self._lay.addWidget(widget)
+        self._rows += 1
+        return widget
 
-        painter.end()
+
+def setting_row(title: str, control: Optional[QWidget] = None, hint: str = "", stretch_control: bool = False) -> QWidget:
+    """A single settings line: title (+ optional hint) on the left, control on the right."""
+    row = QWidget()
+    row.setObjectName("Row")
+    lay = QHBoxLayout(row)
+    lay.setContentsMargins(0, 10, 0, 10)
+    lay.setSpacing(16)
+    text_col = QVBoxLayout()
+    text_col.setSpacing(1)
+    lt = QLabel(title)
+    lt.setObjectName("RowTitle")
+    text_col.addWidget(lt)
+    if hint:
+        lh = QLabel(hint)
+        lh.setObjectName("RowHint")
+        lh.setWordWrap(True)
+        text_col.addWidget(lh)
+    lay.addLayout(text_col, 1)
+    if control is not None:
+        if stretch_control:
+            lay.addWidget(control, 2)
+        else:
+            lay.addWidget(control, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+    row.title_label = lt
+    return row
+
+
+class SliderRow(QWidget):
+    """Title on the left, slider and a value pill on the right."""
+
+    def __init__(self, title: str, lo: int, hi: int, value: int, fmt: Callable[[int], str], hint: str = ""):
+        super().__init__()
+        self.fmt = fmt
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 10, 0, 10)
+        lay.setSpacing(14)
+        col = QVBoxLayout()
+        col.setSpacing(1)
+        self.title_label = QLabel(title)
+        self.title_label.setObjectName("RowTitle")
+        col.addWidget(self.title_label)
+        if hint:
+            h = QLabel(hint)
+            h.setObjectName("RowHint")
+            col.addWidget(h)
+        lay.addLayout(col, 1)
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider.setRange(lo, hi)
+        self.slider.setMinimumWidth(200)
+        self.slider.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        lay.addWidget(self.slider, 2)
+        self.pill = QLabel()
+        self.pill.setObjectName("Pill")
+        self.pill.setFixedWidth(62)
+        self.pill.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lay.addWidget(self.pill)
+        self.slider.valueChanged.connect(lambda v: self.pill.setText(self.fmt(v)))
+        self.slider.setValue(value)
+        self.pill.setText(self.fmt(value))
 
 
 class BubbleStyleGraphic(QWidget):
-    """Paints mini preview dual-capsule for Default, Frosted Glass, Transparent, Minimal."""
+    """Mini preview of the floating bubble for each style preset."""
+
     def __init__(self, style_name: str, parent=None):
         super().__init__(parent)
         self.setFixedSize(62, 26)
@@ -152,1083 +288,672 @@ class BubbleStyleGraphic(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w = float(self.width())
-        h = float(self.height())
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = float(self.width()), float(self.height())
         r = h / 2.0
-
+        rect = QRectF(1, 1, w - 2, h - 2)
         if self.style_name == "Default":
-            painter.setPen(QPen(QColor("#94A3B8"), 1.2))
-            painter.setBrush(QBrush(QColor("#FFFFFF") if not self.is_dark else QColor("#1E293B")))
-            painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
+            p.setPen(QPen(QColor("#94A3B8"), 1.2))
+            p.setBrush(QColor("#1E293B") if self.is_dark else QColor("#FFFFFF"))
         elif self.style_name == "Frosted Glass":
-            grad = QLinearGradient(0, 0, w, h)
-            if not self.is_dark:
-                grad.setColorAt(0.0, QColor(255, 255, 255, 255))
-                grad.setColorAt(1.0, QColor(237, 233, 254, 255))
-                painter.setPen(QPen(QColor("#7C3AED"), 1.5))
+            g = QLinearGradient(0, 0, w, h)
+            if self.is_dark:
+                g.setColorAt(0, QColor(46, 16, 101, 220)); g.setColorAt(1, QColor(30, 27, 75, 240))
+                p.setPen(QPen(QColor("#A78BFA"), 1.5))
             else:
-                grad.setColorAt(0.0, QColor(46, 16, 101, 220))
-                grad.setColorAt(1.0, QColor(30, 27, 75, 240))
-                painter.setPen(QPen(QColor("#A78BFA"), 1.5))
-            painter.setBrush(QBrush(grad))
-            painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
+                g.setColorAt(0, QColor("#FFFFFF")); g.setColorAt(1, QColor("#EDE9FE"))
+                p.setPen(QPen(QColor("#7C3AED"), 1.5))
+            p.setBrush(QBrush(g))
         elif self.style_name == "Transparent":
-            pen = QPen(QColor("#94A3B8"), 1.2, Qt.PenStyle.DashLine)
-            painter.setPen(pen)
-            painter.setBrush(QBrush(QColor(255, 255, 255, 40) if not self.is_dark else QColor(0, 0, 0, 40)))
-            painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
-        elif self.style_name == "Minimal":
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(QColor("#EDE9FE") if not self.is_dark else QColor("#312E81")))
-            painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), r, r)
-
-        # Subtle divider in middle
-        painter.setPen(QPen(QColor("#CBD5E1") if not self.is_dark else QColor(255, 255, 255, 40), 1.0))
-        painter.drawLine(int(w / 2.0), 4, int(w / 2.0), int(h - 4))
-
-        # Left mini mic icon
-        mic_col = QColor("#0084FF") if self.style_name == "Frosted Glass" else QColor("#7C3AED")
-        painter.setPen(QPen(mic_col, 1.2))
-        painter.setBrush(QBrush(mic_col))
-        painter.drawRoundedRect(QRectF(w * 0.25 - 3, h * 0.5 - 5, 6, 8), 3, 3)
-        painter.drawLine(int(w * 0.25), int(h * 0.5 + 3), int(w * 0.25), int(h * 0.5 + 6))
-
-        # Right mini doc icon
-        doc_col = QColor("#7C3AED")
-        painter.setPen(QPen(doc_col, 1.2))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(QRectF(w * 0.75 - 4, h * 0.5 - 5, 8, 10), 1.5, 1.5)
-        painter.drawLine(int(w * 0.75 - 2), int(h * 0.5 - 2), int(w * 0.75 + 2), int(h * 0.5 - 2))
-        painter.drawLine(int(w * 0.75 - 2), int(h * 0.5 + 1), int(w * 0.75 + 2), int(h * 0.5 + 1))
-
-        painter.end()
+            p.setPen(QPen(QColor("#94A3B8"), 1.2, Qt.PenStyle.DashLine))
+            p.setBrush(QColor(0, 0, 0, 40) if self.is_dark else QColor(255, 255, 255, 40))
+        else:  # Minimal
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor("#312E81") if self.is_dark else QColor("#EDE9FE"))
+        p.drawRoundedRect(rect, r, r)
+        p.setPen(QPen(QColor(255, 255, 255, 40) if self.is_dark else QColor("#CBD5E1"), 1.0))
+        p.drawLine(int(w / 2), 5, int(w / 2), int(h - 5))
+        c = QColor("#A78BFA") if self.is_dark else QColor("#7C3AED")
+        p.setPen(QPen(c, 1.2)); p.setBrush(c)
+        p.drawRoundedRect(QRectF(w * 0.25 - 3, h * 0.5 - 5, 6, 8), 3, 3)
+        p.drawLine(int(w * 0.25), int(h * 0.5 + 3), int(w * 0.25), int(h * 0.5 + 6))
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.drawRoundedRect(QRectF(w * 0.75 - 4, h * 0.5 - 5, 8, 10), 1.5, 1.5)
+        p.end()
 
 
-class CornerRadiusGraphic(QWidget):
-    """Paints mini preview icon for Square, Medium, Round corner styles."""
-    def __init__(self, corner_name: str, parent=None):
-        super().__init__(parent)
-        self.setFixedSize(24, 24)
-        self.corner_name = corner_name
-        self.is_dark = False
+class Tile(QFrame):
+    """Selectable card tile (used for bubble styles)."""
+    clicked = pyqtSignal()
 
-    def set_dark(self, is_dark: bool):
-        self.is_dark = is_dark
-        self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(QColor("#7C3AED"), 2.0)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-
-        if self.corner_name == "Square":
-            painter.drawRect(QRectF(4, 4, 16, 16))
-        elif self.corner_name == "Medium":
-            painter.drawRoundedRect(QRectF(4, 4, 16, 16), 4.5, 4.5)
-        elif self.corner_name == "Round":
-            painter.drawEllipse(QRectF(4, 4, 16, 16))
-        painter.end()
-
-
-class SidebarWidget(QWidget):
-    """Left sidebar with subtle decorative bottom-left wave matching mockup."""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedWidth(210)
-        self.theme_mode = "light"
+        self.setObjectName("Tile")
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setProperty("selected", False)
 
-    def set_theme_mode(self, mode: str):
-        self.theme_mode = mode
-        self.update()
+    def set_selected(self, selected: bool):
+        self.setProperty("selected", bool(selected))
+        self.style().unpolish(self)
+        self.style().polish(self)
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w = float(self.width())
-        h = float(self.height())
-        is_dark = (self.theme_mode == "dark")
-
-        # Background
-        bg_col = QColor("#0F172A") if is_dark else QColor("#F8FAFC")
-        painter.fillRect(self.rect(), bg_col)
-
-        # Right divider border
-        border_col = QColor(255, 255, 255, 18) if is_dark else QColor("#E2E8F0")
-        painter.setPen(QPen(border_col, 1.0))
-        painter.drawLine(int(w - 1), 0, int(w - 1), int(h))
-
-        # Bottom decorative organic wave
-        wave_path1 = QPainterPath()
-        wave_path1.moveTo(0, h)
-        wave_path1.lineTo(0, h - 85)
-        wave_path1.cubicTo(w * 0.35, h - 110, w * 0.65, h - 45, w, h - 65)
-        wave_path1.lineTo(w, h)
-        wave_path1.closeSubpath()
-
-        wave_path2 = QPainterPath()
-        wave_path2.moveTo(0, h)
-        wave_path2.lineTo(0, h - 55)
-        wave_path2.cubicTo(w * 0.40, h - 80, w * 0.70, h - 20, w, h - 40)
-        wave_path2.lineTo(w, h)
-        wave_path2.closeSubpath()
-
-        if is_dark:
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(QColor(124, 58, 237, 28)))
-            painter.drawPath(wave_path1)
-            painter.setBrush(QBrush(QColor(167, 139, 250, 38)))
-            painter.drawPath(wave_path2)
-        else:
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(QColor(216, 180, 254, 90)))
-            painter.drawPath(wave_path1)
-            painter.setBrush(QBrush(QColor(192, 132, 252, 120)))
-            painter.drawPath(wave_path2)
-
-        painter.end()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
 
 
 class EqualizerPreviewWidget(QWidget):
-    """Voice-reactive animated spectrum equalizer visualizer widget with buttery organic harmonic physics."""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setFixedHeight(34)
-        self.setFixedWidth(240)
-        self.is_active = False
-        self.num_bars = 18
-        self._levels = [0.12] * self.num_bars
-        self._target_levels = [0.12] * self.num_bars
-        self._phase = 0.0
+    """Small animated voice spectrum; lively while speaking, calm when idle."""
 
-        # Ultra-smooth 60 FPS animation timer (16ms)
+    def __init__(self, width: int = 150, bars: int = 14, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(width, 26)
+        self.is_active = False
+        self.num_bars = bars
+        self._levels = [0.12] * bars
+        self._phase = 0.0
         self._timer = QTimer(self)
         self._timer.setInterval(16)
-        self._timer.timeout.connect(self._update_bars)
+        self._timer.timeout.connect(self._tick)
         self._timer.start()
 
     def set_active(self, active: bool):
         self.is_active = active
-        self.update()
 
-    def _update_bars(self):
+    def _tick(self):
         import math
+        if not self.isVisible():
+            return
         self._phase += 0.065
         t = self._phase
-
-        for i in range(self.num_bars):
-            idx_norm = i / float(self.num_bars - 1)  # 0.0 to 1.0
-            # Bell curve envelope so mid-frequencies dominate naturally
-            envelope = math.sin(idx_norm * math.pi)
-
+        n = self.num_bars
+        for i in range(n):
+            env = math.sin((i / float(n - 1)) * math.pi)
             if self.is_active:
-                # Organic multi-harmonic vocal physics: fundamental + formant harmonics
-                w1 = math.sin(t * 3.8 + i * 0.42)
-                w2 = math.cos(t * 2.1 - i * 0.28)
-                w3 = math.sin(t * 5.4 + i * 0.65)
-                raw = 0.45 + 0.35 * w1 * w2 + 0.20 * w3
-                target = 0.15 + (raw * envelope * 0.82)
-                self._target_levels[i] = max(0.12, min(0.98, target))
+                raw = 0.45 + 0.35 * math.sin(t * 3.8 + i * 0.42) * math.cos(t * 2.1 - i * 0.28) + 0.2 * math.sin(t * 5.4 + i * 0.65)
+                target = max(0.12, min(0.98, 0.15 + raw * env * 0.82))
             else:
-                # Subtle ambient breathing wave when idle
-                idle_wave = math.sin(t * 1.2 + i * 0.3) * 0.05
-                self._target_levels[i] = max(0.08, 0.12 + idle_wave * envelope)
-
-            # Exponential low-pass smoothing for buttery, liquid motion
-            self._levels[i] += (self._target_levels[i] - self._levels[i]) * 0.18
-
+                target = max(0.08, 0.12 + math.sin(t * 1.2 + i * 0.3) * 0.05 * env)
+            self._levels[i] += (target - self._levels[i]) * 0.18
         self.update()
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w = float(self.width())
-        h = float(self.height())
-        num_bars = self.num_bars
-        bar_w = 6.0
-        gap = (w - (num_bars * bar_w)) / max(1, num_bars - 1)
-
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = float(self.width()), float(self.height())
+        n, bw = self.num_bars, 5.0
+        gap = (w - n * bw) / max(1, n - 1)
+        p.setPen(Qt.PenStyle.NoPen)
         for i, lvl in enumerate(self._levels):
-            x = i * (bar_w + gap)
-            bar_h = max(4.0, h * lvl)
-            y = (h - bar_h) / 2.0
-
+            bh = max(4.0, h * lvl)
             if self.is_active:
-                # Rich vibrant gradient from Violet (#8B5CF6) to Cyan (#06B6D4)
-                ratio = i / float(num_bars - 1)
-                r_c = int(139 * (1.0 - ratio) + 6 * ratio)
-                g_c = int(92 * (1.0 - ratio) + 182 * ratio)
-                b_c = int(246 * (1.0 - ratio) + 212 * ratio)
-                bar_color = QColor(r_c, g_c, b_c, 240)
+                r = i / float(n - 1)
+                p.setBrush(QColor(int(139 * (1 - r) + 6 * r), int(92 * (1 - r) + 182 * r), int(246 * (1 - r) + 212 * r), 240))
             else:
-                bar_color = QColor(148, 163, 184, 100)
-
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(bar_color))
-            painter.drawRoundedRect(QRectF(x, y, bar_w, bar_h), 3.0, 3.0)
-
-        painter.end()
+                p.setBrush(QColor(148, 163, 184, 90))
+            p.drawRoundedRect(QRectF(i * (bw + gap), (h - bh) / 2, bw, bh), 2.5, 2.5)
+        p.end()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Settings dialog
+# ─────────────────────────────────────────────────────────────────────────────
 class SettingsDialog(QDialog):
     settings_applied = pyqtSignal()
     test_bubble_requested = pyqtSignal()
+    read_text_requested = pyqtSignal(str)
+
+    PAGE_READ, PAGE_VOICE, PAGE_PLAYBACK, PAGE_APPEARANCE, PAGE_ABOUT, PAGE_PERMISSIONS = range(6)
 
     def __init__(self, tts_engine: Optional[TTSEngine] = None, parent=None):
         super().__init__(parent)
         self.tts = tts_engine
         self.current_theme = settings_db.get("settings_theme", "light")
-        self.setWindowTitle(f"{APP_NAME} — Settings ({VERSION})")
-        self.setFixedSize(890, 680)
-        self.setWindowIcon(create_app_icon(64))
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-
-        self.nav_buttons: List[QPushButton] = []
-        self.bubble_cards: Dict[str, QFrame] = {}
-        self.bubble_chk: Dict[str, QLabel] = {}
-        self.corner_cards: Dict[str, QFrame] = {}
-        self.corner_chk: Dict[str, QLabel] = {}
+        if self.current_theme not in PALETTES:
+            self.current_theme = "light"
         self.current_bubble_style: str = "Frosted Glass"
         self.current_corner_radius: str = "Medium"
+        self.nav_buttons: List[QPushButton] = []
+        self.bubble_tiles: Dict[str, Tile] = {}
+        self.bubble_graphics: List[BubbleStyleGraphic] = []
+        self.switches: List[ToggleSwitch] = []
+        self._test_running = False
+
+        self.setWindowTitle(f"{APP_NAME} — Settings")
+        self.setWindowIcon(create_app_icon(64))
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+        self.setMinimumSize(840, 600)
+        self.resize(880, 640)
+
         self._init_ui()
+        if self.tts:
+            self.tts.playback_started.connect(self._on_tts_started)
+            self.tts.playback_finished.connect(self._on_tts_finished)
+            if hasattr(self.tts, "playback_error"):
+                self.tts.playback_error.connect(lambda _msg: self._on_tts_finished())
         self.apply_theme(self.current_theme)
         self.load_values()
+        self._go_to(self.PAGE_READ)
 
+    # ── Layout ──────────────────────────────────────────────────────────────
     def _init_ui(self):
-        root_layout = QHBoxLayout(self)
-        root_layout.setContentsMargins(0, 0, 0, 0)
-        root_layout.setSpacing(0)
+        root = QHBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
-        # ═════════════════════════════════════════════════════════════
-        # 1. LEFT SIDEBAR (Width 210px with official brand logo)
-        # ═════════════════════════════════════════════════════════════
-        self.sidebar_widget = SidebarWidget(self)
-        sidebar_layout = QVBoxLayout(self.sidebar_widget)
-        sidebar_layout.setContentsMargins(14, 20, 14, 16)
-        sidebar_layout.setSpacing(8)
+        # Sidebar
+        self.sidebar_widget = QFrame(self)
+        self.sidebar_widget.setObjectName("Sidebar")
+        self.sidebar_widget.setFixedWidth(200)
+        side = QVBoxLayout(self.sidebar_widget)
+        side.setContentsMargins(14, 22, 14, 16)
+        side.setSpacing(4)
 
-        # Brand Header in Sidebar using official user logo asset
         self.lbl_sidebar_logo = QLabel(self.sidebar_widget)
-        self.lbl_sidebar_logo.setFixedHeight(64)
+        self.lbl_sidebar_logo.setFixedHeight(52)
         self.lbl_sidebar_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._update_sidebar_logo()
-        sidebar_layout.addWidget(self.lbl_sidebar_logo)
+        side.addWidget(self.lbl_sidebar_logo)
+        side.addSpacing(18)
 
-        sidebar_layout.addSpacing(18)
-
-        # Navigation Items matching user mockups (literal '&&' avoids underscore mnemonic)
-        self.nav_items = [
-            ("🎙️  Voice && Speech", 0, "🎙️", "Voice && Speech", "Fine-tune neural voices, cadence, and parametric equalizer"),
-            ("🎛️  Audio && Playback", 1, "🎛️", "Audio && Playback", "Control transitions, hardware output, and auto-read behaviors"),
-            ("🎨  Appearance", 2, "🎨", "Appearance", "Personalize the look and feel of Voxel"),
-            ("ℹ️  About", 3, "ℹ️", "About Voxel", "Product information, licenses, and social links"),
+        self.pages_meta = [
+            (self.PAGE_READ, "📝   Read Text", "Read Text", "Paste any text and listen."),
+            (self.PAGE_VOICE, "🎙️   Voice", "Voice", "Pick a voice and tune how it sounds."),
+            (self.PAGE_PLAYBACK, "🎚️   Playback", "Playback", "When and how Voxel plays."),
+            (self.PAGE_APPEARANCE, "🎨   Appearance", "Appearance", "Style of the floating bubble."),
+            (self.PAGE_ABOUT, "ℹ️   About", "About", "Version, links and license."),
         ]
         if IS_MAC:
-            self.nav_items.append(
-                ("🛡️  Permissions", 4, "🛡️", "macOS Permissions", "System accessibility and text selection status")
-            )
+            self.pages_meta.append((self.PAGE_PERMISSIONS, "🛡️   Permissions", "Permissions", "Let Voxel read selected text."))
 
         self.btn_group_nav = QButtonGroup(self)
-        for text, page_idx, icon_badge, header_title, header_sub in self.nav_items:
-            btn = QPushButton(text, self.sidebar_widget)
-            btn.setCheckable(True)
-            btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            clean_t = header_title.replace("&&", "&")
-            clean_s = header_sub.replace("&&", "&")
-            btn.clicked.connect(lambda checked, idx=page_idx, b=icon_badge, h_title=clean_t, h_sub=clean_s: self._on_nav_clicked(idx, b, h_title, h_sub))
-            self.btn_group_nav.addButton(btn)
-            self.nav_buttons.append(btn)
-            sidebar_layout.addWidget(btn)
+        self._nav_by_page: Dict[int, QPushButton] = {}
+        for page, label, _t, _s in self.pages_meta:
+            b = QPushButton(label, self.sidebar_widget)
+            b.setObjectName("NavBtn")
+            b.setCheckable(True)
+            b.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            b.clicked.connect(lambda _=False, p=page: self._go_to(p))
+            self.btn_group_nav.addButton(b)
+            self.nav_buttons.append(b)
+            self._nav_by_page[page] = b
+            side.addWidget(b)
+        side.addStretch()
 
-        sidebar_layout.addStretch()
-        root_layout.addWidget(self.sidebar_widget)
+        self.seg_theme = Segmented([("☀  Light", "light"), ("☾  Dark", "dark")], self.sidebar_widget)
+        self.seg_theme.changed.connect(self.apply_theme)
+        side.addWidget(self.seg_theme, 0, Qt.AlignmentFlag.AlignHCenter)
+        side.addSpacing(8)
+        lbl_ver = QLabel(f"{APP_NAME} {VERSION}", self.sidebar_widget)
+        lbl_ver.setObjectName("Faint")
+        lbl_ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        side.addWidget(lbl_ver)
+        root.addWidget(self.sidebar_widget)
 
-        # ═════════════════════════════════════════════════════════════
-        # 2. RIGHT MAIN CONTENT AREA
-        # ═════════════════════════════════════════════════════════════
-        self.main_content_widget = QWidget(self)
-        main_col = QVBoxLayout(self.main_content_widget)
-        main_col.setContentsMargins(22, 18, 22, 16)
-        main_col.setSpacing(12)
+        # Main column
+        main = QWidget(self)
+        main.setObjectName("Main")
+        col = QVBoxLayout(main)
+        col.setContentsMargins(28, 24, 28, 18)
+        col.setSpacing(14)
 
-        # ─── Top Header Bar ──────────────────────────────────────────
-        top_header_layout = QHBoxLayout()
-        top_header_layout.setSpacing(12)
+        self.lbl_header_title = QLabel("", main)
+        self.lbl_header_title.setObjectName("PageTitle")
+        self.lbl_header_subtitle = QLabel("", main)
+        self.lbl_header_subtitle.setObjectName("PageSub")
+        head = QVBoxLayout()
+        head.setSpacing(2)
+        head.addWidget(self.lbl_header_title)
+        head.addWidget(self.lbl_header_subtitle)
+        col.addLayout(head)
 
-        self.header_badge = QLabel("🎛️", self.main_content_widget)
-        self.header_badge.setFixedSize(36, 36)
-        self.header_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.header_badge.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-size: 16px; font-weight: 700; border-radius: 8px;")
-        top_header_layout.addWidget(self.header_badge)
-
-        header_text_layout = QVBoxLayout()
-        header_text_layout.setSpacing(2)
-        self.lbl_header_title = QLabel("Audio & Playback", self.main_content_widget)
-        self.lbl_header_title.setStyleSheet("font-size: 21px; font-weight: 800;")
-        header_text_layout.addWidget(self.lbl_header_title)
-
-        self.lbl_header_subtitle = QLabel("Control transitions, hardware output, and auto-read behaviors", self.main_content_widget)
-        self.lbl_header_subtitle.setStyleSheet("font-size: 12px; color: #64748B;")
-        header_text_layout.addWidget(self.lbl_header_subtitle)
-        top_header_layout.addLayout(header_text_layout)
-
-        top_header_layout.addStretch()
-
-        # Segmented Theme Toggle Pill [ ☀️ Light | 🌙 Dark ]
-        self.theme_segmented_widget = QWidget(self.main_content_widget)
-        self.theme_segmented_widget.setObjectName("ThemePill")
-        pill_layout = QHBoxLayout(self.theme_segmented_widget)
-        pill_layout.setContentsMargins(3, 3, 3, 3)
-        pill_layout.setSpacing(2)
-
-        self.btn_theme_light = QPushButton("☀️ Light", self.theme_segmented_widget)
-        self.btn_theme_light.setCheckable(True)
-        self.btn_theme_light.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_theme_light.clicked.connect(lambda: self.apply_theme("light"))
-        pill_layout.addWidget(self.btn_theme_light)
-
-        self.btn_theme_dark = QPushButton("🌙 Dark", self.theme_segmented_widget)
-        self.btn_theme_dark.setCheckable(True)
-        self.btn_theme_dark.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_theme_dark.clicked.connect(lambda: self.apply_theme("dark"))
-        pill_layout.addWidget(self.btn_theme_dark)
-
-        top_header_layout.addWidget(self.theme_segmented_widget)
-        main_col.addLayout(top_header_layout)
-
-        # ─── Stacked Pages ───────────────────────────────────────────
-        self.stacked_pages = QStackedWidget(self.main_content_widget)
-
-        self.page_voice = self._create_voice_page()
-        self.page_playback = self._create_playback_page()
-        self.page_appearance = self._create_appearance_page()
-        self.page_about = self._create_about_page()
-
-        self.stacked_pages.addWidget(self.page_voice)        # Index 0
-        self.stacked_pages.addWidget(self.page_playback)     # Index 1
-        self.stacked_pages.addWidget(self.page_appearance)   # Index 2
-        self.stacked_pages.addWidget(self.page_about)        # Index 3
-
+        self.stacked_pages = QStackedWidget(main)
+        self.stacked_pages.addWidget(self._create_read_page())        # 0
+        self.stacked_pages.addWidget(self._create_voice_page())       # 1
+        self.stacked_pages.addWidget(self._create_playback_page())    # 2
+        self.stacked_pages.addWidget(self._create_appearance_page())  # 3
+        self.stacked_pages.addWidget(self._create_about_page())       # 4
         if IS_MAC:
-            self.page_permissions = self._create_permissions_page()
-            self.stacked_pages.addWidget(self.page_permissions)  # Index 4
+            self.stacked_pages.addWidget(self._create_permissions_page())  # 5
+        col.addWidget(self.stacked_pages, 1)
 
-        main_col.addWidget(self.stacked_pages)
-
-        # ─── Bottom Action Bar ───────────────────────────────────────
-        action_bar_layout = QHBoxLayout()
-        action_bar_layout.setSpacing(10)
-
-        self.btn_reset_defaults = QPushButton("↺  Reset to Default", self.main_content_widget)
+        # Bottom action bar (only on settings pages)
+        self.action_bar = QWidget(main)
+        bar = QHBoxLayout(self.action_bar)
+        bar.setContentsMargins(0, 0, 0, 0)
+        self.btn_reset_defaults = QPushButton("Reset to defaults", self.action_bar)
+        self.btn_reset_defaults.setObjectName("BtnGhost")
         self.btn_reset_defaults.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_reset_defaults.clicked.connect(self.reset_to_defaults)
-        action_bar_layout.addWidget(self.btn_reset_defaults)
-
-        action_bar_layout.addStretch()
-
-        self.btn_save_changes = QPushButton("✓  Save Changes", self.main_content_widget)
+        bar.addWidget(self.btn_reset_defaults)
+        bar.addStretch()
+        self.btn_save_changes = QPushButton("Save changes", self.action_bar)
         self.btn_save_changes.setObjectName("BtnPrimary")
         self.btn_save_changes.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_save_changes.clicked.connect(self.save_and_apply)
-        action_bar_layout.addWidget(self.btn_save_changes)
+        bar.addWidget(self.btn_save_changes)
+        col.addWidget(self.action_bar)
+        root.addWidget(main, 1)
 
-        main_col.addLayout(action_bar_layout)
-        root_layout.addWidget(self.main_content_widget)
-
-        # Default select Audio & Playback tab matching user mockup
-        if len(self.nav_buttons) > 1:
-            self.nav_buttons[1].setChecked(True)
-            self._on_nav_clicked(1, "🎛️", "Audio & Playback", "Control transitions, hardware output, and auto-read behaviors")
-
-    def _update_sidebar_logo(self):
-        """Displays the official Voxel Logo Main image in the sidebar."""
-        is_dark = (self.current_theme == "dark")
-        pix = get_brand_logo_pixmap(is_dark=is_dark, target_width=180)
-        if not pix.isNull():
-            self.lbl_sidebar_logo.setPixmap(pix)
-
-    # ═════════════════════════════════════════════════════════════
-    # PAGE 1: PLAYBACK (Matching User Mockup Image 1)
-    # ═════════════════════════════════════════════════════════════
-
-    def _create_playback_page(self) -> QWidget:
+    @staticmethod
+    def _scroll(content_builder: Callable[[QVBoxLayout], None]) -> QScrollArea:
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-
         content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 8, 12)
-        layout.setSpacing(14)
-
-        # ─── SECTION 1: Audio Transitions & Fading ───────────────────────────
-        card_transitions = QGroupBox("Audio Transitions & Fading", content)
-        l_trans = QVBoxLayout(card_transitions)
-        l_trans.setSpacing(10)
-        sub_t = QLabel("Configure start ramp-up and end decay transitions for smooth audio playback.", card_transitions)
-        sub_t.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_trans.addWidget(sub_t)
-
-        # Fade-in Toggle Row
-        fi_row = QHBoxLayout()
-        lbl_fi_title = QLabel("Smooth fade-in at speech start", card_transitions)
-        lbl_fi_title.setStyleSheet("font-size: 13px; font-weight: 500;")
-        fi_row.addWidget(lbl_fi_title)
-        fi_row.addStretch()
-        self.switch_fade_in = ToggleSwitch(checked=True, parent=card_transitions)
-        fi_row.addWidget(self.switch_fade_in)
-        l_trans.addLayout(fi_row)
-
-        # Fade-out Duration Slider
-        fo_header = QHBoxLayout()
-        lbl_fo_title = QLabel("Fade-out decay duration", card_transitions)
-        lbl_fo_title.setStyleSheet("font-size: 13px; font-weight: 500;")
-        fo_header.addWidget(lbl_fo_title)
-        fo_header.addStretch()
-        self.lbl_fade_out_val = QLabel("1.00s", card_transitions)
-        self.lbl_fade_out_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
-        self.lbl_fade_out_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        fo_header.addWidget(self.lbl_fade_out_val)
-        l_trans.addLayout(fo_header)
-
-        self.slider_fade_out = QSlider(Qt.Orientation.Horizontal, card_transitions)
-        self.slider_fade_out.setRange(20, 300)  # 0.20s to 3.00s
-        self.slider_fade_out.setValue(100)      # 1.00s default
-        self.slider_fade_out.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.slider_fade_out.valueChanged.connect(self._on_fade_out_slider_changed)
-        l_trans.addWidget(self.slider_fade_out)
-
-        fo_scale_row = QHBoxLayout()
-        fo_scale_row.addWidget(QLabel("0.2s (Fast)"))
-        fo_scale_row.addStretch()
-        fo_scale_row.addWidget(QLabel("1.0s (Default)"))
-        fo_scale_row.addStretch()
-        fo_scale_row.addWidget(QLabel("2.0s"))
-        fo_scale_row.addStretch()
-        fo_scale_row.addWidget(QLabel("3.0s (Gentle)"))
-        for i in range(fo_scale_row.count()):
-            w = fo_scale_row.itemAt(i).widget()
-            if w:
-                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
-        l_trans.addLayout(fo_scale_row)
-        layout.addWidget(card_transitions)
-
-        # ─── SECTION 2: Auto-Read & Trigger Behavior ─────────────────────────
-        card_behavior = QGroupBox("Auto-Read & Trigger Behavior", content)
-        l_beh = QVBoxLayout(card_behavior)
-        l_beh.setSpacing(10)
-        sub_b = QLabel("Choose when and how Voxel triggers speech playback.", card_behavior)
-        sub_b.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_beh.addWidget(sub_b)
-
-        beh_items_layout = QVBoxLayout()
-        beh_items_layout.setSpacing(12)
-
-        startup_label = "Launch Voxel automatically at system startup" if IS_MAC else "Launch Voxel automatically when Windows starts"
-        self.chk_startup = QCheckBox(startup_label, card_behavior)
-        self.chk_startup.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        beh_items_layout.addWidget(self.chk_startup)
-
-        self.chk_prebuffer = QCheckBox("Instant playback: Pre-generate first sentence on hover", card_behavior)
-        self.chk_prebuffer.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        beh_items_layout.addWidget(self.chk_prebuffer)
-
-        self.chk_trigger = QCheckBox("Show floating Voxel badge when selecting text", card_behavior)
-        self.chk_trigger.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        beh_items_layout.addWidget(self.chk_trigger)
-
-        self.chk_autoclose = QCheckBox("Automatically close player when speech finishes", card_behavior)
-        self.chk_autoclose.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        beh_items_layout.addWidget(self.chk_autoclose)
-
-        l_beh.addLayout(beh_items_layout)
-        layout.addWidget(card_behavior)
-
-        # ─── SECTION 3: Hardware Output & Recordings ─────────────────────────
-        card_out = QGroupBox("Hardware Output && Auto-Recordings", content)
-        l_out = QVBoxLayout(card_out)
-        l_out.setSpacing(12)
-        sub_o = QLabel("Choose hardware output device and manage speech recordings destination.", card_out)
-        sub_o.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_out.addWidget(sub_o)
-
-        # Row 1: Output Device (Full Width)
-        dev_layout = QVBoxLayout()
-        dev_layout.setSpacing(4)
-        lbl_dev = QLabel("Output Device:", card_out)
-        lbl_dev.setStyleSheet("font-weight: 600; font-size: 12px;")
-        dev_layout.addWidget(lbl_dev)
-        self.combo_device = QComboBox(card_out)
-        self.combo_device.addItem("🔊 Default Output Device (Speakers / Headphones)", "default")
-        dev_layout.addWidget(self.combo_device)
-        l_out.addLayout(dev_layout)
-
-        # Row 2: Volume Slider and Recordings Folder
-        row2_out = QHBoxLayout()
-        row2_out.setSpacing(16)
-
-        vol_box = QVBoxLayout()
-        vol_box.setSpacing(4)
-        lbl_vol = QLabel("Volume:", card_out)
-        lbl_vol.setStyleSheet("font-weight: 600; font-size: 12px;")
-        vol_box.addWidget(lbl_vol)
-
-        vol_h = QHBoxLayout()
-        vol_h.setSpacing(8)
-        vol_h.addWidget(QLabel("🔊"))
-        self.slider_volume = QSlider(Qt.Orientation.Horizontal, card_out)
-        self.slider_volume.setRange(0, 100)
-        self.slider_volume.setValue(80)
-        self.slider_volume.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.slider_volume.valueChanged.connect(lambda v: self.lbl_vol_val.setText(f"{v}%"))
-        vol_h.addWidget(self.slider_volume)
-        self.lbl_vol_val = QLabel("80%", card_out)
-        self.lbl_vol_val.setStyleSheet("font-weight: 700; font-size: 12px; color: #7C3AED; min-width: 36px;")
-        vol_h.addWidget(self.lbl_vol_val)
-        vol_box.addLayout(vol_h)
-        row2_out.addLayout(vol_box, 1)
-        l_out.addLayout(row2_out)
-
-        # Recordings Folder row with Word Wrapping (Guaranteed no horizontal overflow)
-        rec_layout = QHBoxLayout()
-        rec_layout.setSpacing(10)
-        lbl_rec_path = QLabel(f"📁 Recordings: <b>{get_recordings_dir()}</b>", card_out)
-        lbl_rec_path.setWordWrap(True)
-        lbl_rec_path.setStyleSheet("font-size: 11px; color: #475569;")
-        rec_layout.addWidget(lbl_rec_path, 1)
-
-        btn_open_rec = QPushButton("📂 Open Folder", card_out)
-        btn_open_rec.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_open_rec.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 6px 14px;")
-        btn_open_rec.clicked.connect(open_recordings_folder)
-        rec_layout.addWidget(btn_open_rec)
-        l_out.addLayout(rec_layout)
-
-        layout.addWidget(card_out)
-
-        # ─── SECTION 4: macOS System Permissions ─────────────────────────────
-        if IS_MAC:
-            card_perm = QGroupBox("macOS System Permissions", content)
-            l_perm = QVBoxLayout(card_perm)
-            l_perm.setSpacing(10)
-
-            perm_row = QHBoxLayout()
-            perm_row.setSpacing(10)
-            trusted = is_accessibility_trusted(prompt=False)
-            status_text = "● Accessibility Granted (Active)" if trusted else "● Accessibility Not Granted"
-            status_color = "#10B981" if trusted else "#F59E0B"
-
-            lbl_perm_status = QLabel(f"<b>Status:</b> <span style='color: {status_color};'>{status_text}</span>", card_perm)
-            lbl_perm_status.setStyleSheet("font-size: 12px;")
-            lbl_perm_status.setWordWrap(True)
-            perm_row.addWidget(lbl_perm_status, 1)
-
-            btn_open_perm = QPushButton("⚙️ Open Settings", card_perm)
-            btn_open_perm.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            btn_open_perm.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 6px 14px;")
-            btn_open_perm.clicked.connect(open_accessibility_settings)
-            perm_row.addWidget(btn_open_perm)
-            l_perm.addLayout(perm_row)
-
-            lbl_perm_desc = QLabel("Required for Voxel to display the floating bubble when highlighting text and to read full documents.", card_perm)
-            lbl_perm_desc.setWordWrap(True)
-            lbl_perm_desc.setStyleSheet("font-size: 11px; color: #64748B;")
-            l_perm.addWidget(lbl_perm_desc)
-
-            layout.addWidget(card_perm)
-
-        layout.addStretch()
-
+        content.setObjectName("ScrollContent")
+        lay = QVBoxLayout(content)
+        lay.setContentsMargins(0, 0, 10, 6)
+        lay.setSpacing(14)
+        content_builder(lay)
+        lay.addStretch()
         scroll.setWidget(content)
+        scroll.viewport().setAutoFillBackground(False)
         return scroll
 
+    def _switch(self) -> ToggleSwitch:
+        s = ToggleSwitch(True)
+        self.switches.append(s)
+        return s
+
+    # ── Page: Read Text ─────────────────────────────────────────────────────
+    def _create_read_page(self) -> QWidget:
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(12)
+
+        self.txt_reader = QPlainTextEdit(page)
+        self.txt_reader.setObjectName("Reader")
+        self.txt_reader.setPlaceholderText(
+            "Paste or type text here…\n\nUseful when an app or website won't let Voxel read the selection."
+        )
+        self.txt_reader.textChanged.connect(self._update_reader_count)
+        lay.addWidget(self.txt_reader, 1)
+
+        bar = QFrame(page)
+        bar.setObjectName("Bar")
+        bl = QHBoxLayout(bar)
+        bl.setContentsMargins(10, 8, 10, 8)
+        bl.setSpacing(8)
+
+        btn_paste = QPushButton("📋  Paste", bar)
+        btn_paste.setObjectName("BtnSoft")
+        btn_paste.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_paste.clicked.connect(self._paste_into_reader)
+        bl.addWidget(btn_paste)
+
+        btn_clear = QPushButton("Clear", bar)
+        btn_clear.setObjectName("BtnGhost")
+        btn_clear.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_clear.clicked.connect(self.txt_reader.clear)
+        bl.addWidget(btn_clear)
+
+        self.lbl_reader_count = QLabel("", bar)
+        self.lbl_reader_count.setObjectName("RowHint")
+        bl.addSpacing(6)
+        bl.addWidget(self.lbl_reader_count)
+        bl.addStretch()
+
+        self.reader_viz = EqualizerPreviewWidget(110, 12, bar)
+        bl.addWidget(self.reader_viz)
+
+        self.btn_read = QPushButton("▶  Read aloud", bar)
+        self.btn_read.setObjectName("BtnPrimary")
+        self.btn_read.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_read.setToolTip("Ctrl+Enter")
+        self.btn_read.clicked.connect(self._toggle_read)
+        bl.addWidget(self.btn_read)
+        lay.addWidget(bar)
+
+        QShortcut(QKeySequence("Ctrl+Return"), self.txt_reader, activated=self._toggle_read)
+        QShortcut(QKeySequence("Ctrl+Enter"), self.txt_reader, activated=self._toggle_read)
+        self._update_reader_count()
+        return page
+
+    def _paste_into_reader(self):
+        text = QApplication.clipboard().text()
+        if text:
+            self.txt_reader.setPlainText(text.strip())
+            self.txt_reader.setFocus()
+
+    def _update_reader_count(self):
+        words = len(self.txt_reader.toPlainText().split())
+        if not words:
+            self.lbl_reader_count.setText("No text yet")
+            return
+        speed = max(0.5, self.slider_speed.value() / 100.0) if hasattr(self, "slider_speed") else 1.0
+        mins = words / (150.0 * speed)
+        dur = "< 1 min" if mins < 1 else f"~{round(mins)} min"
+        self.lbl_reader_count.setText(f"{words:,} words · {dur}")
+
+    def _toggle_read(self):
+        if self.tts and self.tts.is_speaking:
+            self.tts.stop()
+            self._on_tts_finished()
+            return
+        text = self.txt_reader.toPlainText().strip()
+        if not text:
+            self.txt_reader.setFocus()
+            return
+        self._apply_voice_choice()
+        if self.receivers(self.read_text_requested) > 0:
+            self.read_text_requested.emit(text)
+        elif self.tts:
+            self.tts.speak(text)
+        self._set_reading_ui(True)
+
+    def _set_reading_ui(self, active: bool):
+        self.btn_read.setText("■  Stop" if active else "▶  Read aloud")
+        self.reader_viz.set_active(active)
+
+    # ── Page: Voice ─────────────────────────────────────────────────────────
+    def _create_voice_page(self) -> QWidget:
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(12)
+
+        def build(l: QVBoxLayout):
+            c = Card("Voice")
+            self.combo_voice = QComboBox()
+            for v in VOICES:
+                self.combo_voice.addItem(v["label"], v["id"])
+            self.combo_voice.setFixedWidth(330)
+            c.add(setting_row("Voice", self.combo_voice))
+            self.combo_emotion = QComboBox()
+            for m in EMOTION_MODES:
+                short, _, detail = m["label"].partition(" (")
+                self.combo_emotion.addItem(short, m["id"])
+                if detail:
+                    self.combo_emotion.setItemData(self.combo_emotion.count() - 1, detail.rstrip(")"), Qt.ItemDataRole.ToolTipRole)
+            self.combo_emotion.setFixedWidth(330)
+            c.add(setting_row("Tone", self.combo_emotion))
+            l.addWidget(c)
+
+            c = Card("Tuning")
+            self.row_speed = SliderRow("Speed", 50, 200, 100, lambda v: f"{v / 100:.2f}×")
+            self.slider_speed = self.row_speed.slider
+            self.lbl_speed_val = self.row_speed.pill
+            self.slider_speed.valueChanged.connect(self._on_speed_slider_changed)
+            c.add(self.row_speed)
+            self.row_pitch = SliderRow("Pitch", -50, 50, 0, lambda v: f"{v:+d} Hz" if v else "0 Hz")
+            self.slider_pitch = self.row_pitch.slider
+            self.lbl_pitch_val = self.row_pitch.pill
+            self.slider_pitch.valueChanged.connect(self._on_pitch_slider_changed)
+            c.add(self.row_pitch)
+            l.addWidget(c)
+
+            c = Card("Equalizer")
+            self.equalizer_widget = VoiceEqualizerWidget()
+            c.add(self.equalizer_widget)
+            l.addWidget(c)
+
+        lay.addWidget(self._scroll(build), 1)
+
+        self.frame_test_voice = QFrame(page)
+        self.frame_test_voice.setObjectName("Bar")
+        tb = QHBoxLayout(self.frame_test_voice)
+        tb.setContentsMargins(10, 8, 14, 8)
+        tb.setSpacing(12)
+        self.btn_test_perf = QPushButton("▶  Test voice", self.frame_test_voice)
+        self.btn_test_perf.setObjectName("BtnSoft")
+        self.btn_test_perf.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_test_perf.clicked.connect(self._run_performance_test)
+        tb.addWidget(self.btn_test_perf)
+        self.equalizer_preview = EqualizerPreviewWidget(150, 16, self.frame_test_voice)
+        tb.addWidget(self.equalizer_preview)
+        self.lbl_test_status = QLabel("", self.frame_test_voice)
+        self.lbl_test_status.setObjectName("RowHint")
+        tb.addWidget(self.lbl_test_status)
+        tb.addStretch()
+        lay.addWidget(self.frame_test_voice)
+        return page
+
+    # ── Page: Playback ──────────────────────────────────────────────────────
+    def _create_playback_page(self) -> QWidget:
+        def build(l: QVBoxLayout):
+            c = Card("Behavior")
+            self.chk_startup = self._switch()
+            c.add(setting_row("Start at login" if IS_MAC else "Start with Windows", self.chk_startup))
+            self.chk_trigger = self._switch()
+            c.add(setting_row("Show bubble on selection", self.chk_trigger, "Floating button appears when you highlight text"))
+            self.chk_prebuffer = self._switch()
+            c.add(setting_row("Instant start", self.chk_prebuffer, "Prepare audio when you hover the bubble"))
+            self.switch_fade_in = self._switch()
+            c.add(setting_row("Smooth fade-in", self.switch_fade_in))
+            self.chk_autoclose = self._switch()
+            c.add(setting_row("Close player when done", self.chk_autoclose))
+            self.row_close_delay = SliderRow("Close delay", 20, 300, 100, lambda v: f"{v / 100:.1f} s")
+            self.slider_fade_out = self.row_close_delay.slider
+            self.lbl_fade_out_val = self.row_close_delay.pill
+            c.add(self.row_close_delay)
+            self.chk_autoclose.toggled.connect(self.row_close_delay.setEnabled)
+            l.addWidget(c)
+
+            c = Card("Output")
+            self.combo_device = QComboBox()
+            self.combo_device.addItem("System default", "default")
+            self.combo_device.setFixedWidth(330)
+            c.add(setting_row("Device", self.combo_device))
+            self.row_volume = SliderRow("Volume", 0, 100, 80, lambda v: f"{v}%")
+            self.slider_volume = self.row_volume.slider
+            self.lbl_vol_val = self.row_volume.pill
+            self.slider_volume.valueChanged.connect(self._on_volume_slider_changed)
+            c.add(self.row_volume)
+
+            rec_dir = str(get_recordings_dir())
+            btn_open = QPushButton("Open folder")
+            btn_open.setObjectName("BtnSoft")
+            btn_open.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_open.clicked.connect(open_recordings_folder)
+            rec_row = setting_row("Recordings", btn_open, " ")
+            hint = rec_row.findChild(QLabel, "RowHint")
+            if hint:
+                hint.setWordWrap(False)
+                hint.setText(QFontMetrics(hint.font()).elidedText(rec_dir, Qt.TextElideMode.ElideMiddle, 330))
+                hint.setToolTip(rec_dir)
+            c.add(rec_row)
+            l.addWidget(c)
+
+        return self._scroll(build)
+
+    # ── Page: Appearance ────────────────────────────────────────────────────
+    def _create_appearance_page(self) -> QWidget:
+        def build(l: QVBoxLayout):
+            c = Card("Bubble style")
+            tiles = QWidget()
+            tl = QHBoxLayout(tiles)
+            tl.setContentsMargins(0, 8, 0, 8)
+            tl.setSpacing(10)
+            for name in ["Default", "Frosted Glass", "Transparent", "Minimal"]:
+                t = Tile()
+                v = QVBoxLayout(t)
+                v.setContentsMargins(8, 12, 8, 10)
+                v.setSpacing(8)
+                g = BubbleStyleGraphic(name, t)
+                self.bubble_graphics.append(g)
+                v.addWidget(g, 0, Qt.AlignmentFlag.AlignHCenter)
+                lbl = QLabel(name, t)
+                lbl.setObjectName("TileLabel")
+                lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                v.addWidget(lbl)
+                t.clicked.connect(lambda n=name: self._select_bubble_style(n))
+                self.bubble_tiles[name] = t
+                tl.addWidget(t)
+            c.add(tiles, divider=False)
+            l.addWidget(c)
+
+            c = Card("Bubble")
+            self.seg_bubble_size = Segmented([("Small", "Small Dot"), ("Medium", "Medium"), ("Large", "Large")])
+            c.add(setting_row("Size", self.seg_bubble_size))
+            self.seg_corner = Segmented([("Square", "Square"), ("Medium", "Medium"), ("Round", "Round")])
+            self.seg_corner.changed.connect(self._select_corner_radius)
+            c.add(setting_row("Corners", self.seg_corner))
+            self.row_opacity = SliderRow("Opacity", 30, 100, 90, lambda v: f"{v}%")
+            self.slider_transparency = self.row_opacity.slider
+            self.lbl_trans_val = self.row_opacity.pill
+            c.add(self.row_opacity)
+            self.row_distance = SliderRow("Distance from text", 15, 75, 28, lambda v: f"{v} px")
+            self.slider_distance = self.row_distance.slider
+            self.lbl_dist_val = self.row_distance.pill
+            c.add(self.row_distance)
+            l.addWidget(c)
+
+            c = Card("Logo")
+            w = QWidget()
+            wl = QHBoxLayout(w)
+            wl.setContentsMargins(0, 8, 0, 8)
+            wl.setSpacing(10)
+            self.frame_logo_preview = QFrame()
+            self.frame_logo_preview.setObjectName("LogoBox")
+            self.frame_logo_preview.setFixedSize(150, 56)
+            pl = QVBoxLayout(self.frame_logo_preview)
+            pl.setContentsMargins(8, 6, 8, 6)
+            self.lbl_logo_preview = QLabel()
+            self.lbl_logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            pl.addWidget(self.lbl_logo_preview)
+            wl.addWidget(self.frame_logo_preview)
+            hint = QLabel("PNG or SVG, square,\n512 × 512 recommended")
+            hint.setObjectName("RowHint")
+            wl.addWidget(hint, 1)
+            self.btn_change_logo = QPushButton("Change")
+            self.btn_change_logo.setObjectName("BtnSoft")
+            self.btn_change_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            self.btn_change_logo.clicked.connect(self._on_change_logo)
+            wl.addWidget(self.btn_change_logo)
+            self.btn_restore_logo = QPushButton("Reset")
+            self.btn_restore_logo.setObjectName("BtnGhost")
+            self.btn_restore_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            self.btn_restore_logo.clicked.connect(self._on_restore_default_logo)
+            wl.addWidget(self.btn_restore_logo)
+            c.add(w, divider=False)
+            l.addWidget(c)
+
+        return self._scroll(build)
+
+    # ── Page: About ─────────────────────────────────────────────────────────
+    def _create_about_page(self) -> QWidget:
+        def build(l: QVBoxLayout):
+            c = Card()
+            hero = QWidget()
+            hl = QVBoxLayout(hero)
+            hl.setContentsMargins(0, 18, 0, 18)
+            hl.setSpacing(10)
+            self.lbl_about_logo = QLabel()
+            self.lbl_about_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            hl.addWidget(self.lbl_about_logo)
+            ver = QLabel(f"Version {VERSION}")
+            ver.setObjectName("Pill")
+            ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            ver.setFixedWidth(120)
+            hl.addWidget(ver, 0, Qt.AlignmentFlag.AlignHCenter)
+            desc = QLabel(f"Select text anywhere and hear it.\nFree and open source, made by {COMPANY_NAME}.")
+            desc.setObjectName("PageSub")
+            desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            hl.addWidget(desc)
+            links = QHBoxLayout()
+            links.setSpacing(8)
+            links.addStretch()
+            for label, url in [("GitHub", GITHUB_URL), (COMPANY_NAME, COMPANY_URL), ("LinkedIn", LINKEDIN_URL)]:
+                b = QPushButton(label)
+                b.setObjectName("BtnSoft")
+                b.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+                b.clicked.connect(lambda _=False, u=url: QDesktopServices.openUrl(QUrl(u)))
+                links.addWidget(b)
+            links.addStretch()
+            hl.addSpacing(4)
+            hl.addLayout(links)
+            c.add(hero, divider=False)
+            l.addWidget(c)
+
+            foot = QLabel("MIT License · No telemetry · Provided as is, without warranty.")
+            foot.setObjectName("Faint")
+            foot.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            l.addWidget(foot)
+
+        return self._scroll(build)
+
+    # ── Page: Permissions (macOS) ───────────────────────────────────────────
+    def _create_permissions_page(self) -> QWidget:
+        def build(l: QVBoxLayout):
+            c = Card("Accessibility")
+            self.lbl_perm_page_status = QLabel()
+            self.lbl_perm_page_status.setObjectName("RowTitle")
+            btn_refresh = QPushButton("Refresh")
+            btn_refresh.setObjectName("BtnGhost")
+            btn_refresh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_refresh.clicked.connect(self._refresh_perm_page_status)
+            row = setting_row("Status", btn_refresh)
+            row.layout().insertWidget(1, self.lbl_perm_page_status)
+            c.add(row)
+            btn_open = QPushButton("Open settings")
+            btn_open.setObjectName("BtnSoft")
+            btn_open.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_open.clicked.connect(open_accessibility_settings)
+            c.add(setting_row("Allow Voxel", btn_open, "Privacy & Security → Accessibility → turn Voxel on"))
+            from src.utils.mac_permissions import restart_voxel_app
+            btn_restart = QPushButton("Restart")
+            btn_restart.setObjectName("BtnSoft")
+            btn_restart.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_restart.clicked.connect(restart_voxel_app)
+            c.add(setting_row("Restart Voxel", btn_restart, "Needed once after granting access"))
+            btn_test = QPushButton("Test")
+            btn_test.setObjectName("BtnSoft")
+            btn_test.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn_test.clicked.connect(lambda: self.test_bubble_requested.emit())
+            c.add(setting_row("Test the bubble", btn_test))
+            l.addWidget(c)
+            self._refresh_perm_page_status()
+
+        return self._scroll(build)
+
+    def _refresh_perm_page_status(self):
+        if not hasattr(self, "lbl_perm_page_status"):
+            return
+        pal = PALETTES[self.current_theme]
+        if is_accessibility_trusted(prompt=False):
+            self.lbl_perm_page_status.setText(f"<span style='color:{pal['ok']}'>● Active</span>")
+        else:
+            self.lbl_perm_page_status.setText(f"<span style='color:{pal['warn']}'>● Not allowed yet</span>")
+
+    # ── Handlers ────────────────────────────────────────────────────────────
     def _on_speed_slider_changed(self, val: int):
-        speed = round(val / 100.0, 2)
-        self.lbl_speed_val.setText(f"{speed:.2f}x")
         if self.tts:
-            self.tts.set_speed(speed)
+            self.tts.set_speed(round(val / 100.0, 2))
+        self._update_reader_count()
 
     def _on_pitch_slider_changed(self, val: int):
-        self.lbl_pitch_val.setText(f"{val:+d}Hz" if val != 0 else "0Hz")
         if self.tts and hasattr(self.tts, "set_pitch"):
             self.tts.set_pitch(val)
 
     def _on_volume_slider_changed(self, val: int):
-        self.lbl_vol_val.setText(f"{val}%")
         if self.tts and hasattr(self.tts, "set_volume"):
             self.tts.set_volume(val / 100.0)
 
     def _on_fade_out_slider_changed(self, val: int):
-        duration = round(val / 100.0, 2)
-        self.lbl_fade_out_val.setText(f"{duration:.2f}s")
-
-    def _create_permissions_page(self) -> QWidget:
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(14)
-
-        # Card 1: Live Status & Quick Actions
-        card_status = QGroupBox("macOS System Permissions Status", content)
-        l_status = QVBoxLayout(card_status)
-        l_status.setSpacing(12)
-
-        self.lbl_perm_page_status = QLabel(card_status)
-        self.lbl_perm_page_status.setWordWrap(True)
-        self._refresh_perm_page_status()
-        l_status.addWidget(self.lbl_perm_page_status)
-
-        # Action Buttons in 2 compact rows to prevent any horizontal overflow
-        btn_open = QPushButton("⚙️  Open Accessibility Settings", card_status)
-        btn_open.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_open.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; border: none; border-radius: 6px; padding: 8px 16px;")
-        btn_open.clicked.connect(open_accessibility_settings)
-        l_status.addWidget(btn_open)
-
-        btn_row2 = QHBoxLayout()
-        btn_row2.setSpacing(10)
-
-        btn_refresh = QPushButton("🔄  Refresh Status", card_status)
-        btn_refresh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_refresh.setStyleSheet("background-color: rgba(255,255,255,0.08); color: #38BDF8; font-weight: 600; border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 8px 14px;")
-        btn_refresh.clicked.connect(self._refresh_perm_page_status)
-        btn_row2.addWidget(btn_refresh)
-
-        btn_test = QPushButton("🎯  Test Floating Bubble Now", card_status)
-        btn_test.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_test.setStyleSheet("background-color: rgba(16,185,129,0.15); color: #10B981; font-weight: 700; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; padding: 8px 14px;")
-        btn_test.clicked.connect(lambda: self.test_bubble_requested.emit())
-        btn_row2.addWidget(btn_test)
-
-        l_status.addLayout(btn_row2)
-        layout.addWidget(card_status)
-
-        # Card 2: 3-Step Setup Guide
-        card_guide = QGroupBox("How to Enable Text Selection on macOS", content)
-        l_guide = QVBoxLayout(card_guide)
-        l_guide.setSpacing(10)
-
-        steps = [
-            ("1", "Click <b>Open Accessibility Settings</b> above to open System Settings directly to Privacy & Security → Accessibility."),
-            ("2", "Find <b>Voxel</b> in the list and flip the toggle switch to <b>ON</b> (enter your Mac password/Touch ID)."),
-            ("3", "If macOS asks to quit and reopen, click <b>Restart Voxel App</b> below to apply permissions.")
-        ]
-        for num, desc in steps:
-            s_row = QHBoxLayout()
-            s_row.setSpacing(10)
-            badge = QLabel(num, card_guide)
-            badge.setFixedSize(22, 22)
-            badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            badge.setStyleSheet("background-color: #7C3AED; color: #FFFFFF; font-weight: 800; font-size: 11px; border-radius: 11px;")
-            s_row.addWidget(badge)
-
-            lbl_d = QLabel(desc, card_guide)
-            lbl_d.setStyleSheet("font-size: 12px; line-height: 1.4;")
-            lbl_d.setTextFormat(Qt.TextFormat.RichText)
-            lbl_d.setWordWrap(True)
-            s_row.addWidget(lbl_d, 1)
-            l_guide.addLayout(s_row)
-
-        layout.addWidget(card_guide)
-
-        # Card 3: Restart Voxel Button
-        card_restart = QGroupBox("Apply System Permissions", content)
-        l_restart = QVBoxLayout(card_restart)
-        l_restart.setSpacing(8)
-
-        lbl_r_info = QLabel("macOS requires applications to restart once granted Accessibility permissions for background event taps to activate.", card_restart)
-        lbl_r_info.setStyleSheet("font-size: 11px; color: #64748B;")
-        lbl_r_info.setWordWrap(True)
-        l_restart.addWidget(lbl_r_info)
-
-        from src.utils.mac_permissions import restart_voxel_app
-        btn_restart_app = QPushButton("🚀  Restart Voxel App", card_restart)
-        btn_restart_app.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_restart_app.setStyleSheet("background-color: #334155; color: #FFFFFF; font-weight: 700; border-radius: 6px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.15);")
-        btn_restart_app.clicked.connect(restart_voxel_app)
-        l_restart.addWidget(btn_restart_app)
-
-        layout.addWidget(card_restart)
-        layout.addStretch()
-
-        scroll.setWidget(content)
-        return scroll
-
-    def _refresh_perm_page_status(self):
-        if not hasattr(self, "lbl_perm_page_status") or self.lbl_perm_page_status is None:
-            return
-        trusted = is_accessibility_trusted(prompt=False)
-        if trusted:
-            status_html = "<span style='color: #10B981; font-weight: bold; font-size: 13px;'>● Text Selection Active (macOS Accessibility Granted)</span><br><span style='font-size: 11px; color: #64748B;'>Voxel is monitoring text selections and ready to display the floating bubble.</span>"
-        else:
-            status_html = "<span style='color: #F59E0B; font-weight: bold; font-size: 13px;'>⚠️ Action Required: Accessibility Not Granted</span><br><span style='font-size: 11px; color: #64748B;'>macOS is currently blocking global mouse drag detection. Please enable Voxel in System Settings below.</span>"
-        self.lbl_perm_page_status.setText(status_html)
-
-    # ═════════════════════════════════════════════════════════════
-    # PAGE 2: APPEARANCE (Matching User Mockup Image 2)
-    # ═════════════════════════════════════════════════════════════
-
-    def _create_appearance_page(self) -> QWidget:
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(14)
-
-        # ─── Card 1: App Logo & Icons ────────────────────────────────
-        card_logo = QGroupBox("App Logo && Icons", content)
-        l_logo = QVBoxLayout(card_logo)
-        l_logo.setSpacing(10)
-
-        sub_logo = QLabel("Update the application logo and related icons.", card_logo)
-        sub_logo.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_logo.addWidget(sub_logo)
-
-        # Top sub-row: Preview Card + Action Buttons
-        logo_top_row = QHBoxLayout()
-        logo_top_row.setSpacing(16)
-
-        # Left: Current Logo Preview Card
-        self.frame_logo_preview = QFrame(card_logo)
-        self.frame_logo_preview.setFixedSize(170, 74)
-        self.frame_logo_preview.setStyleSheet(
-            "QFrame { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; }"
-        )
-        l_prev = QVBoxLayout(self.frame_logo_preview)
-        l_prev.setContentsMargins(6, 6, 6, 6)
-        self.lbl_logo_preview = QLabel(self.frame_logo_preview)
-        self.lbl_logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        l_prev.addWidget(self.lbl_logo_preview)
-        logo_top_row.addWidget(self.frame_logo_preview)
-
-        # Right: Logo Action Buttons
-        logo_btn_col = QVBoxLayout()
-        logo_btn_col.setSpacing(8)
-        logo_btn_col.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-
-        self.btn_change_logo = QPushButton("  ⭡  Change Logo", card_logo)
-        self.btn_change_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_change_logo.setFixedHeight(32)
-        self.btn_change_logo.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: 1.5px solid #7C3AED;
-                border-radius: 8px;
-                color: #7C3AED;
-                font-weight: 700;
-                font-size: 12px;
-                padding: 4px 14px;
-            }
-            QPushButton:hover {
-                background-color: #EDE9FE;
-            }
-        """)
-        self.btn_change_logo.clicked.connect(self._on_change_logo)
-        logo_btn_col.addWidget(self.btn_change_logo)
-
-        self.btn_restore_logo = QPushButton("  ↺  Restore Default", card_logo)
-        self.btn_restore_logo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_restore_logo.setFixedHeight(32)
-        self.btn_restore_logo.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid #CBD5E1;
-                border-radius: 8px;
-                color: #475569;
-                font-weight: 600;
-                font-size: 12px;
-                padding: 4px 14px;
-            }
-            QPushButton:hover {
-                background-color: #F1F5F9;
-                color: #0F172A;
-            }
-        """)
-        self.btn_restore_logo.clicked.connect(self._on_restore_default_logo)
-        logo_btn_col.addWidget(self.btn_restore_logo)
-        logo_top_row.addLayout(logo_btn_col)
-        logo_top_row.addStretch()
-        l_logo.addLayout(logo_top_row)
-
-        # Bottom sub-row: Logo Requirements Info Card (Full Width)
-        self.frame_logo_req = QFrame(card_logo)
-        self.frame_logo_req.setStyleSheet(
-            "QFrame { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; }"
-        )
-        l_req = QHBoxLayout(self.frame_logo_req)
-        l_req.setContentsMargins(12, 8, 12, 8)
-        l_req.setSpacing(14)
-
-        lbl_req_title = QLabel("ℹ️  Requirements:", self.frame_logo_req)
-        lbl_req_title.setStyleSheet("font-weight: 800; font-size: 12px; color: #1E293B;")
-        l_req.addWidget(lbl_req_title)
-
-        req_text = QLabel(
-            "PNG, JPG or SVG &nbsp;•&nbsp; Recommended: 512×512 px &nbsp;•&nbsp; Min: 256×256 px &nbsp;•&nbsp; 1:1 Aspect Ratio",
-            self.frame_logo_req
-        )
-        req_text.setStyleSheet("font-size: 11px; color: #475569;")
-        req_text.setWordWrap(True)
-        l_req.addWidget(req_text, 1)
-        l_logo.addWidget(self.frame_logo_req)
-        layout.addWidget(card_logo)
-
-        # ─── Card 2: Floating Bubble Appearance (4 selectable cards) ───
-        card_bubble_app = QGroupBox("Floating Bubble", content)
-        l_ba = QVBoxLayout(card_bubble_app)
-        l_ba.setSpacing(10)
-
-        sub_ba = QLabel("Customize the text selection bubble (dual-capsule) appearance.", card_bubble_app)
-        sub_ba.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_ba.addWidget(sub_ba)
-
-        bubble_styles_row = QHBoxLayout()
-        bubble_styles_row.setSpacing(12)
-
-        bubble_presets = ["Default", "Frosted Glass", "Transparent", "Minimal"]
-
-        for name in bubble_presets:
-            f = QFrame(card_bubble_app)
-            f.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            f_l = QVBoxLayout(f)
-            f_l.setContentsMargins(10, 8, 10, 10)
-            f_l.setSpacing(6)
-            f_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            # Top checkmark badge container
-            top_bar = QHBoxLayout()
-            top_bar.setContentsMargins(0, 0, 0, 0)
-            top_bar.addStretch()
-            chk = QLabel("✓", f)
-            chk.setStyleSheet(
-                "background-color: #7C3AED; color: #FFFFFF; font-weight: 800; "
-                "border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; "
-                "qproperty-alignment: AlignCenter; font-size: 10px;"
-            )
-            chk.setVisible(False)
-            top_bar.addWidget(chk)
-            f_l.addLayout(top_bar)
-
-            # Mini visual dual-action capsule
-            g = BubbleStyleGraphic(name, f)
-            f_l.addWidget(g, alignment=Qt.AlignmentFlag.AlignCenter)
-
-            lbl_n = QLabel(name, f)
-            lbl_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl_n.setStyleSheet("font-weight: 700; font-size: 12px;")
-            f_l.addWidget(lbl_n)
-
-            f.mousePressEvent = lambda e, s=name: self._select_bubble_style(s)
-            self.bubble_cards[name] = f
-            self.bubble_chk[name] = chk
-            bubble_styles_row.addWidget(f)
-
-        l_ba.addLayout(bubble_styles_row)
-        layout.addWidget(card_bubble_app)
-
-        # ─── Card 3: Bubble Settings ─────────────────────────────────
-        card_b_set = QGroupBox("Bubble Settings", content)
-        l_bs = QVBoxLayout(card_b_set)
-        l_bs.setSpacing(12)
-
-        sub_bs = QLabel("Adjust size, transparency, and corner style.", card_b_set)
-        sub_bs.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_bs.addWidget(sub_bs)
-
-        # Top Row: Transparency & Bubble Size side by side
-        bs_row = QHBoxLayout()
-        bs_row.setSpacing(24)
-
-        # Transparency column
-        trans_col = QVBoxLayout()
-        trans_col.setSpacing(6)
-        lbl_trans_title = QLabel("Transparency", card_b_set)
-        lbl_trans_title.setStyleSheet("font-weight: 700; font-size: 12px;")
-        trans_col.addWidget(lbl_trans_title)
-
-        trans_h = QHBoxLayout()
-        trans_h.setSpacing(10)
-        self.slider_transparency = QSlider(Qt.Orientation.Horizontal, card_b_set)
-        self.slider_transparency.setRange(30, 100)
-        self.slider_transparency.setValue(90)
-        self.slider_transparency.valueChanged.connect(lambda v: self.lbl_trans_val.setText(f"{v}%"))
-        trans_h.addWidget(self.slider_transparency)
-
-        self.lbl_trans_val = QLabel("90%", card_b_set)
-        self.lbl_trans_val.setFixedWidth(40)
-        self.lbl_trans_val.setStyleSheet("font-weight: 700; color: #7C3AED; font-size: 12px;")
-        trans_h.addWidget(self.lbl_trans_val)
-        trans_col.addLayout(trans_h)
-        bs_row.addLayout(trans_col)
-
-        # Bubble Size column
-        size_col = QVBoxLayout()
-        size_col.setSpacing(6)
-        lbl_size_title = QLabel("Bubble Size", card_b_set)
-        lbl_size_title.setStyleSheet("font-weight: 700; font-size: 12px;")
-        size_col.addWidget(lbl_size_title)
-
-        size_h = QHBoxLayout()
-        size_h.setSpacing(10)
-        self.slider_bubble_size = QSlider(Qt.Orientation.Horizontal, card_b_set)
-        self.slider_bubble_size.setRange(1, 3)
-        self.slider_bubble_size.setValue(3)
-        size_h.addWidget(self.slider_bubble_size)
-
-        self.combo_bubble_size = QComboBox(card_b_set)
-        self.combo_bubble_size.addItem("Small Dot", 1)
-        self.combo_bubble_size.addItem("Medium", 2)
-        self.combo_bubble_size.addItem("Large", 3)
-        self.combo_bubble_size.setCurrentIndex(2)
-        self.combo_bubble_size.setFixedWidth(115)
-        self.combo_bubble_size.currentIndexChanged.connect(lambda idx: self.slider_bubble_size.setValue(idx + 1))
-        self.slider_bubble_size.valueChanged.connect(lambda val: self.combo_bubble_size.setCurrentIndex(val - 1))
-        size_h.addWidget(self.combo_bubble_size)
-        size_col.addLayout(size_h)
-        bs_row.addLayout(size_col)
-
-        # Distance Padding column
-        dist_col = QVBoxLayout()
-        dist_col.setSpacing(6)
-        lbl_dist_title = QLabel("Distance Padding", card_b_set)
-        lbl_dist_title.setStyleSheet("font-weight: 700; font-size: 12px;")
-        dist_col.addWidget(lbl_dist_title)
-
-        dist_h = QHBoxLayout()
-        dist_h.setSpacing(10)
-        self.slider_distance = QSlider(Qt.Orientation.Horizontal, card_b_set)
-        self.slider_distance.setRange(15, 75)
-        self.slider_distance.setValue(28)
-        self.slider_distance.valueChanged.connect(lambda v: self.lbl_dist_val.setText(f"{v}px"))
-        dist_h.addWidget(self.slider_distance)
-
-        self.lbl_dist_val = QLabel("28px", card_b_set)
-        self.lbl_dist_val.setFixedWidth(40)
-        self.lbl_dist_val.setStyleSheet("font-weight: 700; color: #7C3AED; font-size: 12px;")
-        dist_h.addWidget(self.lbl_dist_val)
-        dist_col.addLayout(dist_h)
-        bs_row.addLayout(dist_col)
-
-        l_bs.addLayout(bs_row)
-
-        # Bottom Row: Corner Radius
-        lbl_cr_title = QLabel("Corner Radius", card_b_set)
-        lbl_cr_title.setStyleSheet("font-weight: 700; font-size: 12px; margin-top: 4px;")
-        l_bs.addWidget(lbl_cr_title)
-
-        corner_row = QHBoxLayout()
-        corner_row.setSpacing(12)
-
-        for name in ["Square", "Medium", "Round"]:
-            f = QFrame(card_b_set)
-            f.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-            f_l = QHBoxLayout(f)
-            f_l.setContentsMargins(14, 10, 14, 10)
-            f_l.setSpacing(10)
-            f_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            g = CornerRadiusGraphic(name, f)
-            f_l.addWidget(g)
-
-            lbl_c = QLabel(name, f)
-            lbl_c.setStyleSheet("font-weight: 700; font-size: 12px;")
-            f_l.addWidget(lbl_c)
-
-            f_l.addStretch()
-
-            chk = QLabel("✓", f)
-            chk.setStyleSheet(
-                "background-color: #7C3AED; color: #FFFFFF; font-weight: 800; "
-                "border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; "
-                "qproperty-alignment: AlignCenter; font-size: 10px;"
-            )
-            chk.setVisible(False)
-            f_l.addWidget(chk)
-
-            f.mousePressEvent = lambda e, s=name: self._select_corner_radius(s)
-            self.corner_cards[name] = f
-            self.corner_chk[name] = chk
-            corner_row.addWidget(f)
-
-        l_bs.addLayout(corner_row)
-        layout.addWidget(card_b_set)
-        layout.addStretch()
-
-        self._update_all_logos()
-
-        scroll.setWidget(content)
-        return scroll
+        """Kept for backwards compatibility; the pill updates itself."""
 
     def _select_bubble_style(self, style_name: str):
+        if style_name not in self.bubble_tiles:
+            style_name = "Frosted Glass"
         self.current_bubble_style = style_name
-        settings_db.set("bubble_appearance", style_name)
-        is_dark = (self.current_theme == "dark")
-        for name, card in self.bubble_cards.items():
-            chk = self.bubble_chk.get(name)
-            if name == style_name:
-                card.setStyleSheet(
-                    "QFrame { background-color: #EDE9FE; border: 2px solid #7C3AED; border-radius: 8px; color: #7C3AED; }"
-                    if not is_dark else
-                    "QFrame { background-color: #2E1065; border: 2px solid #A78BFA; border-radius: 8px; color: #FFFFFF; }"
-                )
-                if chk:
-                    chk.setVisible(True)
-            else:
-                card.setStyleSheet(
-                    "QFrame { background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; color: #0F172A; }"
-                    if not is_dark else
-                    "QFrame { background-color: #1A1F33; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #94A3B8; }"
-                )
-                if chk:
-                    chk.setVisible(False)
+        for name, tile in self.bubble_tiles.items():
+            tile.set_selected(name == style_name)
 
     def _select_corner_radius(self, corner_name: str):
+        if corner_name not in ("Square", "Medium", "Round"):
+            corner_name = "Medium"
         self.current_corner_radius = corner_name
-        settings_db.set("bubble_corner_radius", corner_name)
-        is_dark = (self.current_theme == "dark")
-        for name, card in self.corner_cards.items():
-            chk = self.corner_chk.get(name)
-            if name == corner_name:
-                card.setStyleSheet(
-                    "QFrame { background-color: #EDE9FE; border: 2px solid #7C3AED; border-radius: 8px; color: #7C3AED; }"
-                    if not is_dark else
-                    "QFrame { background-color: #2E1065; border: 2px solid #A78BFA; border-radius: 8px; color: #FFFFFF; }"
-                )
-                if chk:
-                    chk.setVisible(True)
-            else:
-                card.setStyleSheet(
-                    "QFrame { background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; color: #0F172A; }"
-                    if not is_dark else
-                    "QFrame { background-color: #1A1F33; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #94A3B8; }"
-                )
-                if chk:
-                    chk.setVisible(False)
+        self.seg_corner.set_value(corner_name)
 
     def _on_change_logo(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Application Logo", "",
-            "Image Files (*.png *.jpg *.jpeg *.svg *.ico);;All Files (*)"
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Choose logo", "", "Images (*.png *.jpg *.jpeg *.svg *.ico)"
         )
-        if file_path and os.path.exists(file_path):
-            settings_db.set("custom_logo_path", file_path)
+        if path and os.path.exists(path):
+            settings_db.set("custom_logo_path", path)
             self._update_all_logos()
 
     def _on_restore_default_logo(self):
@@ -1236,762 +961,59 @@ class SettingsDialog(QDialog):
             settings_db.remove("custom_logo_path")
         self._update_all_logos()
 
+    def _update_sidebar_logo(self):
+        pix = get_brand_logo_pixmap(is_dark=(self.current_theme == "dark"), target_width=150)
+        if not pix.isNull():
+            self.lbl_sidebar_logo.setPixmap(pix)
+
     def _update_all_logos(self):
         self._update_sidebar_logo()
-        is_dark = (self.current_theme == "dark")
-        pix = get_brand_logo_pixmap(is_dark=is_dark, target_width=140)
-        if hasattr(self, "lbl_logo_preview") and not pix.isNull():
-            self.lbl_logo_preview.setPixmap(pix)
-        if hasattr(self, "frame_logo_preview"):
-            self.frame_logo_preview.setStyleSheet(
-                "QFrame { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; }"
-                if not is_dark else
-                "QFrame { background-color: #161F30; border: 1px solid #1E293B; border-radius: 10px; }"
-            )
-        if hasattr(self, "frame_logo_req"):
-            self.frame_logo_req.setStyleSheet(
-                "QFrame { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }"
-                if not is_dark else
-                "QFrame { background-color: #161F30; border: 1px solid #1E293B; border-radius: 10px; }"
-            )
+        is_dark = self.current_theme == "dark"
+        if hasattr(self, "lbl_logo_preview"):
+            pix = get_brand_logo_pixmap(is_dark=is_dark, target_width=120)
+            if not pix.isNull():
+                self.lbl_logo_preview.setPixmap(pix)
+        if hasattr(self, "lbl_about_logo"):
+            pix = get_brand_logo_pixmap(is_dark=is_dark, target_width=220)
+            if not pix.isNull():
+                self.lbl_about_logo.setPixmap(pix)
 
-    # ═════════════════════════════════════════════════════════════
-    # PAGE 0: VOICE && SPEECH
-    # ═════════════════════════════════════════════════════════════
+    def _go_to(self, page: int):
+        meta = next((m for m in self.pages_meta if m[0] == page), self.pages_meta[0])
+        self.stacked_pages.setCurrentIndex(meta[0])
+        self._nav_by_page[meta[0]].setChecked(True)
+        self.lbl_header_title.setText(meta[2])
+        self.lbl_header_subtitle.setText(meta[3])
+        self.action_bar.setVisible(meta[0] in (self.PAGE_VOICE, self.PAGE_PLAYBACK, self.PAGE_APPEARANCE))
+        if meta[0] == self.PAGE_PERMISSIONS:
+            self._refresh_perm_page_status()
 
-    def _create_voice_page(self) -> QWidget:
-        container = QWidget()
-        page_layout = QVBoxLayout(container)
-        page_layout.setContentsMargins(0, 0, 0, 0)
-        page_layout.setSpacing(10)
+    def _on_nav_clicked(self, page_idx: int, *_args):
+        """Backwards-compatible alias."""
+        self._go_to(page_idx)
 
-        # 1. Scrollable Cards Area (Voice, Emotion, Tuning, EQ)
-        scroll = QScrollArea(container)
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(12)
-
-        # Card 1: Voice && Emotion Selection
-        card_v = QGroupBox("Voice && Emotion Selection", content)
-        l_v = QFormLayout(card_v)
-        l_v.setSpacing(10)
-        l_v.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-
-        self.combo_voice = QComboBox(card_v)
-        for v in VOICES:
-            self.combo_voice.addItem(v["label"], v["id"])
-        l_v.addRow(QLabel("<b>Primary Voice:</b>"), self.combo_voice)
-
-        self.combo_emotion = QComboBox(card_v)
-        for m in EMOTION_MODES:
-            self.combo_emotion.addItem(m["label"], m["id"])
-        l_v.addRow(QLabel("<b>Emotion && Tone:</b>"), self.combo_emotion)
-        layout.addWidget(card_v)
-
-        # Card 2: Voice Tuning & Audio Controls (Speed, Pitch, Volume)
-        card_tune = QGroupBox("Voice Tuning && Audio Controls", content)
-        l_tune = QVBoxLayout(card_tune)
-        l_tune.setSpacing(10)
-        lbl_tune_sub = QLabel("Fine-tune cadence speed, neural pitch, and master listening volume:", card_tune)
-        lbl_tune_sub.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_tune.addWidget(lbl_tune_sub)
-
-        # 1. Speaking Speed
-        speed_header = QHBoxLayout()
-        lbl_s_title = QLabel("Speaking Speed", card_tune)
-        lbl_s_title.setStyleSheet("font-weight: 600; font-size: 12px;")
-        speed_header.addWidget(lbl_s_title)
-        speed_header.addStretch()
-        self.lbl_speed_val = QLabel("1.00x", card_tune)
-        self.lbl_speed_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
-        self.lbl_speed_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        speed_header.addWidget(self.lbl_speed_val)
-        l_tune.addLayout(speed_header)
-
-        self.slider_speed = QSlider(Qt.Orientation.Horizontal, card_tune)
-        self.slider_speed.setRange(50, 200)
-        self.slider_speed.setValue(100)
-        self.slider_speed.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.slider_speed.valueChanged.connect(self._on_speed_slider_changed)
-        l_tune.addWidget(self.slider_speed)
-
-        scale_s = QHBoxLayout()
-        scale_s.addWidget(QLabel("0.5x (Slow)"))
-        scale_s.addStretch()
-        scale_s.addWidget(QLabel("1.0x (Normal)"))
-        scale_s.addStretch()
-        scale_s.addWidget(QLabel("2.0x (Fast)"))
-        for i in range(scale_s.count()):
-            w = scale_s.itemAt(i).widget()
-            if w:
-                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
-        l_tune.addLayout(scale_s)
-
-        # 2. Pitch Tuning
-        pitch_header = QHBoxLayout()
-        lbl_p_title = QLabel("Voice Pitch Tuning", card_tune)
-        lbl_p_title.setStyleSheet("font-weight: 600; font-size: 12px;")
-        pitch_header.addWidget(lbl_p_title)
-        pitch_header.addStretch()
-        self.lbl_pitch_val = QLabel("0Hz", card_tune)
-        self.lbl_pitch_val.setStyleSheet("background-color: #E0F2FE; color: #0284C7; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
-        self.lbl_pitch_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pitch_header.addWidget(self.lbl_pitch_val)
-        l_tune.addLayout(pitch_header)
-
-        self.slider_pitch = QSlider(Qt.Orientation.Horizontal, card_tune)
-        self.slider_pitch.setRange(-50, 50)
-        self.slider_pitch.setValue(0)
-        self.slider_pitch.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.slider_pitch.valueChanged.connect(self._on_pitch_slider_changed)
-        l_tune.addWidget(self.slider_pitch)
-
-        scale_p = QHBoxLayout()
-        scale_p.addWidget(QLabel("-50Hz (Deeper)"))
-        scale_p.addStretch()
-        scale_p.addWidget(QLabel("Default (0Hz)"))
-        scale_p.addStretch()
-        scale_p.addWidget(QLabel("+50Hz (Higher)"))
-        for i in range(scale_p.count()):
-            w = scale_p.itemAt(i).widget()
-            if w:
-                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
-        l_tune.addLayout(scale_p)
-
-        # 3. Master Listening Volume
-        vol_header = QHBoxLayout()
-        lbl_v_title = QLabel("Master Listening Volume", card_tune)
-        lbl_v_title.setStyleSheet("font-weight: 600; font-size: 12px;")
-        vol_header.addWidget(lbl_v_title)
-        vol_header.addStretch()
-        self.lbl_vol_val = QLabel("80%", card_tune)
-        self.lbl_vol_val.setStyleSheet("background-color: #EDE9FE; color: #7C3AED; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 8px; min-width: 44px;")
-        self.lbl_vol_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        vol_header.addWidget(self.lbl_vol_val)
-        l_tune.addLayout(vol_header)
-
-        self.slider_volume = QSlider(Qt.Orientation.Horizontal, card_tune)
-        self.slider_volume.setRange(0, 100)
-        self.slider_volume.setValue(80)
-        self.slider_volume.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.slider_volume.valueChanged.connect(self._on_volume_slider_changed)
-        l_tune.addWidget(self.slider_volume)
-
-        scale_v = QHBoxLayout()
-        scale_v.addWidget(QLabel("0% (Mute)"))
-        scale_v.addStretch()
-        scale_v.addWidget(QLabel("80% (Recommended)"))
-        scale_v.addStretch()
-        scale_v.addWidget(QLabel("100% (Maximum)"))
-        for i in range(scale_v.count()):
-            w = scale_v.itemAt(i).widget()
-            if w:
-                w.setStyleSheet("color: #94A3B8; font-size: 10px;")
-        l_tune.addLayout(scale_v)
-
-        layout.addWidget(card_tune)
-
-        # Card 3: Interactive Voice Equalizer (EQ)
-        card_eq = QGroupBox("Voice Equalizer (EQ)", content)
-        l_eq = QVBoxLayout(card_eq)
-        l_eq.setSpacing(6)
-        lbl_eq_sub = QLabel("Parametric frequency response curve and vocal timbre presets:")
-        lbl_eq_sub.setStyleSheet("font-size: 11px; color: #64748B;")
-        l_eq.addWidget(lbl_eq_sub)
-
-        self.equalizer_widget = VoiceEqualizerWidget(card_eq)
-        l_eq.addWidget(self.equalizer_widget)
-        layout.addWidget(card_eq)
-
-        layout.addStretch()
-        scroll.setWidget(content)
-        page_layout.addWidget(scroll, 1)
-
-        # 2. Always-Fixed Bottom Test Voice Bar (Docked at bottom of Voice page)
-        self.frame_test_voice = QFrame(container)
-        self.frame_test_voice.setObjectName("FixedTestVoiceBar")
-        bar_layout = QHBoxLayout(self.frame_test_voice)
-        bar_layout.setContentsMargins(14, 8, 14, 8)
-        bar_layout.setSpacing(14)
-
-        self.btn_test_perf = QPushButton("▶ Test Voice", self.frame_test_voice)
-        self.btn_test_perf.setObjectName("BtnTest")
-        self.btn_test_perf.setFixedHeight(36)
-        self.btn_test_perf.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_test_perf.clicked.connect(self._run_performance_test)
-        bar_layout.addWidget(self.btn_test_perf)
-
-        self.equalizer_preview = EqualizerPreviewWidget(self.frame_test_voice)
-        bar_layout.addWidget(self.equalizer_preview)
-
-        self.lbl_test_status = QLabel("", self.frame_test_voice)
-        self.lbl_test_status.setStyleSheet("color: #7C3AED; font-weight: 600; font-size: 11px;")
-        bar_layout.addWidget(self.lbl_test_status)
-
-        bar_layout.addStretch()
-        page_layout.addWidget(self.frame_test_voice, 0)
-
-        return container
-
-    # ═════════════════════════════════════════════════════════════
-    # PAGE 3: ABOUT VOXEL
-    # ═════════════════════════════════════════════════════════════
-
-    def _create_about_page(self) -> QWidget:
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(12)
-
-        # Overview && Verified Links
-        card_about = QGroupBox("About Voxel", content)
-        l_ab = QVBoxLayout(card_about)
-        l_ab.setSpacing(12)
-
-        about_desc = QLabel(
-            f"Voxel is an official open-source product from <b>{COMPANY_NAME}</b>.<br>"
-            "Crafted to provide free, high-performance, and emotional text-to-speech anywhere on local machines without telemetry or restrictions.",
-            card_about
-        )
-        about_desc.setWordWrap(True)
-        l_ab.addWidget(about_desc)
-
-        links_row = QHBoxLayout()
-        links_row.setSpacing(10)
-
-        btn_linkedin = QPushButton("🔗 Connect on LinkedIn", card_about)
-        btn_linkedin.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_linkedin.setStyleSheet("background-color: #0A66C2; color: #FFFFFF; font-weight: 700; padding: 8px 16px; border: none; border-radius: 6px;")
-        btn_linkedin.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(LINKEDIN_URL)))
-        links_row.addWidget(btn_linkedin)
-
-        btn_website = QPushButton("🌐 Visit Digimo", card_about)
-        btn_website.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_website.setStyleSheet("background-color: #0084FF; color: #FFFFFF; font-weight: 700; padding: 8px 16px; border: none; border-radius: 6px;")
-        btn_website.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(COMPANY_URL)))
-        links_row.addWidget(btn_website)
-
-        btn_gh = QPushButton("🐙 GitHub Repository", card_about)
-        btn_gh.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_gh.setStyleSheet("background-color: #334155; color: #FFFFFF; font-weight: 700; padding: 8px 16px; border: none; border-radius: 6px;")
-        btn_gh.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
-        links_row.addWidget(btn_gh)
-
-        l_ab.addLayout(links_row)
-        layout.addWidget(card_about)
-
-        # Freedom && Disclaimer
-        card_free = QGroupBox("Open Source Freedom", content)
-        l_f = QVBoxLayout(card_free)
-        lbl_f = QLabel("This software is <b>100% free and open source</b> with no copyright restrictions or telemetry. Anyone is welcome to contribute.", card_free)
-        lbl_f.setWordWrap(True)
-        l_f.addWidget(lbl_f)
-        layout.addWidget(card_free)
-
-        card_disc = QGroupBox("Disclaimer", content)
-        l_d = QVBoxLayout(card_disc)
-        lbl_d = QLabel("Provided 'as is' for personal and productivity use. Digimo and creators assume no liability for any use or outcome.", card_disc)
-        lbl_d.setWordWrap(True)
-        l_d.addWidget(lbl_d)
-        layout.addWidget(card_disc)
-
-        layout.addStretch()
-        scroll.setWidget(content)
-        return scroll
-
-    # ═════════════════════════════════════════════════════════════
-    # THEME STYLESHEET DEFINITIONS (QSS / Custom CSS)
-    # ═════════════════════════════════════════════════════════════
-
-    def _get_check_icon_path(self) -> str:
-        path = _get_asset_path("branding/png/checkbox_check.png") or _get_asset_path("checkbox_check.png")
-        if not path or not os.path.exists(path):
-            import tempfile
-            fallback_icon = os.path.join(tempfile.gettempdir(), "voxel_check.png")
-            if not os.path.exists(fallback_icon):
-                from PyQt6.QtGui import QImage, QPainter, QPen, QColor
-                from PyQt6.QtCore import Qt, QPointF
-                img = QImage(32, 32, QImage.Format.Format_ARGB32_Premultiplied)
-                img.fill(0)
-                p = QPainter(img)
-                p.setRenderHint(QPainter.RenderHint.Antialiasing)
-                pen = QPen(QColor("#FFFFFF"), 3.6, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-                p.setPen(pen)
-                p.drawLine(QPointF(7.5, 16.5), QPointF(13.5, 23.0))
-                p.drawLine(QPointF(13.5, 23.0), QPointF(24.5, 9.5))
-                p.end()
-                img.save(fallback_icon, "PNG")
-            path = fallback_icon
-        return path.replace("\\", "/")
-
-    def _get_light_stylesheet(self) -> str:
-        check_icon_path = self._get_check_icon_path()
-        return f"""
-            QDialog {{
-                background-color: #F8FAFC;
-                color: #0F172A;
-                font-family: {FONT_FAMILY};
-            }}
-            #ThemePill {{
-                background-color: #EDE9FE;
-                border-radius: 16px;
-                border: 1px solid #DDD6FE;
-            }}
-            #ThemePill QPushButton {{
-                background-color: transparent;
-                color: #64748B;
-                border: none;
-                border-radius: 13px;
-                padding: 4px 12px;
-                font-size: 11px;
-                font-weight: 600;
-            }}
-            #ThemePill QPushButton:checked {{
-                background-color: #FFFFFF;
-                color: #0F172A;
-                font-weight: 700;
-            }}
-            QLabel {{
-                color: #0F172A;
-                font-size: 13px;
-            }}
-            #FixedTestVoiceBar {{
-                background-color: #FFFFFF;
-                border: 1px solid #E2E8F0;
-                border-radius: 12px;
-            }}
-            QGroupBox {{
-                border: 1px solid #E2E8F0;
-                border-radius: 12px;
-                margin-top: 14px;
-                padding: 18px 14px 12px 14px;
-                font-weight: 700;
-                color: #0F172A;
-                background-color: #FFFFFF;
-            }}
-            QGroupBox::title {{
-                color: #0F172A;
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 14px;
-                padding: 0 4px;
-                font-size: 13px;
-                font-weight: 700;
-                background-color: transparent;
-            }}
-            QComboBox, QDoubleSpinBox {{
-                background-color: #F8FAFC;
-                color: #0F172A;
-                border: 1px solid #CBD5E1;
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 12px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: #FFFFFF;
-                color: #0F172A;
-                selection-background-color: #7C3AED;
-                selection-color: #FFFFFF;
-                border: 1px solid #CBD5E1;
-            }}
-            QCheckBox {{
-                color: #0F172A;
-                font-size: 13px;
-                spacing: 10px;
-                font-weight: 500;
-            }}
-            QCheckBox:hover {{
-                color: #7C3AED;
-            }}
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-                border: 1.5px solid #CBD5E1;
-                border-radius: 5px;
-                background-color: #FFFFFF;
-            }}
-            QCheckBox::indicator:hover {{
-                border-color: #7C3AED;
-                background-color: #F8FAFC;
-            }}
-            QCheckBox::indicator:unchecked {{
-                image: none;
-                background-color: #FFFFFF;
-                border: 1.5px solid #CBD5E1;
-            }}
-            QCheckBox::indicator:checked {{
-                background-color: #7C3AED;
-                border: 1.5px solid #7C3AED;
-                image: url("{check_icon_path}");
-            }}
-            QSlider::groove:horizontal {{
-                height: 6px;
-                background: #E2E8F0;
-                border-radius: 3px;
-            }}
-            QSlider::sub-page:horizontal {{
-                background: #7C3AED;
-                border-radius: 3px;
-            }}
-            QSlider::handle:horizontal {{
-                background: #FFFFFF;
-                border: 2px solid #7C3AED;
-                width: 16px;
-                margin-top: -5px;
-                margin-bottom: -5px;
-                border-radius: 8px;
-            }}
-            QPushButton {{
-                background-color: #F8FAFC;
-                color: #0F172A;
-                border: 1px solid #CBD5E1;
-                border-radius: 6px;
-                padding: 7px 16px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background-color: #EDF2F7;
-                border-color: #7C3AED;
-            }}
-            #BtnPrimary {{
-                background-color: #7C3AED;
-                color: #FFFFFF;
-                border: none;
-                font-weight: 700;
-                padding: 8px 24px;
-                border-radius: 7px;
-            }}
-            #BtnPrimary:hover {{
-                background-color: #6D28D9;
-            }}
-            #BtnTest {{
-                background-color: #7C3AED;
-                color: #FFFFFF;
-                border: none;
-                font-weight: 700;
-                padding: 7px 16px;
-            }}
-            #BtnTest:hover {{
-                background-color: #6D28D9;
-            }}
-            QScrollBar:horizontal {{
-                height: 0px;
-                background: transparent;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: transparent;
-                width: 6px;
-                margin: 0px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: #CBD5E1;
-                min-height: 24px;
-                border-radius: 3px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: #94A3B8;
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """
-
-    def _get_dark_stylesheet(self) -> str:
-        check_icon_path = self._get_check_icon_path()
-        return f"""
-            QDialog {{
-                background-color: #0B0F19;
-                color: #F8FAFC;
-                font-family: {FONT_FAMILY};
-            }}
-            #ThemePill {{
-                background-color: #1E293B;
-                border-radius: 16px;
-                border: 1px solid #334155;
-            }}
-            #ThemePill QPushButton {{
-                background-color: transparent;
-                color: #94A3B8;
-                border: none;
-                border-radius: 13px;
-                padding: 4px 12px;
-                font-size: 11px;
-                font-weight: 600;
-            }}
-            #ThemePill QPushButton:checked {{
-                background-color: #2E3A59;
-                color: #FFFFFF;
-                font-weight: 700;
-            }}
-            QLabel {{
-                color: #F1F5F9;
-                font-size: 13px;
-            }}
-            #FixedTestVoiceBar {{
-                background-color: #161F30;
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 12px;
-            }}
-            QGroupBox {{
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 12px;
-                margin-top: 14px;
-                padding: 18px 14px 12px 14px;
-                font-weight: 700;
-                color: #F8FAFC;
-                background-color: #161F30;
-            }}
-            QGroupBox::title {{
-                color: #F8FAFC;
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 14px;
-                padding: 0 4px;
-                font-size: 13px;
-                font-weight: 700;
-                background-color: transparent;
-            }}
-            QComboBox, QDoubleSpinBox {{
-                background-color: #1E293B;
-                color: #F8FAFC;
-                border: 1px solid #334155;
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 12px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: #1E293B;
-                color: #FFFFFF;
-                selection-background-color: #7C3AED;
-                selection-color: #FFFFFF;
-                border: 1px solid #334155;
-            }}
-            QCheckBox {{
-                color: #F1F5F9;
-                font-size: 13px;
-                spacing: 10px;
-                font-weight: 500;
-            }}
-            QCheckBox:hover {{
-                color: #A78BFA;
-            }}
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-                border: 1.5px solid #475569;
-                border-radius: 5px;
-                background-color: #1E293B;
-            }}
-            QCheckBox::indicator:hover {{
-                border-color: #A78BFA;
-                background-color: #334155;
-            }}
-            QCheckBox::indicator:unchecked {{
-                image: none;
-                background-color: #1E293B;
-                border: 1.5px solid #475569;
-            }}
-            QCheckBox::indicator:checked {{
-                background-color: #7C3AED;
-                border: 1.5px solid #7C3AED;
-                image: url("{check_icon_path}");
-            }}
-            QSlider::groove:horizontal {{
-                height: 6px;
-                background: #1E293B;
-                border-radius: 3px;
-            }}
-            QSlider::sub-page:horizontal {{
-                background: #7C3AED;
-                border-radius: 3px;
-            }}
-            QSlider::handle:horizontal {{
-                background: #FFFFFF;
-                border: 2px solid #7C3AED;
-                width: 16px;
-                margin-top: -5px;
-                margin-bottom: -5px;
-                border-radius: 8px;
-            }}
-            QPushButton {{
-                background-color: #1E293B;
-                color: #FFFFFF;
-                border: 1px solid #334155;
-                border-radius: 6px;
-                padding: 7px 16px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background-color: #2D3748;
-                border-color: #7C3AED;
-            }}
-            #BtnPrimary {{
-                background-color: #7C3AED;
-                color: #FFFFFF;
-                border: none;
-                font-weight: 700;
-                padding: 8px 24px;
-                border-radius: 7px;
-            }}
-            #BtnPrimary:hover {{
-                background-color: #6D28D9;
-            }}
-            #BtnTest {{
-                background-color: #7C3AED;
-                color: #FFFFFF;
-                border: none;
-                font-weight: 700;
-                padding: 7px 16px;
-            }}
-            #BtnTest:hover {{
-                background-color: #6D28D9;
-            }}
-            QScrollBar:horizontal {{
-                height: 0px;
-                background: transparent;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: transparent;
-                width: 6px;
-                margin: 0px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: #334155;
-                min-height: 24px;
-                border-radius: 3px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: #475569;
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """
-
-    def apply_theme(self, theme: str):
-        """Switches between Dark Mode and Light Mode."""
-        self.current_theme = theme
-        settings_db.set("settings_theme", theme)
-        is_dark = (theme == "dark")
-
-        self._update_sidebar_logo()
-
-        if is_dark:
-            self.setStyleSheet(self._get_dark_stylesheet())
-            self.btn_theme_dark.setChecked(True)
-            self.btn_theme_light.setChecked(False)
-            self.sidebar_widget.set_theme_mode("dark")
-            if hasattr(self, "switch_fade_in"):
-                self.switch_fade_in.set_theme_mode("dark")
-            nav_btn_style = """
-                QPushButton {
-                    background-color: transparent;
-                    color: #94A3B8;
-                    border: none;
-                    border-radius: 8px;
-                    padding: 9px 14px;
-                    text-align: left;
-                    font-size: 13px;
-                    font-weight: 500;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0.06);
-                    color: #FFFFFF;
-                }
-                QPushButton:checked {
-                    background-color: #7C3AED;
-                    color: #FFFFFF;
-                    font-weight: 700;
-                }
-            """
-        else:
-            self.setStyleSheet(self._get_light_stylesheet())
-            self.btn_theme_light.setChecked(True)
-            self.btn_theme_dark.setChecked(False)
-            self.sidebar_widget.set_theme_mode("light")
-            if hasattr(self, "switch_fade_in"):
-                self.switch_fade_in.set_theme_mode("light")
-            nav_btn_style = """
-                QPushButton {
-                    background-color: transparent;
-                    color: #475569;
-                    border: none;
-                    border-radius: 8px;
-                    padding: 9px 14px;
-                    text-align: left;
-                    font-size: 13px;
-                    font-weight: 500;
-                }
-                QPushButton:hover {
-                    background-color: #E2E8F0;
-                    color: #0F172A;
-                }
-                QPushButton:checked {
-                    background-color: #7C3AED;
-                    color: #FFFFFF;
-                    font-weight: 700;
-                }
-            """
-
-        for btn in self.nav_buttons:
-            btn.setStyleSheet(nav_btn_style)
-
-        if hasattr(self, "equalizer_widget"):
-            self.equalizer_widget.set_theme_mode(theme)
-
-        self._update_all_logos()
-        curr_b_style = getattr(self, "current_bubble_style", settings_db.get("bubble_appearance", "Frosted Glass"))
-        self._select_bubble_style(curr_b_style)
-        curr_corner = getattr(self, "current_corner_radius", settings_db.get("bubble_corner_radius", "Medium"))
-        self._select_corner_radius(curr_corner)
-
-    def _on_nav_clicked(self, page_idx: int, icon_badge: str, header_title: str, header_sub: str):
-        self.stacked_pages.setCurrentIndex(page_idx)
-        self.header_badge.setText(icon_badge)
-        self.lbl_header_title.setText(header_title)
-        self.lbl_header_subtitle.setText(header_sub)
+    def _show_page(self, page: int):
+        self._go_to(page)
+        self.show()
+        self.raise_()
+        self.activateWindow()
 
     def open_preferences(self):
-        if len(self.nav_buttons) > 1:
-            self.nav_buttons[1].setChecked(True)
-        self._on_nav_clicked(1, "🎛️", "Audio & Playback", "Control transitions, hardware output, and auto-read behaviors")
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        self._show_page(self.PAGE_VOICE)
 
     def open_about(self):
-        if len(self.nav_buttons) > 3:
-            self.nav_buttons[3].setChecked(True)
-        self._on_nav_clicked(3, "ℹ️", "About Voxel", "Product information, licenses, and social links")
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        self._show_page(self.PAGE_ABOUT)
 
-    def _run_performance_test(self):
+    def open_reader(self, text: str = ""):
+        if text:
+            self.txt_reader.setPlainText(text)
+        self._show_page(self.PAGE_READ)
+        self.txt_reader.setFocus()
+
+    # ── TTS state ───────────────────────────────────────────────────────────
+    def _apply_voice_choice(self):
         if not self.tts:
-            self.lbl_test_status.setText("Audio engine not attached.")
             return
-
-        if self.tts.is_speaking:
-            self.tts.stop()
-            self.btn_test_perf.setText("▶ Test Voice")
-            self.lbl_test_status.setText("")
-            if hasattr(self, "equalizer_preview"):
-                self.equalizer_preview.set_active(False)
-            return
-
         voice_id = self.combo_voice.currentData()
         for i, v in enumerate(VOICES):
             if v["id"] == voice_id:
@@ -1999,167 +1021,219 @@ class SettingsDialog(QDialog):
                 break
         self.tts.set_emotion_mode(self.combo_emotion.currentData())
 
-        self.btn_test_perf.setText("⏹ Stop Voice")
-        self.lbl_test_status.setText("⚡ Synthesizing live audio...")
-        if hasattr(self, "equalizer_preview"):
-            self.equalizer_preview.set_active(True)
+    def _on_tts_started(self):
+        if self._test_running:
+            self.lbl_test_status.setText("Playing…")
 
-        test_phrase = (
-            "Hello! This is a live voice preview with your selected voice and tuning. "
-            "Speed, pitch, and timbre are running smoothly."
-        )
+    def _on_tts_finished(self):
+        self._test_running = False
+        self.btn_test_perf.setText("▶  Test voice")
+        self.lbl_test_status.setText("")
+        self.equalizer_preview.set_active(False)
+        self._set_reading_ui(False)
 
-        def _on_test_done():
-            try:
-                self.tts.playback_finished.disconnect(_on_test_done)
-            except Exception:
-                pass
-            self.btn_test_perf.setText("▶ Test Voice")
-            self.lbl_test_status.setText("")
-            if hasattr(self, "equalizer_preview"):
-                self.equalizer_preview.set_active(False)
+    def _run_performance_test(self):
+        if not self.tts:
+            self.lbl_test_status.setText("Audio engine not available")
+            return
+        if self.tts.is_speaking:
+            self.tts.stop()
+            self._on_tts_finished()
+            return
+        self._apply_voice_choice()
+        self._test_running = True
+        self.btn_test_perf.setText("■  Stop")
+        self.lbl_test_status.setText("Preparing…")
+        self.equalizer_preview.set_active(True)
+        self.tts.speak("Hi, I'm Voxel. This is how I sound with your current settings.")
 
-        self.tts.playback_finished.connect(_on_test_done)
-        self.tts.speak(test_phrase)
+    # ── Theme ───────────────────────────────────────────────────────────────
+    def _stylesheet(self, pal: dict) -> str:
+        chevron = _icon_file("chevron", pal["muted"], _chevron)
+        return f"""
+        QDialog {{ background: {pal['bg']}; font-family: {FONT_FAMILY}; }}
+        QWidget#Main, QWidget#ScrollContent {{ background: transparent; }}
+        QScrollArea {{ background: transparent; border: none; }}
+        QLabel {{ background: transparent; color: {pal['text']}; font-size: 13px; }}
+        QToolTip {{ background: {pal['surface']}; color: {pal['text']}; border: 1px solid {pal['border']}; padding: 4px 8px; }}
 
+        QFrame#Sidebar {{ background: {pal['sidebar']}; border-right: 1px solid {pal['border']}; }}
+        QPushButton#NavBtn {{
+            background: transparent; color: {pal['muted']}; border: none; border-radius: 10px;
+            padding: 10px 12px; text-align: left; font-size: 13px; font-weight: 600;
+        }}
+        QPushButton#NavBtn:hover {{ background: {pal['surface2']}; color: {pal['text']}; }}
+        QPushButton#NavBtn:checked {{ background: {pal['accent_soft']}; color: {pal['accent_text']}; }}
+
+        QLabel#PageTitle {{ font-size: 22px; font-weight: 800; }}
+        QLabel#PageSub {{ font-size: 13px; color: {pal['muted']}; }}
+        QLabel#Faint {{ font-size: 11px; color: {pal['faint']}; }}
+
+        QFrame#Card {{ background: {pal['surface']}; border: 1px solid {pal['border']}; border-radius: 14px; }}
+        QLabel#CardTitle {{ font-size: 12px; font-weight: 700; color: {pal['muted']}; }}
+        QFrame#Divider {{ background: {pal['border']}; border: none; }}
+        QLabel#RowTitle {{ font-size: 13px; font-weight: 600; }}
+        QLabel#RowHint {{ font-size: 11px; color: {pal['muted']}; }}
+        QLabel#Pill {{
+            background: {pal['accent_soft']}; color: {pal['accent_text']};
+            border-radius: 8px; padding: 3px 6px; font-size: 12px; font-weight: 700;
+        }}
+        QFrame#Bar {{ background: {pal['surface']}; border: 1px solid {pal['border']}; border-radius: 14px; }}
+
+        QFrame#Segmented {{ background: {pal['surface2']}; border: 1px solid {pal['border']}; border-radius: 10px; }}
+        QPushButton#SegBtn {{
+            background: transparent; color: {pal['muted']}; border: none; border-radius: 8px;
+            padding: 5px 12px; font-size: 12px; font-weight: 600; min-width: 46px;
+        }}
+        QPushButton#SegBtn:hover {{ color: {pal['text']}; }}
+        QPushButton#SegBtn:checked {{ background: {pal['surface']}; color: {pal['accent_text']}; border: 1px solid {pal['border']}; }}
+
+        QFrame#Tile {{ background: {pal['surface2']}; border: 1.5px solid transparent; border-radius: 12px; }}
+        QFrame#Tile:hover {{ border-color: {pal['border']}; }}
+        QFrame#Tile[selected="true"] {{ background: {pal['accent_soft']}; border-color: {pal['accent']}; }}
+        QLabel#TileLabel {{ font-size: 12px; font-weight: 600; }}
+        QFrame#LogoBox {{ background: {pal['surface2']}; border: 1px solid {pal['border']}; border-radius: 10px; }}
+
+        QPlainTextEdit#Reader {{
+            background: {pal['surface']}; color: {pal['text']}; border: 1px solid {pal['border']};
+            border-radius: 14px; padding: 14px; font-size: 14px;
+            selection-background-color: {pal['accent']}; selection-color: #FFFFFF;
+        }}
+        QPlainTextEdit#Reader:focus {{ border: 1.5px solid {pal['accent']}; }}
+
+        QComboBox {{
+            background: {pal['surface2']}; color: {pal['text']}; border: 1px solid {pal['border']};
+            border-radius: 9px; padding: 6px 32px 6px 12px; font-size: 13px; min-height: 20px;
+        }}
+        QComboBox:hover {{ border-color: {pal['accent']}; }}
+        QComboBox::drop-down {{ border: none; width: 28px; }}
+        QComboBox::down-arrow {{ image: url("{chevron}"); width: 12px; height: 12px; }}
+        QComboBox QAbstractItemView {{
+            background: {pal['surface']}; color: {pal['text']}; border: 1px solid {pal['border']};
+            border-radius: 8px; padding: 4px; outline: none;
+            selection-background-color: {pal['accent_soft']}; selection-color: {pal['accent_text']};
+        }}
+
+        QSlider::groove:horizontal {{ height: 4px; background: {pal['track_off']}; border-radius: 2px; }}
+        QSlider::sub-page:horizontal {{ background: {pal['accent']}; border-radius: 2px; }}
+        QSlider::handle:horizontal {{
+            background: #FFFFFF; border: 2px solid {pal['accent']};
+            width: 14px; height: 14px; margin: -7px 0; border-radius: 9px;
+        }}
+        QSlider::handle:horizontal:hover {{ background: {pal['accent_soft']}; }}
+        QSlider::sub-page:horizontal:disabled {{ background: {pal['track_off']}; }}
+        QSlider::handle:horizontal:disabled {{ border-color: {pal['track_off']}; }}
+
+        QPushButton {{
+            background: {pal['surface2']}; color: {pal['text']}; border: 1px solid {pal['border']};
+            border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 600;
+        }}
+        QPushButton#BtnPrimary {{
+            background: {pal['accent']}; color: #FFFFFF; border: none; padding: 9px 22px; font-weight: 700;
+        }}
+        QPushButton#BtnPrimary:hover {{ background: {pal['accent_hover']}; }}
+        QPushButton#BtnSoft {{ background: {pal['accent_soft']}; color: {pal['accent_text']}; border: none; }}
+        QPushButton#BtnSoft:hover {{ background: {pal['accent']}; color: #FFFFFF; }}
+        QPushButton#BtnGhost {{ background: transparent; color: {pal['muted']}; border: 1px solid {pal['border']}; }}
+        QPushButton#BtnGhost:hover {{ color: {pal['text']}; border-color: {pal['muted']}; }}
+
+        QScrollBar:vertical {{ background: transparent; width: 6px; margin: 0; border: none; }}
+        QScrollBar::handle:vertical {{ background: {pal['track_off']}; min-height: 30px; border-radius: 3px; }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
+        """
+
+    def apply_theme(self, theme: str):
+        if theme not in PALETTES:
+            theme = "light"
+        self.current_theme = theme
+        settings_db.set("settings_theme", theme)
+        self.setStyleSheet(self._stylesheet(PALETTES[theme]))
+        self.seg_theme.set_value(theme)
+        for s in self.switches:
+            s.set_theme_mode(theme)
+        for g in self.bubble_graphics:
+            g.set_dark(theme == "dark")
+        if hasattr(self, "equalizer_widget"):
+            self.equalizer_widget.set_theme_mode(theme)
+        self._update_all_logos()
+        self._refresh_perm_page_status()
+
+    # ── Load / save ─────────────────────────────────────────────────────────
     def reset_to_defaults(self):
-        """Restores all settings to defaults matching mockups."""
         idx = self.combo_voice.findData("en-US-JennyNeural")
         if idx >= 0:
             self.combo_voice.setCurrentIndex(idx)
-        idx_e = self.combo_emotion.findData(DEFAULT_EMOTION_MODE)
-        if idx_e >= 0:
-            self.combo_emotion.setCurrentIndex(idx_e)
-
+        idx = self.combo_emotion.findData(DEFAULT_EMOTION_MODE)
+        if idx >= 0:
+            self.combo_emotion.setCurrentIndex(idx)
         self.slider_speed.setValue(100)
         self.slider_pitch.setValue(0)
-        self.lbl_pitch_val.setText("0Hz")
         self.slider_fade_out.setValue(100)
-        self.lbl_fade_out_val.setText("1.00s")
         self.switch_fade_in.setChecked(True)
         self.chk_startup.setChecked(False)
         self.chk_prebuffer.setChecked(True)
         self.chk_trigger.setChecked(True)
         self.chk_autoclose.setChecked(True)
         self.slider_volume.setValue(80)
-        self.lbl_vol_val.setText("80%")
         self.slider_transparency.setValue(90)
-        self.slider_bubble_size.setValue(3)
-        self.combo_bubble_size.setCurrentIndex(2)
-        if hasattr(self, "slider_distance"):
-            self.slider_distance.setValue(28)
-            self.lbl_dist_val.setText("28px")
-
-        if hasattr(self, "equalizer_widget"):
-            self.equalizer_widget.apply_preset("Podcast Warmth")
-
-        self.apply_theme("light")
+        self.seg_bubble_size.set_value("Large")
+        self.slider_distance.setValue(28)
+        self.equalizer_widget.apply_preset("Podcast Warmth")
         self._select_bubble_style("Frosted Glass")
         self._select_corner_radius("Medium")
         self._on_restore_default_logo()
 
     def load_values(self):
-        """Loads saved settings into controls."""
-        voice_id = settings_db.get("default_voice", "en-US-JennyNeural")
-        idx = self.combo_voice.findData(voice_id)
+        idx = self.combo_voice.findData(settings_db.get("default_voice", "en-US-JennyNeural"))
         if idx >= 0:
             self.combo_voice.setCurrentIndex(idx)
+        idx = self.combo_emotion.findData(settings_db.get("emotion_mode", DEFAULT_EMOTION_MODE))
+        if idx >= 0:
+            self.combo_emotion.setCurrentIndex(idx)
+        self.slider_speed.setValue(int(round(float(settings_db.get("default_speed", 1.0)) * 100)))
+        self.slider_pitch.setValue(int(settings_db.get("default_pitch", 0)))
 
-        emotion_mode = settings_db.get("emotion_mode", DEFAULT_EMOTION_MODE)
-        idx_em = self.combo_emotion.findData(emotion_mode)
-        if idx_em >= 0:
-            self.combo_emotion.setCurrentIndex(idx_em)
+        self.chk_startup.setChecked(is_startup_enabled(), animate=False)
+        self.chk_prebuffer.setChecked(settings_db.get("prebuffer_enabled", True), animate=False)
+        self.chk_trigger.setChecked(settings_db.get("selection_popup_enabled", True), animate=False)
+        self.chk_autoclose.setChecked(settings_db.get("auto_close_finished", True), animate=False)
+        self.switch_fade_in.setChecked(settings_db.get("smooth_fade_in", True), animate=False)
+        self.row_close_delay.setEnabled(self.chk_autoclose.isChecked())
 
-        speed_val = float(settings_db.get("default_speed", 1.0))
-        self.slider_speed.setValue(int(round(speed_val * 100)))
+        delay = float(settings_db.get("auto_close_delay", 1.0))
+        self.slider_fade_out.setValue(max(20, min(300, int(round(delay * 100)))))
+        self.slider_volume.setValue(int(settings_db.get("volume", 80)))
+        self.slider_transparency.setValue(int(settings_db.get("bubble_transparency", 90)))
 
-        pitch_val = int(settings_db.get("default_pitch", 0))
-        self.slider_pitch.setValue(pitch_val)
-        self.lbl_pitch_val.setText(f"{pitch_val:+d}Hz" if pitch_val != 0 else "0Hz")
-
-        self.chk_startup.setChecked(is_startup_enabled())
-
-        prebuffer = settings_db.get("prebuffer_enabled", True)
-        self.chk_prebuffer.setChecked(prebuffer)
-
-        enabled = settings_db.get("selection_popup_enabled", True)
-        self.chk_trigger.setChecked(enabled)
-
-        autoclose = settings_db.get("auto_close_finished", True)
-        self.chk_autoclose.setChecked(autoclose)
-
-        delay_val = float(settings_db.get("auto_close_delay", 1.0))
-        self.slider_fade_out.setValue(max(20, min(300, int(round(delay_val * 100)))))
-        self.lbl_fade_out_val.setText(f"{delay_val:.2f}s")
-
-        vol_val = int(settings_db.get("volume", 80))
-        self.slider_volume.setValue(vol_val)
-        self.lbl_vol_val.setText(f"{vol_val}%")
-
-        trans_val = int(settings_db.get("bubble_transparency", 90))
-        self.slider_transparency.setValue(trans_val)
-        self.lbl_trans_val.setText(f"{trans_val}%")
-
-        b_size = str(settings_db.get("bubble_size", "Large"))
-        idx_size = -1
-        for i in range(self.combo_bubble_size.count()):
-            txt = self.combo_bubble_size.itemText(i).lower()
-            if "small" in b_size.lower() and "small" in txt:
-                idx_size = i
-                break
-            elif "medium" in b_size.lower() and "medium" in txt:
-                idx_size = i
-                break
-            elif "large" in b_size.lower() and "large" in txt:
-                idx_size = i
-                break
-        if idx_size >= 0:
-            self.combo_bubble_size.setCurrentIndex(idx_size)
-            self.slider_bubble_size.setValue(idx_size + 1)
-
-        dist_val = int(settings_db.get("bubble_distance", 28))
-        if hasattr(self, "slider_distance"):
-            self.slider_distance.setValue(dist_val)
-            self.lbl_dist_val.setText(f"{dist_val}px")
-
-        curr_corner = settings_db.get("bubble_corner_radius", "Medium")
-        self._select_corner_radius(curr_corner)
-
-        fade_in_val = settings_db.get("smooth_fade_in", True)
-        self.switch_fade_in.setChecked(fade_in_val)
-
-        curr_b_style = settings_db.get("bubble_appearance", "Frosted Glass")
-        self._select_bubble_style(curr_b_style)
-
+        size = str(settings_db.get("bubble_size", "Large")).lower()
+        self.seg_bubble_size.set_value("Small Dot" if "small" in size else "Medium" if "medium" in size else "Large")
+        self.slider_distance.setValue(int(settings_db.get("bubble_distance", 28)))
+        self._select_corner_radius(settings_db.get("bubble_corner_radius", "Medium"))
+        self._select_bubble_style(settings_db.get("bubble_appearance", "Frosted Glass"))
         self._update_all_logos()
 
     def save_and_apply(self):
-        """Saves values and emits update signal."""
         settings_db.set("default_voice", self.combo_voice.currentData())
         settings_db.set("emotion_mode", self.combo_emotion.currentData())
-        speed = round(self.slider_speed.value() / 100.0, 2)
-        settings_db.set("default_speed", speed)
+        settings_db.set("default_speed", round(self.slider_speed.value() / 100.0, 2))
         settings_db.set("default_pitch", self.slider_pitch.value())
         if self.tts and hasattr(self.tts, "set_pitch"):
             self.tts.set_pitch(self.slider_pitch.value())
         settings_db.set("prebuffer_enabled", self.chk_prebuffer.isChecked())
         settings_db.set("selection_popup_enabled", self.chk_trigger.isChecked())
         settings_db.set("auto_close_finished", self.chk_autoclose.isChecked())
-        fade_out_secs = round(self.slider_fade_out.value() / 100.0, 2)
-        settings_db.set("auto_close_delay", fade_out_secs)
+        settings_db.set("auto_close_delay", round(self.slider_fade_out.value() / 100.0, 2))
         settings_db.set("volume", self.slider_volume.value())
         if self.tts and hasattr(self.tts, "set_volume"):
             self.tts.set_volume(self.slider_volume.value() / 100.0)
         settings_db.set("bubble_transparency", self.slider_transparency.value())
-        settings_db.set("bubble_size", self.combo_bubble_size.currentText())
-        if hasattr(self, "slider_distance"):
-            settings_db.set("bubble_distance", self.slider_distance.value())
-        settings_db.set("bubble_corner_radius", getattr(self, "current_corner_radius", "Medium"))
-        settings_db.set("bubble_appearance", getattr(self, "current_bubble_style", "Frosted Glass"))
+        settings_db.set("bubble_size", self.seg_bubble_size.value() or "Large")
+        settings_db.set("bubble_distance", self.slider_distance.value())
+        settings_db.set("bubble_corner_radius", self.current_corner_radius)
+        settings_db.set("bubble_appearance", self.current_bubble_style)
         settings_db.set("smooth_fade_in", self.switch_fade_in.isChecked())
         settings_db.set("settings_theme", self.current_theme)
-
         set_startup_enabled(self.chk_startup.isChecked())
-
         self.settings_applied.emit()
         self.close()

@@ -28,6 +28,7 @@ class AppTrayIcon(QSystemTrayIcon):
     toggle_enabled_requested = pyqtSignal(bool)
     history_requested = pyqtSignal()
     read_clipboard_requested = pyqtSignal()
+    reader_requested = pyqtSignal()
     read_document_requested = pyqtSignal(str)
     open_file_requested = pyqtSignal()
 
@@ -87,6 +88,10 @@ class AppTrayIcon(QSystemTrayIcon):
         title_action.setEnabled(False)
 
         menu.addSeparator()
+
+        # Paste & read any text (for apps that block selection)
+        reader_action = menu.addAction("📝  Read Text...")
+        reader_action.triggered.connect(self.reader_requested.emit)
 
         # Preferences
         settings_action = menu.addAction("⚙️  Preferences...")
