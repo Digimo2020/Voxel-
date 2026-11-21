@@ -62,7 +62,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "theme_mode": "light_glass",       # "dark_glass" or "light_glass"
     "auto_close_finished": True,      # Auto-close player after speech completes
     "auto_close_delay": 1.0,          # Fade-out duration in seconds
-    "version": "v1.1.24"
+    "version": "v1.1.25"
 }
 
 

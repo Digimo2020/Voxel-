@@ -35,11 +35,13 @@ Voxel lives in the **system tray** (Windows) or **menu bar** (macOS) after it st
 
 <img src="images/player.png" alt="Mini player in light and dark" width="420">
 
-| Button | What it does |
+At rest the player shows only two things: the **wave** (grey when idle, moving blue while reading, red while recording) and the **blue Play/Pause** button. **Hover the player** and it slides open:
+
+| Control | What it does |
 | :--- | :--- |
-| Round blue button | Pause / resume |
+| Blue round button | Play / Pause |
 | `1×` | Change speed |
-| `•••` More | Read the whole document · Record to MP3 (saved in *Documents/Voxel Recordings*) |
+| `•••` More | Read the whole document · Record to MP3 |
 | Sliders icon | Open Settings |
 | ✕ | Close the player |
 

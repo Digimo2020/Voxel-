@@ -10,6 +10,16 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.25] - 2026-11-21
+
+### Smart mini player
+- At rest the player shows only the Voxel wave and the blue Play/Pause button: one clear thing to click.
+- The wave is a status light, not a button: grey when idle, moving blue while reading, red while recording.
+- Hover the player and it slides open to show speed, More, Settings and Close; it folds back when the mouse leaves. Menus keep it open.
+- Removed the second blue logo circle and the "Voxel" name from the player.
+
+---
+
 ## [v1.1.24] - 2026-11-21
 
 ### New design: calm, simple, one window
