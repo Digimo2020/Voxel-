@@ -33,6 +33,7 @@
 - 🫧 **Never steals focus**: the bubble sits on top of your work without interrupting it
 - 📄 **Read whole documents** with one click
 - 📝 **Read Text**: paste text from apps that block selection and listen
+- 🔖 **Keep things**: save texts, bookmark what you heard, find recordings in Resources
 - 🎚 **Your pace**: speed, pitch, volume and equalizer presets
 - 🌗 **Light, dark and frosted-glass** themes; small / medium / large bubble sizes
 

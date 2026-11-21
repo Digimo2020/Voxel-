@@ -34,6 +34,7 @@ from src.utils.startup import is_startup_enabled, set_startup_enabled
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from src.utils.audio_recorder import get_recordings_dir, open_recordings_folder
 from src.utils.history import history_db
+from src.utils.library import library_db
 from src.ui.equalizer_widget import VoiceEqualizerWidget
 from src.ui.design import PALETTES, FONT_STACK, resolve_theme, line_icon, THEME_PREFS
 from assets.icons import create_app_icon, get_brand_logo_pixmap
@@ -384,6 +385,7 @@ class SettingsDialog(QDialog):
         self._folds: List[Collapsible] = []
         self._test_running = False
         self._loading = False
+        self._editing_text_id: Optional[str] = None   # saved-text item open in Read Text
         self._collapsed = bool(settings_db.get("ui_sidebar_collapsed", False))
 
         self._apply_timer = QTimer(self)
@@ -449,7 +451,7 @@ class SettingsDialog(QDialog):
         self.pages_meta = [
             (self.PAGE_LISTEN, "Listen", "headphones", "Listen", "Select text anywhere, then click the wave."),
             (self.PAGE_READ, "Read Text", "file-text", "Read Text", "Paste any text and listen."),
-            (self.PAGE_RESOURCES, "Resources", "folder", "Resources", "Your saved recordings."),
+            (self.PAGE_RESOURCES, "Resources", "folder", "Resources", "Saved text, bookmarks and recordings."),
             (self.PAGE_HISTORY, "History", "history", "History", "Everything Voxel has read for you."),
             (self.PAGE_SETTINGS, "Settings", "settings-2", "Settings", "Changes are saved automatically."),
         ]
@@ -645,8 +647,12 @@ class SettingsDialog(QDialog):
         self.btn_paste.clicked.connect(self._paste_into_reader)
         bl.addWidget(self.btn_paste)
         self.btn_clear = self._btn(" Clear", "BtnGhost")
-        self.btn_clear.clicked.connect(self.txt_reader.clear)
+        self.btn_clear.clicked.connect(self._clear_reader)
         bl.addWidget(self.btn_clear)
+        self.btn_save_text = self._btn(" Save", "BtnGhost")
+        self.btn_save_text.setToolTip("Keep this text in Resources")
+        self.btn_save_text.clicked.connect(self._save_reader_text)
+        bl.addWidget(self.btn_save_text)
         self.lbl_reader_count = QLabel("")
         self.lbl_reader_count.setObjectName("RowHint")
         bl.addSpacing(6)
@@ -671,10 +677,23 @@ class SettingsDialog(QDialog):
         self._update_reader_count()
         return page
 
+    def _clear_reader(self):
+        self.txt_reader.clear()
+        self._editing_text_id = None
+
+    def _save_reader_text(self):
+        item = library_db.save_text(self.txt_reader.toPlainText(), item_id=self._editing_text_id)
+        if item:
+            self._editing_text_id = item["id"]
+            self.lbl_reader_status.setText("Saved to Resources")
+            QTimer.singleShot(2500, lambda: self.lbl_reader_status.setText("")
+                              if self.lbl_reader_status.text() == "Saved to Resources" else None)
+
     def _paste_into_reader(self):
         text = QApplication.clipboard().text()
         if text:
             self.txt_reader.setPlainText(text.strip())
+            self._editing_text_id = None   # pasted text is a new item, not an edit
             self.txt_reader.setFocus()
 
     def _update_reader_count(self):
@@ -752,31 +771,140 @@ class SettingsDialog(QDialog):
         page = QWidget()
         lay = QVBoxLayout(page)
         lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(10)
-        top = QHBoxLayout()
-        t = QLabel("Recordings")
-        t.setObjectName("CardTitle")
-        top.addWidget(t)
-        top.addStretch()
-        self.btn_rec_open = self._btn(" Open folder", "BtnGhost")
-        self.btn_rec_open.clicked.connect(open_recordings_folder)
-        top.addWidget(self.btn_rec_open)
-        lay.addLayout(top)
-        self.list_recordings = QListWidget()
-        self.list_recordings.setObjectName("List")
+        lay.setSpacing(12)
+        self.seg_resources = Segmented([("Saved text", "texts"), ("Bookmarks", "bookmarks"), ("Recordings", "recordings")])
+        self.seg_resources.changed.connect(self._show_resource_tab)
+        lay.addWidget(self.seg_resources, 0, Qt.AlignmentFlag.AlignLeft)
+        self.res_stack = QStackedWidget()
+        lay.addWidget(self.res_stack, 1)
+
+        def tab(empty_text: str):
+            w = QWidget()
+            v = QVBoxLayout(w)
+            v.setContentsMargins(0, 0, 0, 0)
+            v.setSpacing(10)
+            lst = QListWidget()
+            lst.setObjectName("List")
+            lst.setWordWrap(True)
+            v.addWidget(lst, 1)
+            empty = QLabel(empty_text)
+            empty.setObjectName("RowHint")
+            empty.setWordWrap(True)
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            v.addWidget(empty, 1)
+            row = QHBoxLayout()
+            row.setSpacing(8)
+            v.addLayout(row)
+            self.res_stack.addWidget(w)
+            return lst, empty, row
+
+        # Saved text
+        self.list_texts, self.lbl_texts_empty, row = tab("No saved text yet. In Read Text, press Save to keep a text here.")
+        self.list_texts.itemDoubleClicked.connect(lambda _i: self._open_saved_text())
+        self.btn_text_open = self._btn(" Open in Read Text")
+        self.btn_text_open.clicked.connect(self._open_saved_text)
+        self.btn_text_read = self._btn(" Read aloud", "BtnGhost")
+        self.btn_text_read.clicked.connect(lambda: self._speak_item(self.list_texts))
+        self.btn_text_delete = self._btn(" Delete", "BtnGhost")
+        self.btn_text_delete.clicked.connect(self._delete_saved_text)
+        row.addWidget(self.btn_text_open); row.addWidget(self.btn_text_read); row.addStretch(); row.addWidget(self.btn_text_delete)
+
+        # Bookmarks
+        self.list_bookmarks, self.lbl_bookmarks_empty, row = tab("No bookmarks yet. In History, press Bookmark to keep an item for good.")
+        self.list_bookmarks.itemDoubleClicked.connect(lambda _i: self._speak_item(self.list_bookmarks))
+        self.btn_bm_read = self._btn(" Read aloud")
+        self.btn_bm_read.clicked.connect(lambda: self._speak_item(self.list_bookmarks))
+        self.btn_bm_copy = self._btn(" Copy text", "BtnGhost")
+        self.btn_bm_copy.clicked.connect(lambda: self._copy_item(self.list_bookmarks))
+        self.btn_bm_remove = self._btn(" Remove", "BtnGhost")
+        self.btn_bm_remove.clicked.connect(self._remove_bookmark)
+        row.addWidget(self.btn_bm_read); row.addWidget(self.btn_bm_copy); row.addStretch(); row.addWidget(self.btn_bm_remove)
+
+        # Recordings (MP3 files in the recordings folder)
+        self.list_recordings, self.lbl_rec_empty, row = tab("No recordings yet. In the mini player choose More → Record to MP3.")
         self.list_recordings.itemDoubleClicked.connect(self._play_recording)
-        lay.addWidget(self.list_recordings, 1)
-        self.lbl_rec_empty = QLabel("No recordings yet. In the mini player choose More → Record to MP3.")
-        self.lbl_rec_empty.setObjectName("RowHint")
-        self.lbl_rec_empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(self.lbl_rec_empty, 1)
-        row = QHBoxLayout()
         self.btn_rec_play = self._btn(" Play")
         self.btn_rec_play.clicked.connect(lambda: self._play_recording(self.list_recordings.currentItem()))
-        row.addWidget(self.btn_rec_play)
-        row.addStretch()
-        lay.addLayout(row)
+        self.btn_rec_open = self._btn(" Open folder", "BtnGhost")
+        self.btn_rec_open.clicked.connect(open_recordings_folder)
+        row.addWidget(self.btn_rec_play); row.addStretch(); row.addWidget(self.btn_rec_open)
+
+        self.seg_resources.set_value(settings_db.get("ui_resources_tab", "texts") or "texts")
+        self.res_stack.setCurrentIndex(["texts", "bookmarks", "recordings"].index(self.seg_resources.value() or "texts"))
         return page
+
+    def _show_resource_tab(self, key: str):
+        keys = ["texts", "bookmarks", "recordings"]
+        self.res_stack.setCurrentIndex(keys.index(key) if key in keys else 0)
+        settings_db.set("ui_resources_tab", key)
+        self._load_resources()
+
+    def _load_resources(self):
+        self._fill(self.list_texts, self.lbl_texts_empty, library_db.saved_texts(),
+                   lambda i: f"{i.get('title', 'Untitled')}\n{len(i.get('text', '').split()):,} words · saved {i.get('updated', '')}",
+                   (self.btn_text_open, self.btn_text_read, self.btn_text_delete))
+        self._fill(self.list_bookmarks, self.lbl_bookmarks_empty, library_db.bookmarks(),
+                   lambda i: f"{i.get('title', '')}\n{i.get('voice', '')} · {i.get('speed', 1.0)}× · {i.get('read_at') or i.get('created', '')}",
+                   (self.btn_bm_read, self.btn_bm_copy, self.btn_bm_remove))
+        self._load_recordings()
+
+    @staticmethod
+    def _fill(lst: QListWidget, empty: QLabel, items, fmt, buttons):
+        lst.clear()
+        for i in items:
+            it = QListWidgetItem(fmt(i))
+            it.setData(Qt.ItemDataRole.UserRole, i)
+            lst.addItem(it)
+        has = lst.count() > 0
+        lst.setVisible(has)
+        empty.setVisible(not has)
+        for b in buttons:
+            b.setVisible(has)
+        if has:
+            lst.setCurrentRow(0)
+
+    @staticmethod
+    def _item(lst: QListWidget):
+        it = lst.currentItem()
+        return it.data(Qt.ItemDataRole.UserRole) if it else None
+
+    def _speak_item(self, lst: QListWidget):
+        item = self._item(lst)
+        if item and item.get("text"):
+            self._apply_voice_choice()
+            self._speak(item["text"])
+
+    def _copy_item(self, lst: QListWidget):
+        item = self._item(lst)
+        if item:
+            QApplication.clipboard().setText(item.get("text", ""))
+
+    def _open_saved_text(self):
+        item = self._item(self.list_texts)
+        if item:
+            self.txt_reader.setPlainText(item.get("text", ""))
+            self._editing_text_id = item.get("id")
+            self._go_to(self.PAGE_READ)
+            self.txt_reader.setFocus()
+
+    def _delete_saved_text(self):
+        item = self._item(self.list_texts)
+        if not item:
+            return
+        ok = QMessageBox.question(self, "Delete saved text", f"Delete “{item.get('title', '')}”?",
+                                  QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                  QMessageBox.StandardButton.No)
+        if ok == QMessageBox.StandardButton.Yes:
+            library_db.delete_text(item.get("id"))
+            if self._editing_text_id == item.get("id"):
+                self._editing_text_id = None
+            self._load_resources()
+
+    def _remove_bookmark(self):
+        item = self._item(self.list_bookmarks)
+        if item:
+            library_db.remove_bookmark(item_id=item.get("id"))
+            self._load_resources()
 
     def _load_recordings(self):
         self.list_recordings.clear()
@@ -828,10 +956,15 @@ class SettingsDialog(QDialog):
         self.btn_hist_replay.clicked.connect(self._history_replay)
         self.btn_hist_copy = self._btn(" Copy text", "BtnGhost")
         self.btn_hist_copy.clicked.connect(self._history_copy)
+        self.btn_hist_bookmark = self._btn(" Bookmark", "BtnGhost")
+        self.btn_hist_bookmark.setToolTip("Keep this item in Resources, even after History removes it")
+        self.btn_hist_bookmark.clicked.connect(self._history_toggle_bookmark)
+        self.list_history.currentItemChanged.connect(lambda *_: self._refresh_bookmark_button())
         self.btn_hist_clear = self._btn(" Clear history", "BtnGhost")
         self.btn_hist_clear.clicked.connect(self._history_clear)
         row.addWidget(self.btn_hist_replay)
         row.addWidget(self.btn_hist_copy)
+        row.addWidget(self.btn_hist_bookmark)
         row.addStretch()
         row.addWidget(self.btn_hist_clear)
         lay.addLayout(row)
@@ -845,17 +978,38 @@ class SettingsDialog(QDialog):
             entries = []
         for e in entries:
             preview = e.get("preview") or e.get("text", "")[:80]
-            meta = f"{e.get('voice', '')} · {e.get('speed', 1.0)}× · {e.get('timestamp', '')}"
+            star = "★  " if library_db.is_bookmarked(e.get("text", "")) else ""
+            meta = f"{star}{e.get('voice', '')} · {e.get('speed', 1.0)}× · {e.get('timestamp', '')}"
             it = QListWidgetItem(f"{preview}\n{meta}")
             it.setData(Qt.ItemDataRole.UserRole, e.get("text", ""))
+            it.setData(Qt.ItemDataRole.UserRole + 1, e)
             self.list_history.addItem(it)
         has = self.list_history.count() > 0
         self.list_history.setVisible(has)
         self.lbl_hist_empty.setVisible(not has)
-        for b in (self.btn_hist_replay, self.btn_hist_copy, self.btn_hist_clear):
+        for b in (self.btn_hist_replay, self.btn_hist_copy, self.btn_hist_bookmark, self.btn_hist_clear):
             b.setEnabled(has)
         if has:
             self.list_history.setCurrentRow(0)
+        self._refresh_bookmark_button()
+
+    def _refresh_bookmark_button(self):
+        text = self._history_text()
+        self.btn_hist_bookmark.setText(" Bookmarked" if text and library_db.is_bookmarked(text) else " Bookmark")
+
+    def _history_toggle_bookmark(self):
+        it = self.list_history.currentItem()
+        if not it:
+            return
+        text = it.data(Qt.ItemDataRole.UserRole)
+        if library_db.is_bookmarked(text):
+            library_db.remove_bookmark(text=text)
+        else:
+            e = it.data(Qt.ItemDataRole.UserRole + 1) or {}
+            library_db.add_bookmark(text, e.get("voice", ""), e.get("speed", 1.0), e.get("timestamp", ""))
+        row = self.list_history.currentRow()
+        self._load_history()
+        self.list_history.setCurrentRow(row)
 
     def _history_text(self) -> str:
         it = self.list_history.currentItem()
@@ -1179,7 +1333,7 @@ class SettingsDialog(QDialog):
         if meta[0] == self.PAGE_HISTORY:
             self._load_history()
         elif meta[0] == self.PAGE_RESOURCES:
-            self._load_recordings()
+            self._load_resources()
         elif meta[0] == self.PAGE_SETTINGS:
             self._refresh_perm_page_status()
         elif meta[0] == self.PAGE_LISTEN:
@@ -1393,6 +1547,14 @@ class SettingsDialog(QDialog):
         self.btn_hist_clear.setIcon(line_icon("trash-2", muted, size=14))
         self.btn_rec_open.setIcon(line_icon("folder-open", muted, size=14))
         self.btn_rec_play.setIcon(line_icon("play", soft, size=14))
+        self.btn_save_text.setIcon(line_icon("save", muted, size=14))
+        self.btn_hist_bookmark.setIcon(line_icon("bookmark", muted, size=14))
+        self.btn_text_open.setIcon(line_icon("file-text", soft, size=14))
+        self.btn_text_read.setIcon(line_icon("play", muted, size=14))
+        self.btn_text_delete.setIcon(line_icon("trash-2", muted, size=14))
+        self.btn_bm_read.setIcon(line_icon("play", soft, size=14))
+        self.btn_bm_copy.setIcon(line_icon("copy", muted, size=14))
+        self.btn_bm_remove.setIcon(line_icon("x", muted, size=14))
         self.btn_open_recordings.setIcon(line_icon("folder-open", muted, size=14))
         self.btn_reset_defaults.setIcon(line_icon("rotate-ccw", muted, size=14))
         for b in self.findChildren(QPushButton):

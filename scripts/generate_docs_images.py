@@ -47,6 +47,12 @@ H.history_db.get_all = lambda: [
 ]
 
 import src.ui.settings_dialog as SD
+import tempfile
+from src.utils.library import LibraryManager
+SD.library_db = LibraryManager(os.path.join(tempfile.mkdtemp(), "library.json"))   # demo library, never the real one
+SD.library_db.save_text("Chapter 3: The quiet city\nThe quiet city woke slowly that morning, one window at a time.")
+SD.library_db.save_text("Meeting notes\nShip the new settings window on Friday. Review the logo with the team.")
+SD.library_db.add_bookmark("Neural voices make long articles easy to follow, even on a busy day.", "Jenny", 1.0, "2026-11-21 09:14")
 SD.is_startup_enabled = lambda: False
 SD.get_recordings_dir = lambda: r"C:\Users\You\Documents\Voxel Recordings"
 

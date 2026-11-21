@@ -79,11 +79,21 @@ Double-click the tray icon (or tray menu → **Open Voxel**). The sidebar has:
 | :--- | :--- |
 | **Listen** | Turn selection reading on/off, see what is playing, shortcuts |
 | **Read Text** | Paste text and listen |
-| **Resources** | Your saved recordings |
+| **Resources** | Saved text, bookmarks and recordings |
 | **History** | Everything Voxel read: replay, copy, clear |
 | **Settings** | General, Voice, Playback, Appearance, Accessibility, About |
 
 <img src="images/settings-listen-light.png" alt="Listen page" width="620">
+
+### Resources: keep what matters
+
+| Tab | How things get there |
+| :--- | :--- |
+| **Saved text** | In **Read Text**, press **Save**. Open it again later, read it aloud, or delete it. |
+| **Bookmarks** | In **History**, press **Bookmark** (★). History keeps only the latest 50 items; bookmarks stay. |
+| **Recordings** | In the mini player, **More → Record to MP3**. |
+
+<img src="images/settings-resources-light.png" alt="Resources page" width="620">
 
 ### Settings
 
