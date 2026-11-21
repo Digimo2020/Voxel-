@@ -27,10 +27,19 @@ Run Voxel from source instead, which is not blocked:
 
 **Recommended: SignPath Foundation** (free for open-source projects). Voxel qualifies: MIT license, public repo, automated GitHub Actions build.
 
-1. Apply at <https://signpath.org/apply> (needs: public repo, OSI license, MFA on GitHub, a code-signing policy page).
-2. Add a `CODE_SIGNING_POLICY.md` to the repo and this line to the README: *"Free code signing provided by SignPath.io, certificate by SignPath Foundation."*
-3. Once approved, add SignPath's GitHub Action to the `build-windows` job in `.github/workflows/build.yml`, right after PyInstaller and before the release upload. SignPath gives you the exact snippet (organization id, project slug, API token as a GitHub secret).
-4. Publisher name will show as "SignPath Foundation". That is normal for this route.
+Already prepared in this repo: [`CODE_SIGNING_POLICY.md`](../CODE_SIGNING_POLICY.md), [`.signpath/artifact-configuration.xml`](../.signpath/artifact-configuration.xml), and a signing step in `.github/workflows/build.yml` that stays **off** until you set the variable below.
+
+**Your steps**
+1. Turn on multi-factor authentication for your GitHub account.
+2. Apply at <https://signpath.org/apply>. Use repo `https://github.com/Digimo2020/Voxel-` and link `CODE_SIGNING_POLICY.md`. (SignPath may ask for a previous release, which exists: v1.1.23.)
+3. After approval, in SignPath create/confirm: a **project** (slug e.g. `voxel`), an **artifact configuration** (paste `.signpath/artifact-configuration.xml`), and a **signing policy** (e.g. `release-signing`). Create an **API token** (CI user) and connect the GitHub trusted build system.
+4. In GitHub: *Settings → Secrets and variables → Actions*:
+   - **Secret** `SIGNPATH_API_TOKEN` = the API token
+   - **Variables** `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG`
+5. Add to the README: *"Free code signing provided by SignPath.io, certificate by SignPath Foundation."* (Only after approval.)
+6. Release a new version tag. The Windows job now uploads the exe, SignPath signs it (you approve the request in SignPath), and the workflow fails the release if the result has no valid signature.
+
+Publisher name will show as "SignPath Foundation". That is normal for this route.
 
 Alternatives: **Azure Artifact Signing** (formerly Trusted Signing), individuals in the US/Canada only, or a paid **OV code-signing certificate** from a certificate authority.
 
