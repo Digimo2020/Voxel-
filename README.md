@@ -49,6 +49,8 @@
 
 **Windows**: download `Voxel-v1.1.23.exe`, run it. If SmartScreen warns, choose *More info → Run anyway*.
 
+> **Windows says "Smart App Control blocked an app"?** The test builds are not code-signed yet. Don't turn Smart App Control off. Run from source with `run.bat` (see below), or follow the [signing and Microsoft Store plan](docs/WINDOWS_STORE_GUIDE.md).
+
 **macOS**: open the `.dmg`, drag Voxel to Applications, then run once in Terminal:
 
 ```bash
@@ -70,6 +72,6 @@ Python 3.11 · PyQt6 · pynput · edge-tts · pypdf · PyInstaller · GitHub Act
 
 ## More
 
-[Full details](docs/DETAILS.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Versioning rules](VERSIONING_RULES.md) · [Contributing](CONTRIBUTING.md) · [All releases](https://github.com/Digimo2020/Voxel-/releases)
+[Full details](docs/DETAILS.md) · [Windows signing & Store](docs/WINDOWS_STORE_GUIDE.md) · [Privacy](docs/PRIVACY.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Versioning rules](VERSIONING_RULES.md) · [Contributing](CONTRIBUTING.md) · [All releases](https://github.com/Digimo2020/Voxel-/releases)
 
 <p align="center"><sub>MIT License · Made by Digimo</sub></p>
