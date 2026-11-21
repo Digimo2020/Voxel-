@@ -21,13 +21,11 @@
 
 ## How it works
 
-| 1. Select | 2. Click the bubble | 3. Listen |
-| :---: | :---: | :---: |
-| Highlight text in any app: browser, Word, PDF | A small floating badge appears near your cursor | Neural voices read it in a mini player |
-
 <p align="center">
-  <img src="assets/branding/mini_player_themes.png" alt="Voxel mini player, dark and frosted glass" width="90%">
+  <img src="docs/images/how-it-works.png" alt="1 Highlight text, 2 click the bubble, 3 listen" width="100%">
 </p>
+
+📖 **[Visual how-to guide →](docs/HOW_TO_USE.md)** (every screen explained with pictures)
 
 ## Features
 
@@ -38,11 +36,18 @@
 - 🎚 **Your pace**: speed, pitch, volume and equalizer presets
 - 🌗 **Light, dark and frosted-glass** themes; small / medium / large bubble sizes
 
-## Settings
+## A look around
+
+| Read Text (paste anything) | Voice |
+| :---: | :---: |
+| <img src="docs/images/settings-read-text-light.png" alt="Read Text" width="100%"> | <img src="docs/images/settings-voice-light.png" alt="Voice" width="100%"> |
+| **Playback** | **Appearance** |
+| <img src="docs/images/settings-playback-light.png" alt="Playback" width="100%"> | <img src="docs/images/settings-appearance-light.png" alt="Appearance" width="100%"> |
 
 <p align="center">
-  <img src="assets/screenshots/settings_read_text.png" alt="Read Text page" width="49%">
-  <img src="assets/screenshots/settings_playback_dark.png" alt="Playback settings, dark theme" width="49%">
+  <img src="docs/images/player.png" alt="Mini player, light and dark" width="46%">
+  &nbsp;
+  <img src="docs/images/bubble-styles.png" alt="Bubble styles" width="50%">
 </p>
 
 ## Install
@@ -72,6 +77,6 @@ Python 3.11 · PyQt6 · pynput · edge-tts · pypdf · PyInstaller · GitHub Act
 
 ## More
 
-[Full details](docs/DETAILS.md) · [Windows signing & Store](docs/WINDOWS_STORE_GUIDE.md) · [Privacy](docs/PRIVACY.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Versioning rules](VERSIONING_RULES.md) · [Contributing](CONTRIBUTING.md) · [All releases](https://github.com/Digimo2020/Voxel-/releases)
+[How to use](docs/HOW_TO_USE.md) · [Full details](docs/DETAILS.md) · [Windows signing & Store](docs/WINDOWS_STORE_GUIDE.md) · [Privacy](docs/PRIVACY.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Versioning rules](VERSIONING_RULES.md) · [Contributing](CONTRIBUTING.md) · [All releases](https://github.com/Digimo2020/Voxel-/releases)
 
 <p align="center"><sub>MIT License · Made by Digimo</sub></p>
