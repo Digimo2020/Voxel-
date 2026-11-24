@@ -10,6 +10,16 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.26] - 2026-11-24
+
+### Typing fix: Voxel stays out of your way
+- The bubble and mini player can never take keyboard focus, so typing always stays in your app (main cause on macOS).
+- New setting "Stay quiet in text boxes" (on by default): no bubble while editing search, address or form fields.
+- If you type or click again right after selecting, Voxel backs off: no copy, no bubble.
+- The automatic copy now sends Cmd/Ctrl+C once and briefly (macOS sent it up to 4 times). The Ctrl+Alt+S hotkey keeps its retries.
+
+---
+
 ## [v1.1.25] - 2026-11-21
 
 ### Smart mini player
