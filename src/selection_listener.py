@@ -14,6 +14,8 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from src.config import DRAG_THRESHOLD_PIXELS, MIN_SELECTED_LENGTH, HOTKEY_WINDOWS, HOTKEY_MAC, HOTKEY_DOC_WINDOWS, HOTKEY_DOC_MAC, IS_MAC
 from src.utils.clipboard import grab_selected_text
 from src.utils.mac_permissions import is_accessibility_trusted
+from src.utils.focus_guard import is_typing_in_text_box
+from src.utils.settings import settings_db
 
 # Known screenshot apps, drawing overlays, and full-screen capture tools to never intercept
 BLOCKED_OVERLAY_PROCESSES = {
@@ -75,6 +77,8 @@ class SelectionListener(QObject):
         self._press_time = 0.0
         self._last_click_time = 0.0
         self._last_click_pos = (0, 0)
+        self._last_key_time = 0.0          # any key press, used to back off while the user types
+        self._activity_listener: Optional[keyboard.Listener] = None
 
     def start(self):
         """Starts mouse and hotkey listeners."""
@@ -92,6 +96,14 @@ class SelectionListener(QObject):
             self._mouse_listener.start()
         except Exception as e:
             print(f"[SelectionListener] Mouse listener start error: {e}")
+
+        # 1b. Key activity (no key data is kept; only the time of the last press)
+        try:
+            self._activity_listener = keyboard.Listener(on_press=self._on_any_key)
+            self._activity_listener.daemon = True
+            self._activity_listener.start()
+        except Exception as e:
+            print(f"[SelectionListener] Key activity listener error: {e}")
 
         # 2. Global Hotkey listeners: Selection (Ctrl+Alt+S) & Document (Ctrl+Alt+D)
         hotkey_str = HOTKEY_MAC if IS_MAC else HOTKEY_WINDOWS
@@ -115,12 +127,17 @@ class SelectionListener(QObject):
                 pass
             self._mouse_listener = None
 
-        if self._keyboard_listener:
-            try:
-                self._keyboard_listener.stop()
-            except Exception:
-                pass
-            self._keyboard_listener = None
+        for attr in ("_keyboard_listener", "_activity_listener"):
+            lst = getattr(self, attr, None)
+            if lst:
+                try:
+                    lst.stop()
+                except Exception:
+                    pass
+                setattr(self, attr, None)
+
+    def _on_any_key(self, key):
+        self._last_key_time = time.time()
 
     def set_enabled(self, enabled: bool):
         """Toggle whether selection detection is active."""
@@ -161,22 +178,40 @@ class SelectionListener(QObject):
                 # Dispatch immediately to background worker thread so Quartz event tap never times out
                 threading.Thread(
                     target=self._handle_possible_selection,
-                    args=(int(x), int(y), start_x, start_y),
+                    args=(int(x), int(y), start_x, start_y, now),
                     daemon=True
                 ).start()
             else:
                 # User clicked empty space or single-clicked without dragging
                 self.clicked_outside.emit()
 
-    def _handle_possible_selection(self, cursor_x: int, cursor_y: int, start_x: int = 0, start_y: int = 0):
-        """Waits briefly for selection to settle in target app, then grabs text."""
+    def _user_moved_on(self, since: float) -> bool:
+        """True if the user typed or clicked again after the selection ended."""
+        return self._last_key_time > since or self._press_time > since
+
+    def _handle_possible_selection(self, cursor_x: int, cursor_y: int, start_x: int = 0, start_y: int = 0,
+                                   released_at: float = 0.0):
+        """Waits briefly for selection to settle in target app, then grabs text.
+
+        Stays out of the way: never runs in screenshot tools, in single-line text boxes
+        (search / URL / form fields, unless the user turned that off), or once the user
+        starts typing or clicks again.
+        """
+        released_at = released_at or time.time()
         # Never inject copy keystrokes into screenshot overlay apps (Flameshot, Lightshot, Snipping Tool)
         if _is_screenshot_app_active():
             return
 
-        time.sleep(0.12)
+        if settings_db.get("skip_text_fields", True) and is_typing_in_text_box():
+            return
 
-        text = grab_selected_text(timeout_ms=320)
+        time.sleep(0.12)
+        if self._user_moved_on(released_at):
+            return
+
+        text = grab_selected_text(timeout_ms=320, persistent=False)
+        if self._user_moved_on(released_at):
+            return  # user is busy again: don't pop up over their work
         if text and len(text) >= MIN_SELECTED_LENGTH:
             if any(c.isalnum() for c in text):
                 self.text_selected.emit(text, cursor_x, cursor_y, start_x, start_y)

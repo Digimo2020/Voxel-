@@ -1055,6 +1055,9 @@ class SettingsDialog(QDialog):
             f = self._fold("More options")
             self.chk_prebuffer = self._switch()
             f.add(setting_row("Instant start", self.chk_prebuffer, "Prepare audio when you hover the bubble"))
+            self.chk_skip_fields = self._switch()
+            f.add(setting_row("Stay quiet in text boxes", self.chk_skip_fields,
+                              "No bubble while you edit search, address or form fields"))
             c.add(f, divider=False)
             l.addWidget(c)
 
@@ -1597,6 +1600,7 @@ class SettingsDialog(QDialog):
         settings_db.set("default_speed", round(self.slider_speed.value() / 100.0, 2))
         settings_db.set("default_pitch", self.slider_pitch.value())
         settings_db.set("prebuffer_enabled", self.chk_prebuffer.isChecked())
+        settings_db.set("skip_text_fields", self.chk_skip_fields.isChecked())
         settings_db.set("selection_popup_enabled", self.chk_trigger.isChecked())
         settings_db.set("auto_close_finished", self.chk_autoclose.isChecked())
         settings_db.set("auto_close_delay", round(self.slider_fade_out.value() / 100.0, 2))
@@ -1639,6 +1643,7 @@ class SettingsDialog(QDialog):
             self.switch_fade_in.setChecked(True)
             self.chk_startup.setChecked(False)
             self.chk_prebuffer.setChecked(True)
+            self.chk_skip_fields.setChecked(True)
             self.chk_trigger.setChecked(True)
             self.chk_autoclose.setChecked(True)
             self.slider_volume.setValue(80)
@@ -1668,6 +1673,7 @@ class SettingsDialog(QDialog):
             self.slider_pitch.setValue(int(settings_db.get("default_pitch", 0)))
             self.chk_startup.setChecked(is_startup_enabled(), animate=False)
             self.chk_prebuffer.setChecked(settings_db.get("prebuffer_enabled", True), animate=False)
+            self.chk_skip_fields.setChecked(settings_db.get("skip_text_fields", True), animate=False)
             self.chk_trigger.setChecked(settings_db.get("selection_popup_enabled", True), animate=False)
             self.sw_listen_selection.setChecked(self.chk_trigger.isChecked(), animate=False)
             self.chk_autoclose.setChecked(settings_db.get("auto_close_finished", True), animate=False)

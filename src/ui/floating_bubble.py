@@ -55,10 +55,12 @@ class FloatingBubble(QWidget):
             Qt.WindowType.Tool |
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.NoDropShadowWindowHint
+            Qt.WindowType.NoDropShadowWindowHint |
+            Qt.WindowType.WindowDoesNotAcceptFocus   # never steal focus from the app you are typing in
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setAttribute(Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 

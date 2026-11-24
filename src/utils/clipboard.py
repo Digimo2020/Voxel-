@@ -39,15 +39,10 @@ def _simulate_copy_mac() -> bool:
         up = CGEventCreateKeyboardEvent(src, 8, False)
         CGEventSetFlags(down, kCGEventFlagMaskCommand)
         CGEventSetFlags(up, kCGEventFlagMaskCommand)
+        # one Cmd+C only (posting to two taps sent the shortcut twice)
         CGEventPost(kCGHIDEventTap, down)
-        time.sleep(0.015)
+        time.sleep(0.008)
         CGEventPost(kCGHIDEventTap, up)
-        try:
-            CGEventPost(kCGSessionEventTap, down)
-            time.sleep(0.015)
-            CGEventPost(kCGSessionEventTap, up)
-        except Exception:
-            pass
         return True
     except Exception as e:
         print(f"[Clipboard] Mac Quartz copy error: {e}")
@@ -72,12 +67,11 @@ def _simulate_copy_win() -> bool:
         VK_CONTROL = 0x11
         VK_C = 0x43
         KEYEVENTF_KEYUP = 0x0002
+        # keep Ctrl down as briefly as possible so it can't mix with the user's own typing
         user32.keybd_event(VK_CONTROL, 0, 0, 0)
-        time.sleep(0.02)
         user32.keybd_event(VK_C, 0, 0, 0)
-        time.sleep(0.03)
+        time.sleep(0.008)
         user32.keybd_event(VK_C, 0, KEYEVENTF_KEYUP, 0)
-        time.sleep(0.02)
         user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
         return True
     except Exception as e:
@@ -100,7 +94,10 @@ def _simulate_copy_pynput():
         return False
 
 
-def grab_selected_text(timeout_ms: int = 480) -> str:
+def grab_selected_text(timeout_ms: int = 480, persistent: bool = True) -> str:
+    # persistent=True (hotkey, the user asked): retries with fallback copy methods.
+    # persistent=False (automatic, after a mouse selection): one copy only, so nothing keeps
+    # pressing Cmd/Ctrl while the user may already be typing.
     """
     Simulates a copy event to capture highlighted text from the active window,
     then restores the user's previous clipboard contents.
@@ -123,7 +120,7 @@ def grab_selected_text(timeout_ms: int = 480) -> str:
                 if _MAC_PB.changeCount() != initial_count:
                     new_text = _MAC_PB.stringForType_(NSPasteboardTypeString) or ""
                     break
-                if not tried_fallback and (time.time() - start_time) > 0.15:
+                if persistent and not tried_fallback and (time.time() - start_time) > 0.15:
                     tried_fallback = True
                     _simulate_copy_applescript()
                     _simulate_copy_pynput()
@@ -173,7 +170,7 @@ def grab_selected_text(timeout_ms: int = 480) -> str:
         except Exception:
             pass
 
-        if not retried_fallback and (time.time() - start_time) > (max_wait * 0.45):
+        if persistent and not retried_fallback and (time.time() - start_time) > (max_wait * 0.45):
             retried_fallback = True
             _simulate_copy_pynput()
 
