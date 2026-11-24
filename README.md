@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Voxel" width="100%">
+  <img src="assets/banner.svg" alt="Voxel" width="100%">
 </p>
 
 <h1 align="center">Voxel</h1>
