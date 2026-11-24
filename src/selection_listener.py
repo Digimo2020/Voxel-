@@ -79,6 +79,7 @@ class SelectionListener(QObject):
         self._last_click_pos = (0, 0)
         self._last_key_time = 0.0          # any key press, used to back off while the user types
         self._activity_listener: Optional[keyboard.Listener] = None
+        self._ignore_keys_until = 0.0     # Voxel's own copy keystrokes are not user typing
 
     def start(self):
         """Starts mouse and hotkey listeners."""
@@ -136,8 +137,21 @@ class SelectionListener(QObject):
                     pass
                 setattr(self, attr, None)
 
-    def _on_any_key(self, key):
-        self._last_key_time = time.time()
+    def _on_any_key(self, key, injected=False):
+        # pynput 1.8+ passes injected=True for synthetic keys (our own Ctrl/Cmd+C).
+        # The time window covers platforms/versions that don't report it.
+        now = time.time()
+        if injected or now < self._ignore_keys_until:
+            return
+        self._last_key_time = now
+
+    def _copy_selection(self, **kwargs) -> str:
+        """Runs the copy while ignoring the key events it generates."""
+        self._ignore_keys_until = time.time() + 5.0
+        try:
+            return grab_selected_text(**kwargs)
+        finally:
+            self._ignore_keys_until = time.time() + 0.15  # late-delivered key-up events
 
     def set_enabled(self, enabled: bool):
         """Toggle whether selection detection is active."""
@@ -209,7 +223,7 @@ class SelectionListener(QObject):
         if self._user_moved_on(released_at):
             return
 
-        text = grab_selected_text(timeout_ms=320, persistent=False)
+        text = self._copy_selection(timeout_ms=320, persistent=False)
         if self._user_moved_on(released_at):
             return  # user is busy again: don't pop up over their work
         if text and len(text) >= MIN_SELECTED_LENGTH:
@@ -222,7 +236,7 @@ class SelectionListener(QObject):
             return
 
         def _worker():
-            text = grab_selected_text(timeout_ms=250)
+            text = self._copy_selection(timeout_ms=250)
             if text and len(text) >= MIN_SELECTED_LENGTH:
                 ctrl = mouse.Controller()
                 cx, cy = ctrl.position

@@ -3,12 +3,14 @@ Voxel - Text to Speech, Anywhere.
 Main Application Entry Point.
 Coordinates UI widgets, background selection listeners, settings, and TTS playback.
 """
+import threading
+import time
 import sys
 import os
 import traceback
 import pyperclip
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
-from PyQt6.QtCore import Qt, QPoint, QTimer
+from PyQt6.QtCore import Qt, QPoint, QTimer, QObject, pyqtSignal
 
 # Install top-level crash guard so unhandled slot exceptions never abort the process
 def _global_exception_handler(exc_type, exc_value, exc_tb):
@@ -29,9 +31,17 @@ from src.ui.tray_icon import AppTrayIcon
 from src.ui.history_dialog import HistoryDialog
 from src.ui.settings_dialog import SettingsDialog
 from src.utils.settings import settings_db
+from src.utils import foreground
+from src.utils.clipboard import grab_selected_text
 from src.utils.mac_permissions import is_accessibility_trusted, open_accessibility_settings
 from assets.icons import create_app_icon
 from src.utils.document_reader import capture_full_document_from_active_window, extract_text_from_file
+
+
+class _ReadBridge(QObject):
+    """Carries text from the background copy thread back to the UI thread."""
+    text_ready = pyqtSignal(str)
+    nothing_selected = pyqtSignal()
 
 
 class VoxelApp:
@@ -50,6 +60,14 @@ class VoxelApp:
         self.history_dialog = HistoryDialog()
         self._last_selected_text = ""
         self.settings_dialog = SettingsDialog(tts_engine=self.tts)
+        self._read_bridge = _ReadBridge()
+        self._read_bridge.text_ready.connect(lambda t: self.player.play_text(t))
+        self._read_bridge.nothing_selected.connect(self._on_nothing_selected)
+        # remember the app window the user works in, so tray actions can copy from it
+        self._fg_timer = QTimer()
+        self._fg_timer.setInterval(400)
+        self._fg_timer.timeout.connect(foreground.remember)
+        self._fg_timer.start()
 
         # Apply saved settings to TTS & Bubble
         self._apply_initial_settings()
@@ -143,6 +161,9 @@ class VoxelApp:
         self.settings_dialog.read_text_requested.connect(lambda t: self.player.play_text(t))
         self.tray.reader_requested.connect(self._show_reader)
         self.tray.open_requested.connect(self._show_main)
+        self.tray.read_selection_requested.connect(self._on_tray_read_selection)
+        self.tray.pause_requested.connect(self.player._toggle_play_pause)
+        self.tray.stop_requested.connect(self.player.hide_player)
         self.tray.quit_requested.connect(self.quit)
 
         # 5. Global Hotkeys: Document reader & Permission guidance
@@ -166,6 +187,26 @@ class VoxelApp:
         """Pre-buffers first sentence on hover for 0ms sub-second latency playback."""
         if settings_db.get("prebuffer_enabled", True):
             self.tts.prefetch(text)
+
+    def _on_tray_read_selection(self):
+        """Tray > Read selected text: copy the selection from the app the user was in and play it."""
+        def _worker():
+            foreground.restore()
+            time.sleep(0.25)                 # let the window take focus again
+            self.listener._ignore_keys_until = time.time() + 5.0
+            try:
+                text = grab_selected_text(timeout_ms=700, persistent=True)
+            finally:
+                self.listener._ignore_keys_until = time.time() + 0.15
+            if text and any(c.isalnum() for c in text):
+                self._read_bridge.text_ready.emit(text)
+            else:
+                self._read_bridge.nothing_selected.emit()
+        threading.Thread(target=_worker, daemon=True).start()
+
+    def _on_nothing_selected(self):
+        self.tray.showMessage("Voxel", "Nothing selected. Select some text first, then choose Read selected text.",
+                              AppTrayIcon.MessageIcon.Information, 3000)
 
     def _on_read_document_requested(self, fallback_text: str = ""):
         """
@@ -197,8 +238,10 @@ class VoxelApp:
                 if active_fallback:
                     self.player.play_text(active_fallback)
 
-        # 200ms delay lets mouse release and background document window regain full focus
-        QTimer.singleShot(200, _do_capture)
+        # bring back the window the user was reading (tray menu clicks move focus to the taskbar),
+        # then a short delay lets mouse release and the document window regain full focus
+        foreground.restore()
+        QTimer.singleShot(250, _do_capture)
 
     def _on_open_file_requested(self):
         """Opens file picker dialog to extract and read PDF, Word, or text files directly."""
@@ -314,7 +357,10 @@ class VoxelApp:
         self._apply_initial_settings()
         enabled = settings_db.get("selection_popup_enabled", True)
         self.listener.set_enabled(enabled)
-        self.tray.enable_action.setChecked(enabled)
+        if hasattr(self.tray, "enable_action"):
+            self.tray.enable_action.blockSignals(True)
+            self.tray.enable_action.setChecked(enabled)
+            self.tray.enable_action.blockSignals(False)
 
     def _on_tray_toggle_enabled(self, enabled: bool):
         settings_db.set("selection_popup_enabled", enabled)

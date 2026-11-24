@@ -30,6 +30,9 @@ class AppTrayIcon(QSystemTrayIcon):
     read_clipboard_requested = pyqtSignal()
     reader_requested = pyqtSignal()
     open_requested = pyqtSignal()
+    read_selection_requested = pyqtSignal()
+    pause_requested = pyqtSignal()
+    stop_requested = pyqtSignal()
     read_document_requested = pyqtSignal(str)
     open_file_requested = pyqtSignal()
 
@@ -65,6 +68,30 @@ class AppTrayIcon(QSystemTrayIcon):
         title_action.setEnabled(False)
         menu.addSeparator()
 
+        sel_key = "Cmd+Opt+S" if IS_MAC else "Ctrl+Alt+S"
+        doc_key = "Cmd+Opt+D" if IS_MAC else "Ctrl+Alt+D"
+        a = menu.addAction(ic("play"), f"Read selected text\t{sel_key}")
+        a.triggered.connect(self.read_selection_requested.emit)
+        a = menu.addAction(ic("file-text"), f"Read whole document\t{doc_key}")
+        a.triggered.connect(lambda: self.read_document_requested.emit(""))
+        a = menu.addAction(ic("clipboard"), "Read copied text")
+        a.triggered.connect(self.read_clipboard_requested.emit)
+        self.pause_action = menu.addAction(ic("pause"), "Pause")
+        self.pause_action.triggered.connect(self.pause_requested.emit)
+        self.stop_action = menu.addAction(ic("square"), "Stop")
+        self.stop_action.triggered.connect(self.stop_requested.emit)
+        menu.addSeparator()
+
+        self.enable_action = menu.addAction("Bubble on selection")
+        self.enable_action.setCheckable(True)
+        try:
+            from src.utils.settings import settings_db
+            self.enable_action.setChecked(bool(settings_db.get("selection_popup_enabled", True)))
+        except Exception:
+            self.enable_action.setChecked(True)
+        self.enable_action.toggled.connect(self.toggle_enabled_requested.emit)
+        menu.addSeparator()
+
         open_action = menu.addAction(ic("headphones"), "Open Voxel")
         open_action.triggered.connect(self.open_requested.emit)
         reader_action = menu.addAction(ic("file-text"), "Read Text...")
@@ -83,4 +110,14 @@ class AppTrayIcon(QSystemTrayIcon):
         quit_action = menu.addAction("Quit Voxel")
         quit_action.triggered.connect(self.quit_requested.emit)
 
+        menu.aboutToShow.connect(self._refresh_playback_actions)
+        self._menu = menu
         self.setContextMenu(menu)
+
+    def _refresh_playback_actions(self):
+        """Show Pause/Resume and Stop only while Voxel is reading."""
+        speaking = bool(getattr(self.tts, "is_speaking", False))
+        paused = bool(getattr(self.tts, "is_paused", False))
+        self.pause_action.setVisible(speaking)
+        self.stop_action.setVisible(speaking)
+        self.pause_action.setText("Resume" if paused else "Pause")
