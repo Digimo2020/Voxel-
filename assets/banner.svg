@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="678" viewBox="0 0 1600 678" role="img" aria-labelledby="title desc">
+<title id="title">Voxel — Text to Speech, Anywhere</title>
+<desc id="desc">Voxel reads selected text aloud on macOS and Windows with a floating trigger and compact player.</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#080e23"/><stop offset=".55" stop-color="#071633"/><stop offset="1" stop-color="#1b0d37"/></linearGradient>
+ <radialGradient id="blueGlow"><stop stop-color="#075cce" stop-opacity=".42"/><stop offset="1" stop-color="#075cce" stop-opacity="0"/></radialGradient>
+ <radialGradient id="purpleGlow"><stop stop-color="#6c20d4" stop-opacity=".35"/><stop offset="1" stop-color="#6c20d4" stop-opacity="0"/></radialGradient>
+ <linearGradient id="wave" x1="0" y1="0" x2="1" y2=".4"><stop stop-color="#00c9ff"/><stop offset=".52" stop-color="#286bff"/><stop offset="1" stop-color="#a52cff"/></linearGradient>
+ <linearGradient id="headline" x1="0" x2="1"><stop stop-color="#08c5ff"/><stop offset="1" stop-color="#8a56ff"/></linearGradient>
+ <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#172647" stop-opacity=".92"/><stop offset="1" stop-color="#0a142b" stop-opacity=".92"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1600" height="678" rx="22" fill="url(#bg)"/>
+<ellipse cx="430" cy="370" rx="570" ry="420" fill="url(#blueGlow)"/>
+<ellipse cx="1410" cy="330" rx="440" ry="430" fill="url(#purpleGlow)"/>
+<rect x="82" y="56" width="98" height="98" rx="24" fill="#347cff"/>
+<g stroke="#fff" stroke-width="9" stroke-linecap="round"><path d="M114 99v16"/><path d="M132 82v50"/><path d="M150 96v22"/><path d="M105 106v4"/></g>
+<text x="205" y="128" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="72" font-weight="750" letter-spacing="-2">Voxel</text>
+<text x="207" y="166" fill="#20c3ff" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="1">TEXT TO SPEECH, ANYWHERE</text>
+<path d="M820 164 C930 130 990 105 1070 132 S1195 210 1260 145 S1390 78 1465 136 S1550 198 1600 146" fill="none" stroke="url(#wave)" stroke-width="3" opacity=".9" filter="url(#glow)"/>
+<path d="M820 176 C930 145 1000 116 1076 145 S1190 221 1267 157 S1395 92 1467 147 S1550 212 1600 159" fill="none" stroke="url(#wave)" stroke-width="1.6" opacity=".65"/>
+<path d="M820 190 C930 161 1000 131 1080 160 S1193 235 1275 170 S1398 106 1474 159 S1555 224 1600 172" fill="none" stroke="url(#wave)" stroke-width="1.2" opacity=".42"/>
+<text x="82" y="250" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="54" font-weight="750" letter-spacing="-1.4">Select text anywhere.</text>
+<text x="650" y="250" fill="url(#headline)" font-family="Inter,Arial,sans-serif" font-size="54" font-weight="750" letter-spacing="-1.4">Hear it instantly.</text>
+<g font-family="Inter,Arial,sans-serif" font-size="17" font-weight="600" fill="#f7f9ff">
+ <rect x="82" y="286" width="330" height="54" rx="27" fill="#09142b" stroke="#34456f" stroke-width="1.5"/><text x="108" y="320">●  macOS Universal (pkg &amp; dmg)</text>
+ <rect x="430" y="286" width="310" height="54" rx="27" fill="#09142b" stroke="#34456f" stroke-width="1.5"/><text x="457" y="320">▦  Windows Standalone (exe)</text>
+ <rect x="758" y="286" width="254" height="54" rx="27" fill="#09142b" stroke="#34456f" stroke-width="1.5"/><text x="785" y="320">⚡  Free &amp; Open Source</text>
+</g>
+<rect x="82" y="389" width="760" height="94" rx="47" fill="url(#panel)" stroke="#3e5486" stroke-width="2.5"/>
+<path d="M128 390 H795" stroke="url(#wave)" stroke-width="2.5" opacity=".8"/>
+<rect x="112" y="411" width="48" height="48" rx="13" fill="#347cff"/>
+<g stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M125 430v10"/><path d="M135 421v28"/><path d="M145 429v13"/><path d="M117 432v7"/></g>
+<text x="177" y="448" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700">Voxel</text>
+<circle cx="306" cy="436" r="27" fill="#2864ff"/><path d="M300 425v22M312 425v22" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+<text x="359" y="445" fill="#abb8d2" font-family="Arial,sans-serif" font-size="25">‹›</text>
+<rect x="414" y="410" width="105" height="52" rx="26" fill="#202f50"/><text x="447" y="444" fill="#fff" font-family="Arial,sans-serif" font-size="20">1×⌄</text>
+<rect x="536" y="410" width="124" height="52" rx="26" fill="#202f50"/><text x="565" y="444" fill="#fff" font-family="Arial,sans-serif" font-size="20">Jenny⌄</text>
+<text x="690" y="446" fill="#c8d2e7" font-family="Arial,sans-serif" font-size="26">⚙</text><text x="785" y="446" fill="#c8d2e7" font-family="Arial,sans-serif" font-size="26">×</text>
+<path d="M894 399 V476" stroke="#34466e" stroke-width="1.5"/>
+<circle cx="990" cy="436" r="46" fill="#0c1731" stroke="url(#wave)" stroke-width="4" filter="url(#glow)"/>
+<rect x="967" y="413" width="46" height="46" rx="13" fill="#347cff"/>
+<g stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M980 431v10"/><path d="M990 423v26"/><path d="M1000 430v12"/><path d="M972 433v7"/></g>
+<text x="1052" y="444" fill="#f4f6ff" font-family="Inter,Arial,sans-serif" font-size="27">Floating Trigger on Selected Text</text>
+<path d="M72 522 H1528" stroke="#526384" stroke-width="1.3" opacity=".7"/>
+<g font-family="Inter,Arial,sans-serif">
+ <g transform="translate(82 560)"><rect width="54" height="54" rx="14" fill="#10264a" stroke="#28539a"/><path d="M27 12v22m-9-9 9 9 9-9M15 39h24" fill="none" stroke="#10baff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><text x="78" y="23" fill="#14bfff" font-size="22" font-weight="700">System-Wide Installer</text><text x="78" y="57" fill="#c5d0e4" font-size="18">Install once and read text</text><text x="78" y="82" fill="#c5d0e4" font-size="18">across your apps</text></g>
+ <path d="M480 561v94" stroke="#314365"/>
+ <g transform="translate(510 560)"><rect width="54" height="54" rx="14" fill="#10264a" stroke="#28539a"/><g stroke="#13bdff" stroke-width="4" stroke-linecap="round"><path d="M14 22v11"/><path d="M22 14v27"/><path d="M30 19v17"/><path d="M38 11v32"/><path d="M46 23v9"/></g><text x="78" y="23" fill="#14bfff" font-size="22" font-weight="700">Voice-Reactive Waveform</text><text x="78" y="57" fill="#c5d0e4" font-size="18">A live waveform that</text><text x="78" y="82" fill="#c5d0e4" font-size="18">responds as you speak</text></g>
+ <path d="M870 561v94" stroke="#314365"/>
+ <g transform="translate(900 560)"><rect width="54" height="54" rx="14" fill="#10264a" stroke="#28539a"/><path d="M27 11 44 20 27 29 10 20Z M10 28l17 9 17-9 M10 36l17 9 17-9" fill="#13bdff"/><text x="78" y="23" fill="#14bfff" font-size="22" font-weight="700">Frosted Glass UI</text><text x="78" y="57" fill="#c5d0e4" font-size="18">A compact player that</text><text x="78" y="82" fill="#c5d0e4" font-size="18">stays out of your way</text></g>
+ <path d="M1250 561v94" stroke="#314365"/>
+ <g transform="translate(1280 560)"><rect width="54" height="54" rx="14" fill="#10264a" stroke="#28539a"/><rect x="11" y="12" width="32" height="23" rx="2" fill="none" stroke="#13bdff" stroke-width="3.5"/><path d="M27 36v7m-9 0h18" stroke="#13bdff" stroke-width="3.5" stroke-linecap="round"/><text x="78" y="23" fill="#14bfff" font-size="22" font-weight="700">Windows + macOS</text><text x="78" y="57" fill="#c5d0e4" font-size="18">One simple listening</text><text x="78" y="82" fill="#c5d0e4" font-size="16">experience on both platforms</text></g>
+</g>
+</svg>
