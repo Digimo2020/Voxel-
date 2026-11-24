@@ -10,6 +10,16 @@ Every 10th patch increments minor, and every 10th minor increments major.
 
 ---
 
+## [v1.1.27] - 2026-11-24
+
+### Bubble works again + play from the tray
+- Fixed: the bubble stopped appearing in v1.1.26 (Voxel's own copy keys were mistaken for the user typing).
+- Tray menu: Read selected text, Read whole document, Read copied text, plus Pause/Resume and Stop while reading, and a "Bubble on selection" switch.
+- Windows: Voxel remembers the window you work in, so tray actions read from it even though the tray click moves focus.
+- Fixed: changing a setting raised a hidden error.
+
+---
+
 ## [v1.1.26] - 2026-11-24
 
 ### Typing fix: Voxel stays out of your way
