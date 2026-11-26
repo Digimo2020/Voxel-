@@ -14,6 +14,6 @@ Voxel is a free, open-source text-to-speech app by Digimo.
 - No account, no ads, no analytics, no telemetry.
 - Voxel does not sell or share your data.
 
-**Contact:** open an issue at https://github.com/Digimo2020/Voxel-/issues
+**Contact:** open an issue at https://github.com/Digimo2020/Voxel-V01/issues
 
 Microsoft's handling of text sent to its speech service is covered by Microsoft's own privacy statement.

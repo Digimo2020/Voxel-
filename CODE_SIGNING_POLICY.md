@@ -22,4 +22,4 @@ Release signing is requested only for version tags (`v*`) and must be approved b
 Voxel does not collect telemetry. See [docs/PRIVACY.md](docs/PRIVACY.md) for how text is handled when it is read aloud.
 
 ## Reporting a problem
-If you believe a signed Voxel file is malicious or was tampered with, report it at <https://github.com/Digimo2020/Voxel-/security> (see [SECURITY.md](SECURITY.md)).
+If you believe a signed Voxel file is malicious or was tampered with, report it at <https://github.com/Digimo2020/Voxel-V01/security> (see [SECURITY.md](SECURITY.md)).

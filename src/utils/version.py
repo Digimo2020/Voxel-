@@ -9,7 +9,7 @@ Format: v<Major>.<Minor>.<Patch:02d>  (e.g., v1.0.01)
 import re
 
 CURRENT_VERSION = "v1.1.27"
-GITHUB_REPO_URL = "https://github.com/Digimo2020/Voxel-"
+GITHUB_REPO_URL = "https://github.com/Digimo2020/Voxel-V01"
 
 
 def parse_version(ver_str: str) -> tuple:

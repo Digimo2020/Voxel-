@@ -6,15 +6,15 @@
 <p align="center"><b>Select text anywhere. Hear it instantly.</b><br>Free text-to-speech for Windows & macOS, a <a href="https://www.digimo.pt/">Digimo</a> product.</p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases/latest"><img src="https://img.shields.io/github/v/release/Digimo2020/Voxel-?style=for-the-badge&color=7441F9&label=Latest" alt="Latest version"></a>
-  <a href="https://github.com/Digimo2020/Voxel-/releases"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-/total?style=for-the-badge&color=00BCD4&label=Downloads" alt="Downloads"></a>
+  <a href="https://github.com/Digimo2020/Voxel-V01/releases/latest"><img src="https://img.shields.io/github/v/release/Digimo2020/Voxel-V01?style=for-the-badge&color=7441F9&label=Latest" alt="Latest version"></a>
+  <a href="https://github.com/Digimo2020/Voxel-V01/releases"><img src="https://img.shields.io/github/downloads/Digimo2020/Voxel-V01/total?style=for-the-badge&color=00BCD4&label=Downloads" alt="Downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1?style=for-the-badge" alt="MIT"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Digimo2020/Voxel-/releases/download/v1.1.27/Voxel-v1.1.27.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-7441F9?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://github.com/Digimo2020/Voxel-V01/releases/download/v1.1.27/Voxel-v1.1.27.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-7441F9?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
   &nbsp;
-  <a href="https://github.com/Digimo2020/Voxel-/releases/download/v1.1.27/Voxel-v1.1.27.dmg"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-0F172A?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+  <a href="https://github.com/Digimo2020/Voxel-V01/releases/download/v1.1.27/Voxel-v1.1.27.dmg"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-0F172A?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
 </p>
 
 ---
@@ -78,6 +78,6 @@ Python 3.11 · PyQt6 · pynput · edge-tts · pypdf · PyInstaller · GitHub Act
 
 ## More
 
-[How to use](docs/HOW_TO_USE.md) · [Full details](docs/DETAILS.md) · [Windows signing & Store](docs/WINDOWS_STORE_GUIDE.md) · [Privacy](docs/PRIVACY.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Versioning rules](VERSIONING_RULES.md) · [Contributing](CONTRIBUTING.md) · [All releases](https://github.com/Digimo2020/Voxel-/releases)
+[How to use](docs/HOW_TO_USE.md) · [Full details](docs/DETAILS.md) · [Windows signing & Store](docs/WINDOWS_STORE_GUIDE.md) · [Privacy](docs/PRIVACY.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Versioning rules](VERSIONING_RULES.md) · [Contributing](CONTRIBUTING.md) · [All releases](https://github.com/Digimo2020/Voxel-V01/releases)
 
 <p align="center"><sub>MIT License · Made by Digimo</sub></p>

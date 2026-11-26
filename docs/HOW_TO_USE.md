@@ -10,7 +10,7 @@ A picture-first guide. Every image below is a real Voxel window.
 
 | Windows | macOS |
 | :--- | :--- |
-| Download `Voxel-v<version>.exe` from [Releases](https://github.com/Digimo2020/Voxel-/releases/latest) and double-click it. | Download `Voxel-v<version>.dmg`, drag **Voxel** into *Applications*, then run `xattr -cr /Applications/Voxel.app` once in Terminal. |
+| Download `Voxel-v<version>.exe` from [Releases](https://github.com/Digimo2020/Voxel-V01/releases/latest) and double-click it. | Download `Voxel-v<version>.dmg`, drag **Voxel** into *Applications*, then run `xattr -cr /Applications/Voxel.app` once in Terminal. |
 | Windows blocks it ("Smart App Control")? Test builds are not code-signed yet. Run from source with `run.bat` instead. See [signing plan](WINDOWS_STORE_GUIDE.md). | Allow Voxel in *System Settings → Privacy & Security → Accessibility*, then restart it. |
 
 Voxel lives in the **system tray** (Windows) or **menu bar** (macOS) after it starts.
@@ -124,7 +124,7 @@ Changes are saved automatically. Less common options are under **More options** 
 | No sound | Settings → Playback → **Volume** and **Output device**. |
 | Which version do I have? | Bottom of the sidebar, or Settings → About. |
 
-Still stuck? [Open an issue](https://github.com/Digimo2020/Voxel-/issues). Privacy: [PRIVACY.md](PRIVACY.md).
+Still stuck? [Open an issue](https://github.com/Digimo2020/Voxel-V01/issues). Privacy: [PRIVACY.md](PRIVACY.md).
 
 ---
 

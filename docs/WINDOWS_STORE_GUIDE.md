@@ -31,7 +31,7 @@ Already prepared in this repo: [`CODE_SIGNING_POLICY.md`](../CODE_SIGNING_POLICY
 
 **Your steps**
 1. Turn on multi-factor authentication for your GitHub account.
-2. Apply at <https://signpath.org/apply>. Use repo `https://github.com/Digimo2020/Voxel-` and link `CODE_SIGNING_POLICY.md`. (SignPath may ask for a previous release, which exists: v1.1.23.)
+2. Apply at <https://signpath.org/apply>. Use repo `https://github.com/Digimo2020/Voxel-V01` and link `CODE_SIGNING_POLICY.md`. (SignPath may ask for a previous release, which exists: v1.1.23.)
 3. After approval, in SignPath create/confirm: a **project** (slug e.g. `voxel`), an **artifact configuration** (paste `.signpath/artifact-configuration.xml`), and a **signing policy** (e.g. `release-signing`). Create an **API token** (CI user) and connect the GitHub trusted build system.
 4. In GitHub: *Settings → Secrets and variables → Actions*:
    - **Secret** `SIGNPATH_API_TOKEN` = the API token
