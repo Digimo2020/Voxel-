@@ -552,7 +552,7 @@ Every 10th patch increments minor, and every 10th minor increments major.
 - **Settings & About Dialog** (`src/ui/settings_dialog.py`):
   - Accessible via the player gear button (⚙️) or taskbar tray icon.
   - Preference controls for default voice, default speed, docking position, and bubble trigger timeout.
-  - About view displaying current version (`v1.0.01`), versioning schema explanation, and a direct link to the [GitHub Repository](https://github.com/Digimo2020/Voxel-).
+  - About view displaying current version (`v1.0.01`), versioning schema explanation, and a direct link to the [GitHub Repository](https://github.com/Digimo2020/Voxel-V01).
 - **Persistent Settings Manager** (`src/utils/settings.py`):
   - Stores and loads preferences from `%LOCALAPPDATA%/Voxel/settings.json`.
 - **Version Rollover Utility** (`src/utils/version.py`):

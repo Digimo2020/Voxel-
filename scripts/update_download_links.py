@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 version = re.search(r'CURRENT_VERSION\s*=\s*"(v[\d.]+)"', (ROOT / "src/utils/version.py").read_text(encoding="utf-8")).group(1)
-base = "https://github.com/Digimo2020/Voxel-/releases/download"
+base = "https://github.com/Digimo2020/Voxel-V01/releases/download"
 
 readme = ROOT / "README.md"
 s = readme.read_text(encoding="utf-8")
